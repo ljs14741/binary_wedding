@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 다크모드 무관하게 바이너리 웨딩 브랜드 컬러 고정 */
+  --background: #FDFCFB;
+  --foreground: #333333;
+}
+
+/* 시스템 다크모드 설정을 무시하도록 root 설정 */
+:root {
+  color-scheme: light;
 }
 
 @theme inline {
@@ -12,10 +18,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* 다크모드일 때도 라이트모드 색상을 유지하도록 강제 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #FDFCFB;
+    --foreground: #333333;
   }
 }
 
@@ -23,10 +30,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* 텍스트 가독성을 위해 안티앨리어싱 추가 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* 기존 내용 건드리지 말고 맨 아래에 추가 */
-
+/* 애니메이션 코드 */
 @keyframes customFadeInUp {
   from {
     opacity: 0;
