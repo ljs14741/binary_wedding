@@ -7,7 +7,8 @@ import { Noto_Serif_KR } from "next/font/google";
 import {
     Phone, Copy, MapPin, Heart, Pause, Play,
     Navigation, ChevronDown, ChevronUp, X,
-    MessageSquare, Plus, Mail
+    MessageSquare, Plus, Mail,
+    Music
 } from "lucide-react";
 
 const serif = Noto_Serif_KR({
@@ -193,29 +194,41 @@ export default function PremiumSample1() {
             />
 
             <div className="w-full max-w-[430px] bg-white shadow-2xl relative flex flex-col overflow-hidden">
-                <audio ref={audioRef} loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" />
+                <audio ref={audioRef} loop src="/music/sample1.mp3"/>
 
                 {/* 1. 메인 히어로 */}
                 <section className="relative h-[100vh]">
                     <Image src={DATA.images[0]} alt="메인 웨딩 사진" fill className="object-cover brightness-95" priority />
                     <div className="absolute top-8 right-8 z-30">
-                        <button
-                            onClick={toggleMusic}
-                            aria-label={isPlaying ? "배경음악 끄기" : "배경음악 켜기"}
-                            className="w-11 h-11 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/40 shadow-sm active:scale-90 transition-transform"
-                        >
-                            {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
-                        </button>
+                        <div className="absolute top-8 right-8 z-30">
+                            <button onClick={toggleMusic} className="transition-transform active:scale-95" aria-label={isPlaying ? "BGM 끄기" : "BGM 켜기"}>
+                                <div className={`relative flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-sm transition-all duration-700 ${isPlaying
+                                        ? "bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.3)] border border-white/40" // 재생 중: 은은한 광채
+                                        : "bg-black/5 border border-white/20" // 정지: 아주 투명하게
+                                    }`}>
+                                    {/* 재생 중일 때 아이콘이 진한 핑크빛으로 변하며 부드럽게 깜빡임 */}
+                                    <Music size={18} className={`transition-colors duration-700 ${isPlaying ? "text-rose-400 animate-[pulse_3s_infinite]" : "text-white/80"}`} strokeWidth={1.5}/>
+
+                                    {/* 재생 중일 때만 보이는 작은 파동 */}
+                                    {isPlaying && (
+                                        <div className="absolute inset-0 rounded-full border border-white/30 animate-[ping_2s_infinite]"></div>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
                     </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-between py-28 text-white text-center z-10">
+                    <div
+                        className="absolute inset-0 flex flex-col items-center justify-between py-28 text-white text-center z-10">
                         <div className="animate-fade-in-up">
-                            <p className="text-[11px] tracking-[0.4em] font-light opacity-80 uppercase font-sans">Save the Date</p>
+                            <p className="text-[11px] tracking-[0.4em] font-light opacity-80 uppercase font-sans">Save
+                                the Date</p>
                             <h1 className="text-4xl font-serif mt-6 font-bold tracking-tighter">
                                 {DATA.groom.name} <span className="font-light mx-1">&</span> {DATA.bride.name}
                             </h1>
                         </div>
                         <div className="animate-fade-in-slow font-serif">
-                            <p className="text-xl tracking-widest uppercase">{weddingYear}. {weddingMonth + 1}. {DATA.date.getDate()}. SUN</p>
+                            <p className="text-xl tracking-widest uppercase">{weddingYear}. {weddingMonth + 1}. {DATA.date.getDate()}.
+                                SUN</p>
                             <p className="text-sm font-light opacity-80 mt-2">{DATA.location} {DATA.detailLocation}</p>
                         </div>
                     </div>
@@ -223,7 +236,7 @@ export default function PremiumSample1() {
 
                 {/* 2. 초대합니다 */}
                 <section className="py-28 px-10 text-center bg-white">
-                    <Heart className="mx-auto text-rose-200 mb-10" size={26} />
+                <Heart className="mx-auto text-rose-200 mb-10" size={26}/>
                     <h2 className="font-serif text-2xl mb-12 tracking-[0.15em] underline underline-offset-8 decoration-rose-50 font-bold italic">초대합니다</h2>
                     <p className="font-serif text-[17px] leading-[2.3] text-gray-600 mb-16">
                         서로가 마주 보며 다진 약속을<br/>
@@ -324,25 +337,33 @@ export default function PremiumSample1() {
 
                     <div className="space-y-8 text-[14px] border-t border-gray-50 pt-10 text-left">
                         <div className="flex gap-5">
-                            <span className="shrink-0 w-14 h-7 bg-rose-50 text-rose-300 rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">지하철</span>
-                            <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm">7호선, 수인분당선 <b className="font-bold text-gray-700">강남구청역</b> 3-1번 출구에서 500m (도보 8분)</p>
+                            <span
+                                className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">지하철</span>
+                            <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm">7호선, 수인분당선 <b
+                                className="font-bold text-gray-800">강남구청역</b> 3-1번 출구에서 500m (도보 8분)</p>
                         </div>
                         <div className="flex gap-5">
-                            <span className="shrink-0 w-14 h-7 bg-gray-50 text-gray-400 rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">버스</span>
-                            <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm"><b className="font-bold text-gray-700">강남구청, 강남세무서</b> 정류장 하차<br/>간선: 301, 342, 472 / 지선: 3011, 4412</p>
+                            <span
+                                className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">버스</span>
+                            <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm"><b
+                                className="font-bold text-gray-800">강남구청, 강남세무서</b> 정류장 하차<br/>간선: 301, 342, 472 / 지선:
+                                3011, 4412</p>
                         </div>
                         <div className="flex gap-5">
-                            <span className="shrink-0 w-14 h-7 bg-gray-50 text-gray-400 rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">주차</span>
-                            <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm font-medium italic">웨딩홀 내 200대 주차 가능 (2시간 무료)</p>
+                            <span
+                                className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">주차</span>
+                            <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm font-medium italic">웨딩홀
+                                내 200대 주차 가능 <span className="text-rose-400 font-bold">(2시간 무료)</span></p>
                         </div>
                     </div>
                 </section>
 
                 {/* 5. 인터뷰 버튼 */}
                 <section className="py-24 px-10 bg-[#FAF9F7] text-center border-y border-[#F3EFEA]">
-                    <Heart className="mx-auto text-rose-50 mb-8" size={24} />
+                    <Heart className="mx-auto text-rose-50 mb-8" size={24}/>
                     <h3 className="font-serif text-2xl text-gray-800 mb-2 italic">우리의 이야기</h3>
-                    <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">The Story</p>
+                    <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">The
+                        Story</p>
                     <button
                         onClick={() => setIsInterviewOpen(true)}
                         aria-label="신랑신부 인터뷰 보기"
@@ -354,7 +375,8 @@ export default function PremiumSample1() {
 
                 {/* 6. 웨딩 갤러리 */}
                 <section className="py-24">
-                    <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩 갤러리</h3>
+                    <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩
+                        갤러리</h3>
                     <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
                     <div className="grid grid-cols-2 gap-1 px-1">
                         <div className="relative col-span-2 aspect-[4/3]"><Image src={DATA.images[2]} alt="웨딩 사진 1" fill className="object-cover" /></div>
