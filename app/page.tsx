@@ -1,12 +1,17 @@
+// app/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, Coffee, Heart, CheckCircle2, Search } from 'lucide-react';
+import { X, Coffee, Heart, CheckCircle2, Search, ChevronDown, MessageCircle } from 'lucide-react';
+// [중요] 컴포넌트 불러오기
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function Home() {
     const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
+    const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     // 접속 시 1초 후 안내 팝업 노출
     useEffect(() => {
@@ -16,36 +21,18 @@ export default function Home() {
         return () => clearTimeout(timer);
     }, []);
 
+    // FAQ 토글 함수
+    const toggleFaq = (index: number) => {
+        setOpenFaq(openFaq === index ? null : index);
+    };
+
+    const KAKAO_CHAT_URL = "http://pf.kakao.com/_xdVEhX";
+
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-slate-900 font-sans selection:bg-rose-500 selection:text-white scroll-smooth">
 
-            {/* 1. 내비게이션 */}
-            <header className="fixed top-0 w-full z-[100] bg-white/90 backdrop-blur-md py-4 px-6 flex justify-between items-center border-b border-rose-50 shadow-sm">
-                <div className="flex flex-col group">
-                    <Link href="/" className="text-xl font-serif font-black tracking-tighter text-slate-900 group-hover:text-rose-600 transition-colors">
-                        Binary Wedding
-                    </Link>
-                    <span className="text-[10px] text-rose-500 font-bold tracking-widest leading-none mt-1">로그인 · 광고 없는 무료 청첩장</span>
-                </div>
-
-                {/* [복구 및 추가] 샘플 보기 + 관리 + 만들기 */}
-                <nav className="flex gap-4 md:gap-8 text-[13px] md:text-[14px] font-bold text-slate-700 items-center">
-                    {/* 기존 샘플 보기 링크 복구 */}
-                    <a href="#samples" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
-                        샘플 보기
-                    </a>
-
-                    {/* 관리 버튼 */}
-                    <Link href="/check" className="hover:text-rose-600 transition-colors flex items-center gap-1">
-                        <Search size={16} /> <span className="hidden md:inline">청첩장</span> 관리
-                    </Link>
-
-                    {/* 만들기 버튼 */}
-                    <Link href="/make" className="bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md active:scale-95">
-                        만들기
-                    </Link>
-                </nav>
-            </header>
+            {/* 1. 헤더 컴포넌트 사용 */}
+            <SiteHeader />
 
             <main>
                 {/* 2. 히어로 섹션 */}
@@ -74,13 +61,12 @@ export default function Home() {
                             오직 두 사람의 소중한 진심만을 담았습니다.
                         </p>
 
-                        {/* 메인 액션 버튼들 */}
-                        <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center">
-                            <Link href="/make" className="w-full md:w-auto px-14 py-5 bg-white text-slate-900 rounded-full font-black text-lg shadow-2xl hover:bg-rose-600 hover:text-white transition-all transform hover:-translate-y-1">
+                        <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <Link href="/make" className="w-full sm:w-auto px-14 py-5 bg-white text-slate-900 rounded-full font-black text-lg shadow-2xl hover:bg-rose-600 hover:text-white transition-all transform hover:-translate-y-1 inline-block">
                                 무료로 만들기
                             </Link>
-                            <Link href="/check" className="w-full md:w-auto px-10 py-5 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-full font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2">
-                                <Search size={20} /> 수정 / 조회
+                            <Link href="/check" className="w-full sm:w-auto px-10 py-5 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-full font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2">
+                                <Search size={20} /> 내 청첩장 수정
                             </Link>
                         </div>
                     </div>
@@ -161,7 +147,36 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* 5. 후원 섹션 */}
+                {/* 5. FAQ 섹션 */}
+                <section id="faq" className="py-32 px-6 bg-[#F8F7F5]">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="text-center mb-16 space-y-4">
+                            <span className="text-slate-400 text-xs font-bold tracking-widest uppercase border border-slate-200 px-3 py-1 rounded-full bg-white">Q&A</span>
+                            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900">자주 묻는 질문</h2>
+                        </div>
+
+                        <div className="space-y-4">
+                            {[
+                                { q: "정말 비용이 발생하지 않나요?", a: "네, 100% 무료입니다. 청첩장 생성, 수정, 공유 등 모든 기능을 비용 없이 제공합니다. 서버 비용은 개발자의 사비와 여러분의 후원으로 충당됩니다." },
+                                { q: "수정이나 삭제는 어떻게 하나요?", a: "청첩장 생성 시 설정한 '비밀번호'와 '이름/전화번호'로 상단의 [내 청첩장 수정] 메뉴에서 언제든 수정 및 삭제가 가능합니다." },
+                                { q: "사진 용량 제한이 있나요?", a: "원활한 로딩을 위해 너무 큰 고용량 사진은 자동으로 최적화될 수 있습니다. 세로로 긴 사진이 모바일에서 가장 예쁘게 보입니다." },
+                                { q: "제작 후 보존 기간이 있나요?", a: "별도의 보존 기간 제한은 없으나, 예식일로부터 3개월이 지난 청첩장은 서버 용량 관리를 위해 정리될 수 있습니다." }
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
+                                    <button onClick={() => toggleFaq(idx)} className="w-full px-8 py-6 flex justify-between items-center text-left hover:bg-slate-50 transition-colors">
+                                        <span className="font-bold text-slate-800 text-lg flex gap-3"><span className="text-rose-500">Q.</span> {item.q}</span>
+                                        <ChevronDown className={`text-slate-400 transition-transform duration-300 ${openFaq === idx ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    <div className={`px-8 transition-all duration-300 overflow-hidden ${openFaq === idx ? 'max-h-40 py-6 border-t border-slate-50' : 'max-h-0'}`}>
+                                        <p className="text-slate-600 leading-relaxed text-sm">{item.a}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* 6. 후원 및 문의 섹션 */}
                 <section id="donate" className="bg-white py-32 text-center px-6 relative overflow-hidden">
                     <div className="max-w-3xl mx-auto space-y-10 relative z-10 font-medium">
                         <div className="inline-block px-4 py-1.5 bg-slate-100 rounded-full text-slate-500 text-xs font-bold tracking-widest uppercase italic mb-4">Developer Story</div>
@@ -172,40 +187,24 @@ export default function Home() {
                         <p className="text-[17px] text-slate-600 leading-loose">
                             안녕하세요, 6년 차 개발자 Binary입니다. <br />
                             결혼 준비 과정의 거품을 빼고 싶은 마음도 컸지만, <br />
-                            <b>미래의 제 결혼식에 직접 쓰기 위해</b> 퇴근 후 정성을 다해 개발했습니다. <br /><br />
-                            직접 사용하려 만든 만큼 퀄리티와 편의성은 타협하지 않았습니다. <br />
-                            예쁘게 사용해 주시고, 제 노력이 마음에 드셨다면 <br />
-                            서버 유지비를 위한 따뜻한 응원을 부탁드립니다.
+                            <b>미래의 제 결혼식에 직접 쓰기 위해</b> 퇴근 후 정성을 다해 개발했습니다. <br />
+                            이용 중 오류가 있거나 개선이 필요하면 언제든 알려주세요.
                         </p>
-                        <button className="mt-8 px-12 py-5 bg-[#FEE500] text-[#191919] font-black rounded-[1.5rem] shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto active:scale-95">
-                            <Coffee size={24} /> 카카오톡으로 응원하기
-                        </button>
+
+                        <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href={KAKAO_CHAT_URL} target="_blank" className="px-10 py-5 bg-slate-900 text-white font-bold rounded-[1.5rem] shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 active:scale-95 cursor-pointer">
+                                <MessageCircle size={20} /> 개발자에게 문의하기
+                            </a>
+                        </div>
                     </div>
                     <div className="absolute top-0 right-0 w-96 h-96 bg-rose-50 rounded-full blur-3xl opacity-40 translate-x-1/2 -translate-y-1/2"></div>
                 </section>
             </main>
 
-            {/* 6. 푸터 */}
-            <footer className="py-20 bg-slate-900 text-white">
-                <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-10">
-                    <div className="text-center md:text-left space-y-3">
-                        <h4 className="text-2xl font-serif font-black tracking-tighter text-white">Binary Wedding</h4>
-                        <p className="text-xs text-slate-400 uppercase tracking-[0.4em] font-bold">Pure Love, Pure Technology</p>
-                    </div>
-                    <div className="flex flex-col items-center md:items-end gap-5 text-xs font-bold text-slate-400">
-                        <div className="flex gap-8 tracking-tight">
-                            <Link href="/terms" className="hover:text-rose-400 transition underline underline-offset-4 decoration-rose-400/30">이용약관</Link>
-                            <Link href="/privacy" className="hover:text-rose-400 transition font-black text-slate-200 underline underline-offset-4 decoration-rose-400/30">개인정보처리방침</Link>
-                        </div>
-                        <div className="text-center md:text-right space-y-1 opacity-60">
-                            <p>제작: Binary</p>
-                            <p>© 2026 BINARY WEDDING. ALL RIGHTS RESERVED.</p>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            {/* 7. 푸터 컴포넌트 사용 */}
+            <SiteFooter />
 
-            {/* 7. 접속 시 안내 모달 */}
+            {/* 8. 접속 시 안내 모달 (기존 유지) */}
             {isWelcomeOpen && (
                 <div className="fixed bottom-8 right-8 z-[200] max-w-[320px] animate-fade-in-up">
                     <div className="bg-white rounded-[2rem] shadow-2xl border border-rose-50 p-8 relative overflow-hidden group">
@@ -225,9 +224,9 @@ export default function Home() {
                                 예쁘게 사용해 주시고, 마음에 드신다면 커피 한 잔으로 제작자를 응원해 주세요. ☕
                             </p>
 
-                            <button className="w-full mt-6 py-3.5 bg-[#FEE500] text-[#191919] font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
+                            <a href={KAKAO_CHAT_URL} target="_blank" className="w-full mt-6 py-3.5 bg-[#FEE500] text-[#191919] font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
                                 <Coffee size={14} /> 카카오톡으로 응원하기
-                            </button>
+                            </a>
 
                             <div className="mt-6 flex gap-4 font-bold text-[10px] uppercase tracking-widest items-center">
                                 <Link href="/make" className="text-rose-600 hover:text-rose-400 transition underline underline-offset-4">만들기</Link>
@@ -238,7 +237,6 @@ export default function Home() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
