@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model admins {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique(map: "username") @db.VarChar(50)
+  password   String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model invitation_accounts {
+  id             Int         @id @default(autoincrement())
+  invitation_id  Int
+  side           String      @db.VarChar(10)
+  bank_name      String      @db.VarChar(20)
+  account_number String      @db.VarChar(50)
+  owner_name     String      @db.VarChar(20)
+  invitations    invitations @relation(fields: [invitation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([invitation_id])
+}
+
+model invitation_photos {
+  id            Int         @id @default(autoincrement())
+  invitation_id Int
+  photo_url     String      @db.VarChar(255)
+  sort_order    Int?        @default(0)
+  invitations   invitations @relation(fields: [invitation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([invitation_id])
+}
+
+// [신규] 인터뷰 테이블
+model invitation_interviews {
+  id            Int         @id @default(autoincrement())
+  invitation_id Int
+  question      String      @db.VarChar(255)
+  answer        String      @db.Text
+  invitations   invitations @relation(fields: [invitation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([invitation_id])
+}
+
+model invitations {
+  id                  Int                   @id @default(autoincrement())
+  url_id              String                @unique(map: "url_id") @db.VarChar(50)
+  template_type       String                @db.VarChar(10)
+  is_active           Boolean?              @default(true)
+
+  // [수정] 혼주 연락처 필드 추가됨
+  groom_name          String                @db.VarChar(20)
+  groom_contact       String?               @db.VarChar(20)
+  groom_father        String?               @db.VarChar(20)
+  groom_father_contact String?              @db.VarChar(20) // New
+  groom_mother        String?               @db.VarChar(20)
+  groom_mother_contact String?              @db.VarChar(20) // New
+
+  bride_name          String                @db.VarChar(20)
+  bride_contact       String?               @db.VarChar(20)
+  bride_father        String?               @db.VarChar(20)
+  bride_father_contact String?              @db.VarChar(20) // New
+  bride_mother        String?               @db.VarChar(20)
+  bride_mother_contact String?              @db.VarChar(20) // New
+
+  wedding_date        DateTime              @db.DateTime(0)
+  location_name       String                @db.VarChar(100)
+  location_detail     String?               @db.VarChar(100) // New (홀 이름 등)
+  location_address    String                @db.VarChar(200)
+  location_lat        Decimal?              @db.Decimal(10, 8)
+  location_lng        Decimal?              @db.Decimal(11, 8)
+
+  // [수정] 교통 정보 추가됨
+  transport_subway    String?               @db.Text
+  transport_bus       String?               @db.Text
+  transport_parking   String?               @db.Text
+
+  welcome_msg         String?               @db.Text
+  main_photo_url      String?               @db.VarChar(255)
+
+  created_at          DateTime?             @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?             @default(now()) @db.Timestamp(0)
+
+  invitation_accounts invitation_accounts[]
+  invitation_photos   invitation_photos[]
+  invitation_interviews invitation_interviews[] // New Relation
+}
