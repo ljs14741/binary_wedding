@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, Coffee, Heart, CheckCircle2 } from 'lucide-react';
+import { X, Coffee, Heart, CheckCircle2, Search } from 'lucide-react';
 
 export default function Home() {
     const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
@@ -27,9 +27,21 @@ export default function Home() {
                     </Link>
                     <span className="text-[10px] text-rose-500 font-bold tracking-widest leading-none mt-1">로그인 · 광고 없는 무료 청첩장</span>
                 </div>
-                <nav className="flex gap-8 text-[14px] font-bold text-slate-700 items-center">
-                    <a href="#samples" className="hover:text-rose-600 transition-colors cursor-pointer">샘플 보기</a>
-                    <Link href="/make" className="bg-slate-900 text-white px-6 py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md active:scale-95">
+
+                {/* [복구 및 추가] 샘플 보기 + 관리 + 만들기 */}
+                <nav className="flex gap-4 md:gap-8 text-[13px] md:text-[14px] font-bold text-slate-700 items-center">
+                    {/* 기존 샘플 보기 링크 복구 */}
+                    <a href="#samples" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
+                        샘플 보기
+                    </a>
+
+                    {/* 관리 버튼 */}
+                    <Link href="/check" className="hover:text-rose-600 transition-colors flex items-center gap-1">
+                        <Search size={16} /> <span className="hidden md:inline">청첩장</span> 관리
+                    </Link>
+
+                    {/* 만들기 버튼 */}
+                    <Link href="/make" className="bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md active:scale-95">
                         만들기
                     </Link>
                 </nav>
@@ -61,9 +73,14 @@ export default function Home() {
                             지저분한 광고와 <b>불필요한 가입 절차</b>는 모두 걷어내고<br className="hidden md:block"/>
                             오직 두 사람의 소중한 진심만을 담았습니다.
                         </p>
-                        <div className="pt-8">
-                            <Link href="/make" className="px-14 py-5 bg-white text-slate-900 rounded-full font-black text-lg shadow-2xl hover:bg-rose-600 hover:text-white transition-all transform hover:-translate-y-1 inline-block">
+
+                        {/* 메인 액션 버튼들 */}
+                        <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center">
+                            <Link href="/make" className="w-full md:w-auto px-14 py-5 bg-white text-slate-900 rounded-full font-black text-lg shadow-2xl hover:bg-rose-600 hover:text-white transition-all transform hover:-translate-y-1">
                                 무료로 만들기
+                            </Link>
+                            <Link href="/check" className="w-full md:w-auto px-10 py-5 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-full font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2">
+                                <Search size={20} /> 수정 / 조회
                             </Link>
                         </div>
                     </div>
@@ -188,7 +205,7 @@ export default function Home() {
                 </div>
             </footer>
 
-            {/* 7. 접속 시 안내 모달 (수정됨) */}
+            {/* 7. 접속 시 안내 모달 */}
             {isWelcomeOpen && (
                 <div className="fixed bottom-8 right-8 z-[200] max-w-[320px] animate-fade-in-up">
                     <div className="bg-white rounded-[2rem] shadow-2xl border border-rose-50 p-8 relative overflow-hidden group">
@@ -208,7 +225,6 @@ export default function Home() {
                                 예쁘게 사용해 주시고, 마음에 드신다면 커피 한 잔으로 제작자를 응원해 주세요. ☕
                             </p>
 
-                            {/* 모달 내 카카오톡 응원 버튼 */}
                             <button className="w-full mt-6 py-3.5 bg-[#FEE500] text-[#191919] font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
                                 <Coffee size={14} /> 카카오톡으로 응원하기
                             </button>

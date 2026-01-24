@@ -7,7 +7,8 @@ interface PageProps {
 }
 
 export default async function CardPage({ params }: PageProps) {
-    const { cardId } = await params;
+    const resolvedParams = await params;
+    const cardId = resolvedParams.cardId;
 
     // 1. DB 조회
     const rawData = await prisma.invitations.findUnique({

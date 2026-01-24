@@ -50,6 +50,7 @@ model invitation_interviews {
 model invitations {
   id                  Int                   @id @default(autoincrement())
   url_id              String                @unique(map: "url_id") @db.VarChar(50)
+  password            String                @db.VarChar(255)
   template_type       String                @db.VarChar(10)
   is_active           Boolean?              @default(true)
 
