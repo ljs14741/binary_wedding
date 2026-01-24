@@ -1,92 +1,73 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import Type1 from "@/components/Type1";
 
-export default async function CardPage({
-                                           params
-                                       }: {
-    params: Promise<{ cardId: string }>
-}) {
+interface PageProps {
+    params: Promise<{ cardId: string }>;
+}
+
+export default async function CardPage({ params }: PageProps) {
     const { cardId } = await params;
 
-    const invitation = await prisma.invitations.findUnique({
+    // 1. DB 조회
+    const rawData = await prisma.invitations.findUnique({
         where: { url_id: cardId },
+        include: {
+            invitation_accounts: true,
+            invitation_photos: { orderBy: { sort_order: 'asc' } },
+            invitation_interviews: true,
+        }
     });
 
-    if (!invitation) return <div>Data Not Found</div>;
+    if (!rawData) return notFound();
 
-    // 날짜 포맷팅 (2025. 10. 25)
-    const dateObj = new Date(invitation.wedding_date);
-    const dateString = `${dateObj.getFullYear()}. ${String(dateObj.getMonth() + 1).padStart(2, '0')}. ${String(dateObj.getDate()).padStart(2, '0')}`;
-    const timeString = dateObj.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    // 2. 데이터 변환 (DB 형태 -> 컴포넌트 형태)
+    const formattedData = {
+        groom: {
+            name: rawData.groom_name,
+            contact: rawData.groom_contact || "",
+            father: rawData.groom_father || "",
+            mother: rawData.groom_mother || "",
+            father_contact: rawData.groom_father_contact || "",
+            mother_contact: rawData.groom_mother_contact || "",
+        },
+        bride: {
+            name: rawData.bride_name,
+            contact: rawData.bride_contact || "",
+            father: rawData.bride_father || "",
+            mother: rawData.bride_mother || "",
+            father_contact: rawData.bride_father_contact || "",
+            mother_contact: rawData.bride_mother_contact || "",
+        },
+        date: rawData.wedding_date,
+        location: rawData.location_name,
+        detail: rawData.location_detail || "",
+        address: rawData.location_address,
+        message: rawData.welcome_msg || "",
 
-    // 요일 구하기 (SAT)
-    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const dayString = days[dateObj.getDay()];
+        // 사진이 없으면 기본 이미지(placeholder) 사용
+        mainImage: rawData.main_photo_url || "",
+        gallery: rawData.invitation_photos.map(p => p.photo_url),
 
-    return (
-        <div className="w-full min-h-screen bg-[#FDFBF9] flex justify-center overflow-hidden">
+        transport: {
+            subway: rawData.transport_subway || "",
+            bus: rawData.transport_bus || "",
+            parking: rawData.transport_parking || "",
+        },
 
-            {/* 모바일 화면 제한 (최대 430px) */}
-            <div className="w-full max-w-[430px] bg-white shadow-2xl relative">
+        accounts: rawData.invitation_accounts.map(acc => ({
+            side: acc.side,
+            bank: acc.bank_name,
+            num: acc.account_number,
+            name: acc.owner_name
+        })),
 
-                {/* [섹션 1: 메인 커버] */}
-                <section className="relative w-full h-screen max-h-[900px]">
+        interviews: rawData.invitation_interviews.map(iv => ({
+            q: iv.question,
+            a: iv.answer
+        }))
+    };
 
-                    {/* 1. 배경 사진 (풀스크린) */}
-                    <div className="absolute inset-0 z-0">
-                        {/* 실제로는 invitation.main_photo_url 을 써야 함. 지금은 샘플용 고정 이미지 */}
-                        <img
-                            src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop"
-                            alt="Main Wedding"
-                            className="w-full h-full object-cover opacity-90 animate-fade-in-slow"
-                        />
-                        {/* 사진 위에 살짝 어두운 필터 (글씨 잘 보이게) */}
-                        <div className="absolute inset-0 bg-black/20" />
-                    </div>
-
-                    {/* 2. 텍스트 오버레이 */}
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-between py-20 text-white">
-
-                        {/* 상단: 날짜 */}
-                        <div className="text-center animate-fade-in-up">
-                            <p className="font-playfair text-lg tracking-[0.2em] mb-2">WEDDING DAY</p>
-                            <div className="w-[1px] h-10 bg-white/70 mx-auto mb-2"></div>
-                            <p className="font-serif text-sm opacity-90">{dateString}</p>
-                            <p className="font-serif text-sm opacity-90">{dayString} {timeString}</p>
-                        </div>
-
-                        {/* 하단: 이름 */}
-                        <div className="text-center w-full px-10 pb-10 animate-fade-in-up [animation-delay:500ms] opacity-0 fill-mode-forwards">
-                            <div className="mb-4">
-                                <p className="font-script text-6xl mb-2 drop-shadow-md">
-                                    {invitation.groom_eng || "Groom"}
-                                    <span className="text-4xl mx-2">&</span>
-                                    {invitation.bride_eng || "Bride"}
-                                </p>
-                            </div>
-
-                            <div className="flex justify-center items-center gap-3 text-sm font-serif tracking-widest opacity-90">
-                                <span>{invitation.groom_name}</span>
-                                <span className="w-1 h-1 bg-white rounded-full"></span>
-                                <span>{invitation.bride_name}</span>
-                            </div>
-
-                            <p className="mt-6 text-xs font-light tracking-wider opacity-80 uppercase">
-                                {invitation.location_name}
-                            </p>
-                        </div>
-
-                    </div>
-                </section>
-
-                {/* [섹션 2: 초대 문구 (맛보기)] */}
-                <section className="py-20 px-8 text-center bg-[#FDFBF9]">
-                    <p className="font-script text-3xl text-stone-400 mb-6">Invitation</p>
-                    <div className="font-serif text-stone-600 leading-loose text-sm whitespace-pre-wrap">
-                        {invitation.welcome_msg || "서로의 이름을 부르는 것만으로도\n사랑의 깊이를 알 수 있는 두 사람이\n꽃과 나무처럼 어우러져\n아름다운 날을 맞이하게 되었습니다."}
-                    </div>
-                </section>
-
-            </div>
-        </div>
-    );
+    // 3. 디자인 컴포넌트 렌더링
+    return <Type1 data={formattedData} />;
 }
