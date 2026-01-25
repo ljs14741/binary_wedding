@@ -4,14 +4,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Script from "next/script";
 import { Noto_Serif_KR } from "next/font/google";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Phone, Copy, MapPin, Heart, Pause, Play,
     Navigation, ChevronDown, ChevronUp, X,
     MessageSquare, Plus, Mail,
-    Music, Share
+    Music, Share, ChevronLeft, ChevronRight
 } from "lucide-react";
-// [추가] 헤더, 푸터 컴포넌트 불러오기
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -80,13 +79,9 @@ const DATA = {
     address: "서울 강남구 선릉로 757",
     lat: 37.5225,
     lng: 127.0392,
-    images: [
-        "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1000",
-        "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1000",
-        "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=1000",
-        "https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=1000",
-        "https://images.unsplash.com/photo-1465495910483-0441499252c5?q=80&w=1000"
-    ],
+    mainImages: ["/images/main1.png", "/images/main2.png", "/images/main3.png"],
+    middleImage: "/images/middle1.png",
+    galleryImages: ["/images/gallary1.png", "/images/gallary2.png", "/images/gallary3.png", "/images/gallary4.png"],
     guestbook: [
         { id: 1, author: "친구 김지수", msg: "나은아 결혼 너무 축하해! ❤️ 우리 꽃길만 걷자!", date: "2026.01.15" },
         { id: 2, author: "동료 박성진", msg: "두 분 모습이 너무 아름답네요. 축복합니다! 👋", date: "2026.01.16" },
@@ -104,6 +99,15 @@ export default function PremiumSample1() {
     const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
     const [openAccount, setOpenAccount] = useState<string | null>(null);
     const [visibleCount, setVisibleCount] = useState(3);
+
+    // 메인 슬라이드 상태
+    const [currentMainIdx, setCurrentMainIdx] = useState(0);
+
+    // 갤러리 관련 상태
+    const [currentGalleryIdx, setCurrentGalleryIdx] = useState(0);
+    const [isGalleryPaused, setIsGalleryPaused] = useState(false);
+    const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
 
@@ -112,55 +116,70 @@ export default function PremiumSample1() {
     const firstDayOfMonth = new Date(weddingYear, weddingMonth, 1).getDay();
     const daysInMonth = new Date(weddingYear, weddingMonth + 1, 0).getDate();
 
+    // [수정] 메인 이미지 슬라이드 속도 통일 (3초 간격)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentMainIdx((prev) => {
+                if (prev === DATA.mainImages.length - 1) {
+                    clearInterval(timer);
+                    return prev;
+                }
+                return prev + 1;
+            });
+        }, 3000); // 3초마다 변경
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        if (!isGalleryPaused) {
+            const timer = setInterval(() => {
+                setCurrentGalleryIdx((prev) => (prev + 1) % DATA.galleryImages.length);
+            }, 3000);
+            return () => clearInterval(timer);
+        }
+    }, [isGalleryPaused]);
+
+    const nextGallery = () => {
+        setIsGalleryPaused(true);
+        setCurrentGalleryIdx((prev) => (prev + 1) % DATA.galleryImages.length);
+    };
+
+    const prevGallery = () => {
+        setIsGalleryPaused(true);
+        setCurrentGalleryIdx((prev) => (prev - 1 + DATA.galleryImages.length) % DATA.galleryImages.length);
+    };
+
+    const selectGallery = (idx: number) => {
+        setIsGalleryPaused(true);
+        setCurrentGalleryIdx(idx);
+    };
+
     const shareKakao = () => {
         if (window.Kakao) {
             const kakao = window.Kakao;
-
-            console.log("Kakao Initialized?", kakao.isInitialized());
-            if (!kakao.isInitialized()) {
-                kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
-            }
-
-
+            if (!kakao.isInitialized()) kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
             kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: `${DATA.groom.name} ♥ ${DATA.bride.name} 결혼합니다`,
-                    description: `${weddingYear}년 ${weddingMonth + 1}월 ${DATA.date.getDate()}일 일요일 오후 12시 30분`,
-                    imageUrl: DATA.images[0],
-                    link: {
-                        mobileWebUrl: window.location.href,
-                        webUrl: window.location.href,
-                    },
+                    description: `${weddingYear}년 ${weddingMonth + 1}월 ${DATA.date.getDate()}일`,
+                    imageUrl: DATA.mainImages[0],
+                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
                 },
-                buttons: [
-                    {
-                        title: '청첩장 보기',
-                        link: {
-                            mobileWebUrl: window.location.href,
-                            webUrl: window.location.href,
-                        },
-                    },
-                ],
+                buttons: [{ title: '청첩장 보기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }],
             });
-        } else {
-            alert("카카오톡 SDK가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.");
         }
     };
 
     const initMap = () => {
         if (!mapRef.current || !window.naver) return;
-        const mapOptions = {
+        const map = new window.naver.maps.Map(mapRef.current, {
             center: new window.naver.maps.LatLng(DATA.lat, DATA.lng),
             zoom: 16,
             zoomControl: false,
             scrollWheel: true,
-        };
-        const map = new window.naver.maps.Map(mapRef.current, mapOptions);
-        new window.naver.maps.Marker({
-            position: new window.naver.maps.LatLng(DATA.lat, DATA.lng),
-            map: map,
         });
+        new window.naver.maps.Marker({ position: new window.naver.maps.LatLng(DATA.lat, DATA.lng), map });
     };
 
     useEffect(() => {
@@ -173,7 +192,6 @@ export default function PremiumSample1() {
                 seconds: Math.floor((distance % (1000 * 60)) / 1000),
             });
         }, 1000);
-
         return () => clearInterval(timer);
     }, []);
 
@@ -184,22 +202,18 @@ export default function PremiumSample1() {
                     await audioRef.current.play();
                     setIsPlaying(true);
                 } catch (error) {
-                    console.log("Autoplay blocked, waiting for interaction");
+                    console.log("Autoplay blocked");
                 }
             }
         };
-
         attemptPlay();
-
         const handleInteraction = () => {
             attemptPlay();
             window.removeEventListener('click', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);
         };
-
         window.addEventListener('click', handleInteraction);
         window.addEventListener('touchstart', handleInteraction);
-
         return () => {
             window.removeEventListener('click', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);
@@ -209,16 +223,8 @@ export default function PremiumSample1() {
     const toggleMusic = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (audioRef.current) {
-            if (isPlaying) {
-                audioRef.current.pause();
-                setIsPlaying(false);
-            } else {
-                audioRef.current.play().then(() => {
-                    setIsPlaying(true);
-                }).catch((error) => {
-                    console.error("재생 에러:", error);
-                });
-            }
+            if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
+            else { audioRef.current.play(); setIsPlaying(true); }
         }
     };
 
@@ -228,156 +234,167 @@ export default function PremiumSample1() {
     };
 
     return (
-        // [변경] 전체를 flex-col로 감싸서 헤더-본문-푸터 구조 형성
         <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex flex-col selection:bg-rose-50`}>
             <title>{`${DATA.groom.name} & ${DATA.bride.name} 결혼합니다`}</title>
             <meta name="description" content={`${weddingYear}년 ${weddingMonth + 1}월 ${DATA.date.getDate()}일, 저희 결혼식에 초대합니다.`} />
             <meta property="og:title" content={`${DATA.groom.name} & ${DATA.bride.name}의 모바일 청첩장`} />
             <meta property="og:description" content={`${weddingYear}년 ${weddingMonth + 1}월 ${DATA.date.getDate()}일 ${DATA.location}`} />
-            <meta property="og:image" content={DATA.images[0]} />
+            <meta property="og:image" content={DATA.mainImages[0]} />
             <meta property="og:type" content="website" />
 
-            <Script
-                strategy="afterInteractive"
-                src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=xmxkex3spn`}
-                onLoad={initMap}
-            />
+            <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=xmxkex3spn`} onLoad={initMap} />
+            <Script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" onLoad={() => {
+                if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
+            }} />
 
-            <Script
-                src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-                onLoad={() => {
-                    if (window.Kakao) {
-                        if (!window.Kakao.isInitialized()) {
-                            window.Kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
-                            console.log("카카오 초기화 완료");
-                        }
-                    }
-                }}
-            />
-
-            {/* 1. 헤더 추가 */}
             <SiteHeader />
 
-            {/* 2. 본문 영역 (헤더 공간만큼 pt-28 여백 추가, 중앙 정렬 유지) */}
             <div className="flex-1 flex justify-center pt-28 pb-20">
                 <div className="w-full max-w-[430px] bg-white shadow-2xl relative flex flex-col overflow-hidden">
                     <audio ref={audioRef} loop src="/music/sample1.mp3"/>
 
-                    <section className="relative h-[100vh]">
-                        <Image src={DATA.images[0]} alt="메인 웨딩 사진" fill className="object-cover brightness-95" priority />
-                        <div className="absolute top-8 right-8 z-30">
-                            <button onClick={toggleMusic} className="transition-transform active:scale-95" aria-label={isPlaying ? "BGM 끄기" : "BGM 켜기"}>
-                                <div className={`relative flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-sm transition-all duration-700 ${isPlaying
-                                    ? "bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.3)] border border-white/40"
-                                    : "bg-black/5 border border-white/20"
-                                }`}>
-                                    <Music size={18} className={`transition-colors duration-700 ${isPlaying ? "text-rose-400 animate-[pulse_3s_infinite]" : "text-white/80"}`} strokeWidth={1.5}/>
-                                    {isPlaying && (
-                                        <div className="absolute inset-0 rounded-full border border-white/30 animate-[ping_2s_infinite]"></div>
-                                    )}
-                                </div>
-                            </button>
-                        </div>
+                    {/* [수정] 음악 버튼: top-24 -> top-36으로 더 내려서 배치 */}
+                    <div className="fixed top-36 right-[calc(50%-185px)] z-[90] max-[430px]:right-8">
+                        <button onClick={toggleMusic} className="transition-transform active:scale-95">
+                            <div
+                                className={`relative flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-md shadow-lg ${isPlaying ? "bg-white/40 ring-1 ring-rose-200" : "bg-black/10"}`}>
+                                <Music size={18}
+                                       className={isPlaying ? "text-rose-400 animate-pulse" : "text-white/80"}/>
+                            </div>
+                        </button>
+                    </div>
+
+                    {/* 메인 섹션 */}
+                    <section className="relative h-[100vh] overflow-hidden">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentMainIdx}
+                                initial={{opacity: 0, scale: 1.1}}
+                                animate={{opacity: 1, scale: 1}}
+                                exit={{opacity: 0}}
+                                transition={{duration: 1.2}} // [수정] 전환 애니메이션 속도 일정하게
+                                className="absolute inset-0"
+                            >
+                                <Image
+                                    src={DATA.mainImages[currentMainIdx]}
+                                    alt="메인 사진"
+                                    fill
+                                    className="object-cover brightness-95"
+                                    priority
+                                />
+                            </motion.div>
+                        </AnimatePresence>
 
                         <div className="absolute inset-0 flex flex-col items-center justify-between py-28 text-white text-center z-10">
-                            <motion.div
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 1.2, ease: "easeOut" }}
-                            >
-                                <p className="text-[11px] tracking-[0.4em] font-light opacity-80 uppercase font-sans">Save the Date</p>
-                                <h1 className="text-4xl font-serif mt-6 font-bold tracking-tighter">
-                                    {DATA.groom.name} <span className="font-light mx-1">&</span> {DATA.bride.name}
+                            <motion.div initial={{opacity: 0, y: 30}} animate={{opacity: 1, y: 0}}
+                                        transition={{duration: 1.2}}>
+                                <p className="text-[10px] tracking-[0.5em] font-medium opacity-90 uppercase bg-black/5 px-4 py-1.5 rounded-full backdrop-blur-[2px]">
+                                    The Day of Our Wedding
+                                </p>
+                                <h1 className="text-4xl font-serif mt-8 font-bold">
+                                    {DATA.groom.name} <span className="font-light mx-1 opacity-70">&</span> {DATA.bride.name}
                                 </h1>
                             </motion.div>
-
-                            <motion.div
-                                className="font-serif"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 1.5, delay: 0.5 }}
-                            >
-                                <p className="text-xl tracking-widest uppercase">{weddingYear}. {weddingMonth + 1}. {DATA.date.getDate()}. SUN</p>
+                            <div className="font-serif">
+                                <p className="text-xl tracking-widest uppercase">{weddingYear}. {weddingMonth + 1}. {DATA.date.getDate()}.
+                                    SUN</p>
                                 <p className="text-sm font-light opacity-80 mt-2">{DATA.location} {DATA.detailLocation}</p>
-                            </motion.div>
+                            </div>
                         </div>
                     </section>
 
+                    {/* 초대문구 섹션 */}
                     <section className="py-28 px-10 text-center bg-white">
                         <FadeIn>
                             <Heart className="mx-auto text-rose-200 mb-10" size={26}/>
-                            <h2 className="font-serif text-2xl mb-12 tracking-[0.15em] underline underline-offset-8 decoration-rose-50 font-bold italic">초대합니다</h2>
+                            <h2 className="font-serif text-2xl mb-12 tracking-[0.15em] font-bold italic">초대합니다</h2>
                             <p className="font-serif text-[17px] leading-[2.3] text-gray-600 mb-16">
                                 서로가 마주 보며 다진 약속을<br/>
-                                이제 여러분 앞에서 소중히 맺으려 합니다.<br/>
-                                저희의 새로운 시작을 위해<br/>
-                                따뜻한 축복을 보내주시면 감사하겠습니다.
+                                이제 여러분 앞에서 소중히 맺으려 합니다.
                             </p>
                         </FadeIn>
 
                         <FadeIn delay={0.2}>
-                            <div className="relative aspect-[4/5] w-full rounded-[2.5rem] overflow-hidden mb-16 shadow-xl shadow-rose-50/50">
-                                <Image src={DATA.images[1]} alt="신랑 신부 사진" fill className="object-cover" />
+                            <div
+                                className="relative aspect-[4/5] w-full rounded-[2.5rem] overflow-hidden mb-16 shadow-xl shadow-rose-50/50">
+                                <Image src={DATA.middleImage} alt="신랑 신부" fill className="object-cover"/>
                             </div>
                         </FadeIn>
 
                         <FadeIn delay={0.3}>
                             <div className="space-y-6 text-gray-800 font-serif mb-12 text-lg">
-                                <div>
-                                    <span className="text-gray-400 font-sans text-sm mr-3">신랑</span> <b>{DATA.groom.name}</b> <span className="text-gray-300 mx-2">|</span> {DATA.groom.father.name} · {DATA.groom.mother.name}의 장남
+                                <div><span className="text-gray-400 font-sans text-sm mr-3">신랑</span>
+                                    <b>{DATA.groom.name}</b> <span
+                                        className="text-gray-300 mx-2">|</span> {DATA.groom.father.name} · {DATA.groom.mother.name}의
+                                    장남
                                 </div>
-                                <div>
-                                    <span className="text-gray-400 font-sans text-sm mr-3">신부</span> <b>{DATA.bride.name}</b> <span className="text-gray-300 mx-2">|</span> {DATA.bride.father.name} · {DATA.bride.mother.name}의 차녀
+                                <div><span className="text-gray-400 font-sans text-sm mr-3">신부</span>
+                                    <b>{DATA.bride.name}</b> <span
+                                        className="text-gray-300 mx-2">|</span> {DATA.bride.father.name} · {DATA.bride.mother.name}의
+                                    차녀
                                 </div>
                             </div>
-
-                            <button
-                                onClick={() => setIsContactOpen(true)}
-                                aria-label="연락처 정보 열기"
-                                className="px-12 py-5 bg-[#FBF7F4] text-[#B19888] rounded-2xl font-bold text-sm flex items-center gap-3 mx-auto shadow-sm active:scale-95 transition-all"
-                            >
-                                <Phone size={16} /> 연락처 보기
+                            <button onClick={() => setIsContactOpen(true)}
+                                    className="px-12 py-5 bg-[#FBF7F4] text-[#B19888] rounded-2xl font-bold text-sm flex items-center gap-3 mx-auto shadow-sm">
+                                <Phone size={16}/> 연락처 보기
                             </button>
                         </FadeIn>
                     </section>
 
+                    {/* [복구] 달력 섹션 (위치: 초대문구 다음) */}
                     <section className="py-24 bg-[#FCFAF8] text-center border-y border-[#F3EFEA]">
                         <FadeIn>
-                            <div className="mb-12">
-                                <h3 className="font-serif text-2xl text-gray-800 tracking-tighter italic font-bold">{weddingYear}년 {weddingMonth + 1}월 {DATA.date.getDate()}일</h3>
-                                <p className="font-serif text-rose-300 mt-2 font-bold tracking-widest text-sm uppercase">Sunday 12:30 PM</p>
-                            </div>
+                            <h3 className="font-serif text-2xl text-gray-800 italic font-bold">{weddingYear}년 {weddingMonth + 1}월 {DATA.date.getDate()}일</h3>
+                            <p className="font-serif text-rose-300 mt-2 font-bold tracking-widest text-sm uppercase">Sunday
+                                12:30 PM</p>
                         </FadeIn>
-
                         <FadeIn delay={0.2}>
-                            <div className="max-w-[290px] mx-auto grid grid-cols-7 gap-y-5 text-sm mb-16 px-2">
-                                {['일', '월', '화', '수', '목', '금', '토'].map(d => <div key={d} className={`font-bold text-[11px] ${d === '일' ? 'text-rose-400' : 'text-gray-300'}`}>{d}</div>)}
-                                {Array.from({ length: firstDayOfMonth }, (_, i) => (<div key={`empty-${i}`} />))}
-                                {Array.from({ length: daysInMonth }, (_, i) => {
+                            <div className="max-w-[290px] mx-auto grid grid-cols-7 gap-y-5 text-sm my-12 px-2">
+                                {['일', '월', '화', '수', '목', '금', '토'].map(d => <div key={d}
+                                                                                   className={`font-bold text-[11px] ${d === '일' ? 'text-rose-400' : 'text-gray-300'}`}>{d}</div>)}
+                                {Array.from({length: firstDayOfMonth}, (_, i) => (<div key={`empty-${i}`}/>))}
+                                {Array.from({length: daysInMonth}, (_, i) => {
                                     const day = i + 1;
-                                    const isWeddingDay = day === 27;
+                                    const isWeddingDay = day === DATA.date.getDate();
                                     return (
-                                        <div key={day} className={`py-1.5 flex items-center justify-center transition-all ${isWeddingDay ? 'bg-rose-400 text-white rounded-full font-bold shadow-lg scale-110' : 'text-gray-600 font-light'}`}>
+                                        <div key={day}
+                                             className={`py-1.5 flex items-center justify-center ${isWeddingDay ? 'bg-rose-400 text-white rounded-full font-bold scale-110' : 'text-gray-600 font-light'}`}>
                                             {day}
                                         </div>
                                     );
                                 })}
                             </div>
                         </FadeIn>
-
                         <FadeIn delay={0.3}>
                             <div className="flex justify-center items-center gap-5 text-gray-800">
-                                <div className="flex flex-col items-center"><span className="text-3xl font-serif tabular-nums">{String(timeLeft.days).padStart(2, '0')}</span><span className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">DAYS</span></div>
+                                <div className="flex flex-col items-center"><span
+                                    className="text-3xl font-serif tabular-nums">{String(timeLeft.days).padStart(2, '0')}</span><span
+                                    className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">DAYS</span>
+                                </div>
                                 <span className="text-2xl font-bold text-gray-400 mb-6 opacity-70">:</span>
-                                <div className="flex flex-col items-center"><span className="text-3xl font-serif tabular-nums">{String(timeLeft.hours).padStart(2, '0')}</span><span className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">HOURS</span></div>
+                                <div className="flex flex-col items-center"><span
+                                    className="text-3xl font-serif tabular-nums">{String(timeLeft.hours).padStart(2, '0')}</span><span
+                                    className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">HOURS</span>
+                                </div>
                                 <span className="text-2xl font-bold text-gray-400 mb-6 opacity-70">:</span>
-                                <div className="flex flex-col items-center"><span className="text-3xl font-serif tabular-nums">{String(timeLeft.minutes).padStart(2, '0')}</span><span className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">MINS</span></div>
+                                <div className="flex flex-col items-center"><span
+                                    className="text-3xl font-serif tabular-nums">{String(timeLeft.minutes).padStart(2, '0')}</span><span
+                                    className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">MINS</span>
+                                </div>
                                 <span className="text-2xl font-bold text-gray-400 mb-6 opacity-70">:</span>
-                                <div className="flex flex-col items-center"><span className="text-3xl font-serif tabular-nums">{String(timeLeft.seconds).padStart(2, '0')}</span><span className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">SECS</span></div>
+                                <div className="flex flex-col items-center"><span
+                                    className="text-3xl font-serif tabular-nums">{String(timeLeft.seconds).padStart(2, '0')}</span><span
+                                    className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">SECS</span>
+                                </div>
                             </div>
                         </FadeIn>
+                        <p className="mt-10 text-center text-gray-500 font-serif text-[15px] animate-fade-in">
+                            {DATA.groom.name}, {DATA.bride.name}의 결혼식이 <span
+                            className="text-rose-400 font-bold text-lg mx-1">{timeLeft.days}</span>일 남았습니다.
+                        </p>
                     </section>
 
+                    {/* [복구] 지도 섹션 (위치: 달력 다음) */}
                     <section className="py-24 px-8 bg-white">
                         <FadeIn>
                             <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">오시는 길</h3>
@@ -387,19 +404,25 @@ export default function PremiumSample1() {
                         </FadeIn>
 
                         <FadeIn delay={0.2}>
-                            <div ref={mapRef} id="map" className="w-full h-[350px] rounded-3xl bg-[#F9F9F9] mb-12 shadow-inner border border-gray-100 overflow-hidden"></div>
+                            <div ref={mapRef} id="map"
+                                 className="w-full h-[350px] rounded-3xl bg-[#F9F9F9] mb-12 shadow-inner border border-gray-100 overflow-hidden"></div>
 
                             <div className="grid grid-cols-3 gap-3 mb-12">
-                                <a href={`https://map.naver.com/v5/search/${encodeURIComponent(DATA.address)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50">
-                                    <Navigation size={18} className="text-[#03C75A]" />
+                                <a href={`https://map.naver.com/v5/search/${encodeURIComponent(DATA.address)}`}
+                                   target="_blank" rel="noopener noreferrer"
+                                   className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50">
+                                    <Navigation size={18} className="text-[#03C75A]"/>
                                     <span className="text-[11px] text-gray-500 font-bold">네이버 지도</span>
                                 </a>
-                                <a href={`https://map.kakao.com/link/to/${encodeURIComponent(DATA.location)},${DATA.lat},${DATA.lng}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50">
-                                    <Navigation size={18} className="text-[#FEE500]" />
+                                <a href={`https://map.kakao.com/link/to/${encodeURIComponent(DATA.location)},${DATA.lat},${DATA.lng}`}
+                                   target="_blank" rel="noopener noreferrer"
+                                   className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50">
+                                    <Navigation size={18} className="text-[#FEE500]"/>
                                     <span className="text-[11px] text-gray-500 font-bold">카카오 내비</span>
                                 </a>
-                                <a href={`tmap://search?name=${encodeURIComponent(DATA.address)}`} className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50">
-                                    <Navigation size={18} className="text-[#ED1C24]" />
+                                <a href={`tmap://search?name=${encodeURIComponent(DATA.address)}`}
+                                   className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50">
+                                    <Navigation size={18} className="text-[#ED1C24]"/>
                                     <span className="text-[11px] text-gray-500 font-bold">T맵</span>
                                 </a>
                             </div>
@@ -408,16 +431,23 @@ export default function PremiumSample1() {
                         <FadeIn delay={0.3}>
                             <div className="space-y-8 text-[14px] border-t border-gray-50 pt-10 text-left">
                                 <div className="flex gap-5">
-                                    <span className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">지하철</span>
-                                    <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm">7호선, 수인분당선 <b className="font-bold text-gray-800">강남구청역</b> 3-1번 출구에서 500m (도보 8분)</p>
+                                    <span
+                                        className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">지하철</span>
+                                    <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm">7호선, 수인분당선 <b
+                                        className="font-bold text-gray-800">강남구청역</b> 3-1번 출구에서 500m (도보 8분)</p>
                                 </div>
                                 <div className="flex gap-5">
-                                    <span className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">버스</span>
-                                    <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm"><b className="font-bold text-gray-800">강남구청, 강남세무서</b> 정류장 하차<br/>간선: 301, 342, 472 / 지선: 3011, 4412</p>
+                                    <span
+                                        className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">버스</span>
+                                    <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm"><b
+                                        className="font-bold text-gray-800">강남구청, 강남세무서</b> 정류장 하차<br/>간선: 301, 342, 472
+                                        / 지선: 3011, 4412</p>
                                 </div>
                                 <div className="flex gap-5">
-                                    <span className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">주차</span>
-                                    <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm font-medium italic">웨딩홀 내 200대 주차 가능 <span className="text-rose-400 font-bold">(2시간 무료)</span></p>
+                                    <span
+                                        className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">주차</span>
+                                    <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm font-medium italic">웨딩홀
+                                        내 200대 주차 가능 <span className="text-rose-400 font-bold">(2시간 무료)</span></p>
                                 </div>
                             </div>
                         </FadeIn>
@@ -438,21 +468,92 @@ export default function PremiumSample1() {
                         </FadeIn>
                     </section>
 
-                    <section className="py-24">
+                    <section className="py-24 bg-white">
                         <FadeIn>
                             <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩 갤러리</h3>
                             <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
                         </FadeIn>
-                        <div className="grid grid-cols-2 gap-1 px-1">
-                            <FadeIn delay={0.1}>
-                                <div className="relative col-span-2 aspect-[4/3]"><Image src={DATA.images[2]} alt="웨딩 사진 1" fill className="object-cover" /></div>
+
+                        <div className="px-4 space-y-4">
+                            <FadeIn>
+                                <div
+                                    className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={currentGalleryIdx}
+                                            initial={{opacity: 0}}
+                                            animate={{opacity: 1}}
+                                            exit={{opacity: 0}}
+                                            transition={{duration: 0.5}}
+                                            className="absolute inset-0"
+                                        >
+                                            <Image
+                                                src={DATA.galleryImages[currentGalleryIdx]}
+                                                alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </motion.div>
+                                    </AnimatePresence>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            prevGallery();
+                                        }}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/50 transition-colors"
+                                    >
+                                        <ChevronLeft size={20}/>
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            nextGallery();
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/50 transition-colors"
+                                    >
+                                        <ChevronRight size={20}/>
+                                    </button>
+                                </div>
                             </FadeIn>
+
                             <FadeIn delay={0.2}>
-                                <div className="relative aspect-square w-full h-full"><Image src={DATA.images[3]} alt="웨딩 사진 2" fill className="object-cover" /></div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {DATA.galleryImages.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => selectGallery(idx)}
+                                            className={`relative aspect-square rounded-xl overflow-hidden shadow-sm transition-all ${
+                                                currentGalleryIdx === idx ? 'ring-2 ring-rose-300 opacity-100' : 'opacity-60 hover:opacity-100'
+                                            }`}
+                                        >
+                                            <Image src={img} alt={`썸네일 ${idx + 1}`} fill className="object-cover"/>
+                                        </button>
+                                    ))}
+                                </div>
                             </FadeIn>
-                            <FadeIn delay={0.3}>
-                                <div className="relative aspect-square w-full h-full"><Image src={DATA.images[4]} alt="웨딩 사진 3" fill className="object-cover" /></div>
-                            </FadeIn>
+
+                            {isGalleryExpanded && (
+                                <motion.div
+                                    initial={{opacity: 0, height: 0}}
+                                    animate={{opacity: 1, height: "auto"}}
+                                    className="grid grid-cols-4 gap-2 mt-2"
+                                >
+                                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center text-[10px] text-gray-300">More 1</div>
+                                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center text-[10px] text-gray-300">More 2</div>
+                                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center text-[10px] text-gray-300">More 3</div>
+                                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center text-[10px] text-gray-300">More 4</div>
+                                </motion.div>
+                            )}
+
+                            <div className="pt-6 flex justify-center">
+                                <button
+                                    onClick={() => setIsGalleryExpanded(!isGalleryExpanded)}
+                                    className="text-gray-400 text-xs font-bold border-b border-gray-200 pb-1 flex items-center gap-1 hover:text-gray-600 transition-colors"
+                                >
+                                    {isGalleryExpanded ? "접기" : "사진 더보기"} {isGalleryExpanded ? <ChevronUp size={14}/> : <Plus size={14}/>}
+                                </button>
+                            </div>
                         </div>
                     </section>
 
@@ -464,14 +565,14 @@ export default function PremiumSample1() {
                         <div className="space-y-4">
                             {(['groom', 'bride'] as const).map((side, idx) => (
                                 <FadeIn key={side} delay={idx * 0.1}>
-                                    <div className="border border-rose-50 rounded-[2rem] overflow-hidden shadow-sm shadow-rose-50/20">
+                                    <div
+                                        className="border border-rose-50 rounded-[2rem] overflow-hidden shadow-sm shadow-rose-50/20">
                                         <button
                                             onClick={() => setOpenAccount(openAccount === side ? null : side)}
-                                            aria-expanded={openAccount === side}
                                             className={`w-full flex justify-between items-center p-7 transition-colors ${openAccount === side ? 'bg-rose-50/30 text-rose-400' : 'bg-white text-gray-700'}`}
                                         >
                                             <span className="font-serif font-bold">{side === 'groom' ? '신랑측' : '신부측'} 계좌번호</span>
-                                            {openAccount === side ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                            {openAccount === side ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
                                         </button>
                                         {openAccount === side && (
                                             <div className="p-7 bg-white space-y-7 divide-y divide-gray-50 animate-fade-in text-left">
@@ -486,7 +587,9 @@ export default function PremiumSample1() {
                                                             <p className="text-[15px] font-bold text-gray-700">{a.name}</p>
                                                             <p className="text-[12px] text-gray-400 font-sans tracking-tight">{a.bank}</p>
                                                         </div>
-                                                        <button onClick={() => copyText(a.bank)} className="text-[11px] text-gray-400 bg-gray-50 px-4 py-2 rounded-full font-bold shadow-sm active:bg-gray-100 transition">복사</button>
+                                                        <button onClick={() => copyText(a.bank)}
+                                                                className="text-[11px] text-gray-400 bg-gray-50 px-4 py-2 rounded-full font-bold shadow-sm active:bg-gray-100 transition">복사
+                                                        </button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -507,7 +610,9 @@ export default function PremiumSample1() {
                                 <FadeIn key={g.id} delay={idx * 0.05}>
                                     <div className="bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-[15px] text-gray-600 leading-relaxed border border-gray-50 animate-fade-in text-left">
                                         <div className="flex justify-between items-center mb-3">
-                                            <div className="flex items-center gap-2"><Heart size={10} className="text-rose-100 fill-rose-100" /><span className="font-bold text-gray-400 text-[11px] font-sans uppercase tracking-tight">{g.author}</span></div>
+                                            <div className="flex items-center gap-2"><Heart size={10} className="text-rose-100 fill-rose-100"/><span
+                                                className="font-bold text-gray-400 text-[11px] font-sans uppercase tracking-tight">{g.author}</span>
+                                            </div>
                                             <span className="text-[9px] text-gray-300 font-sans tracking-wider">{g.date}</span>
                                         </div>
                                         {g.msg}
@@ -520,42 +625,40 @@ export default function PremiumSample1() {
                             <div className="flex flex-col gap-4">
                                 <div className="flex justify-center gap-6">
                                     {visibleCount < DATA.guestbook.length ? (
-                                        <button onClick={() => setVisibleCount(DATA.guestbook.length)} className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">전체 보기 <ChevronDown size={14} /></button>
+                                        <button onClick={() => setVisibleCount(DATA.guestbook.length)}
+                                                className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">전체 보기 <ChevronDown size={14}/></button>
                                     ) : (
-                                        <button onClick={() => setVisibleCount(3)} className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">접기 <ChevronUp size={14} /></button>
+                                        <button onClick={() => setVisibleCount(3)}
+                                                className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">접기 <ChevronUp size={14}/></button>
                                     )}
                                 </div>
                                 <button
                                     onClick={() => setIsWriteModalOpen(true)}
                                     className="w-full py-5 border-2 border-[#E8E1D9] text-[#A68F7F] rounded-[1.8rem] font-bold text-[15px] bg-white shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                                 >
-                                    <MessageSquare size={18} /> 축하 메시지 남기기
+                                    <MessageSquare size={18}/> 축하 메시지 남기기
                                 </button>
                             </div>
                         </FadeIn>
                     </section>
 
                     <section className="py-20 px-8 bg-[#FEE500]/5 text-center">
-                        <FadeIn>
-                            <p className="text-gray-400 text-[11px] mb-6 font-bold tracking-widest">INVITATION</p>
-                            <button
-                                onClick={shareKakao}
-                                className="w-full py-5 bg-[#FEE500] text-[#191919] rounded-[1.8rem] font-bold text-[15px] shadow-md hover:shadow-lg hover:bg-[#FDD835] transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                            >
-                                <Share size={18} /> 카카오톡으로 공유하기
-                            </button>
-                        </FadeIn>
+                        <button onClick={shareKakao}
+                                className="w-full py-5 bg-[#FEE500] text-[#191919] rounded-[1.8rem] font-bold text-[15px] shadow-md flex items-center justify-center gap-3">
+                            <Share size={18}/> 카카오톡으로 공유하기
+                        </button>
                     </section>
 
-                    <footer className="py-20 bg-white text-center opacity-30 text-[9px] tracking-[0.6em] text-gray-400 font-light font-sans uppercase">
+                    <footer className="py-20 bg-white text-center opacity-30 text-[9px] tracking-[0.6em] text-gray-400 font-light uppercase">
                         Binary Wedding Service
                     </footer>
 
+                    {/* 모달 창들 (연락처, 인터뷰, 작성) */}
                     {isContactOpen && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in" role="dialog" aria-modal="true">
-                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsContactOpen(false)} />
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in">
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsContactOpen(false)}/>
                             <div className="bg-white w-full max-w-[380px] rounded-[3rem] p-10 relative z-10 shadow-2xl animate-fade-in-up overflow-y-auto max-h-[85vh]">
-                                <button onClick={() => setIsContactOpen(false)} aria-label="닫기" className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X /></button>
+                                <button onClick={() => setIsContactOpen(false)} className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X/></button>
                                 <h4 className="font-serif text-2xl mb-12 text-center text-gray-800 font-bold italic underline underline-offset-8 decoration-rose-50 italic">연락하기</h4>
                                 <div className="space-y-12">
                                     {(['groom', 'bride'] as const).map((side) => (
@@ -564,12 +667,12 @@ export default function PremiumSample1() {
                                                 {side === 'groom' ? '신랑측 GROOM' : '신부측 BRIDE'}
                                             </p>
                                             <div className="space-y-6">
-                                                {[ { label: side === 'groom' ? '신랑' : '신부', person: DATA[side] }, { label: '부', person: DATA[side].father }, { label: '모', person: DATA[side].mother } ].map((item, idx) => (
+                                                {[{ label: side === 'groom' ? '신랑' : '신부', person: DATA[side] }, { label: '부', person: DATA[side].father }, { label: '모', person: DATA[side].mother }].map((item, idx) => (
                                                     <div key={idx} className="flex justify-between items-center group">
                                                         <span className="text-base font-bold text-gray-700">{item.label} {item.person.name}</span>
                                                         <div className="flex gap-4">
-                                                            <a href={`tel:${item.person.phone}`} aria-label={`${item.label}에게 전화하기`} className="w-10 h-10 bg-[#FDFBF9] border border-rose-50 rounded-full flex items-center justify-center text-rose-300"><Phone size={18} /></a>
-                                                            <a href={`sms:${item.person.phone}`} aria-label={`${item.label}에게 문자하기`} className="w-10 h-10 bg-[#FDFBF9] border border-gray-100 rounded-full flex items-center justify-center text-gray-400"><MessageSquare size={18} /></a>
+                                                            <a href={`tel:${item.person.phone}`} className="w-10 h-10 bg-[#FDFBF9] border border-rose-50 rounded-full flex items-center justify-center text-rose-300"><Phone size={18}/></a>
+                                                            <a href={`sms:${item.person.phone}`} className="w-10 h-10 bg-[#FDFBF9] border border-gray-100 rounded-full flex items-center justify-center text-gray-400"><MessageSquare size={18}/></a>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -582,10 +685,10 @@ export default function PremiumSample1() {
                     )}
 
                     {isInterviewOpen && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog" aria-modal="true">
-                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsInterviewOpen(false)} />
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsInterviewOpen(false)}/>
                             <div className="bg-[#FCFAF9] w-full max-w-[360px] rounded-[3rem] p-10 relative z-10 max-h-[75vh] overflow-y-auto animate-fade-in-up shadow-2xl">
-                                <button onClick={() => setIsInterviewOpen(false)} aria-label="닫기" className="absolute top-10 right-10 text-gray-300 hover:text-gray-500 transition"><X /></button>
+                                <button onClick={() => setIsInterviewOpen(false)} className="absolute top-10 right-10 text-gray-300 hover:text-gray-500 transition"><X/></button>
                                 <h4 className="font-serif text-2xl mb-14 text-center text-gray-800 font-bold italic underline underline-offset-8 decoration-rose-50 italic">The Story</h4>
                                 <div className="space-y-12 text-center text-gray-600">
                                     <div className="space-y-5">
@@ -602,26 +705,26 @@ export default function PremiumSample1() {
                     )}
 
                     {isWriteModalOpen && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog" aria-modal="true">
-                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsWriteModalOpen(false)} />
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsWriteModalOpen(false)}/>
                             <div className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 relative z-10 animate-fade-in-up shadow-2xl border border-rose-50">
-                                <button onClick={() => setIsWriteModalOpen(false)} aria-label="닫기" className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X /></button>
+                                <button onClick={() => setIsWriteModalOpen(false)} className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X/></button>
                                 <div className="text-center mb-10 text-gray-800">
-                                    <MessageSquare className="mx-auto text-rose-100 mb-4" size={36} />
+                                    <MessageSquare className="mx-auto text-rose-100 mb-4" size={36}/>
                                     <h4 className="font-serif text-xl font-bold italic underline underline-offset-8 decoration-rose-50 italic">축하 메시지 작성</h4>
                                 </div>
                                 <div className="space-y-6 text-left">
                                     <div className="space-y-2">
                                         <label htmlFor="writerName" className="text-[13px] font-bold text-gray-800 ml-1">성함</label>
-                                        <input id="writerName" type="text" placeholder="성함을 입력해주세요" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900 font-medium" />
+                                        <input id="writerName" type="text" placeholder="성함을 입력해주세요" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900 font-medium"/>
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="writerPw" className="text-[13px] font-bold text-gray-800 ml-1">비밀번호</label>
-                                        <input id="writerPw" type="password" placeholder="비밀번호 입력 (수정/삭제 시 필요)" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900" />
+                                        <input id="writerPw" type="password" placeholder="비밀번호 입력 (수정/삭제 시 필요)" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900"/>
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="writerMsg" className="text-[13px] font-bold text-gray-800 ml-1">메시지</label>
-                                        <textarea id="writerMsg" rows={4} placeholder="소중한 축하의 마음을 남겨주세요" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all resize-none text-gray-900 leading-relaxed" />
+                                        <textarea id="writerMsg" rows={4} placeholder="소중한 축하의 마음을 남겨주세요" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all resize-none text-gray-900 leading-relaxed"/>
                                     </div>
                                     <button onClick={() => alert("샘플 페이지에서는 작성이 불가능합니다.")} className="w-full py-5 bg-[#B19888] text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg shadow-rose-50/50 active:scale-[0.98] transition-all mt-4">등록하기</button>
                                 </div>
@@ -631,8 +734,7 @@ export default function PremiumSample1() {
                 </div>
             </div>
 
-            {/* 3. 푸터 추가 */}
-            <SiteFooter />
+            <SiteFooter/>
         </div>
     );
 }

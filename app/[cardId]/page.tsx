@@ -2,13 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Type1 from "@/components/Type1";
 
+// [중요] Next.js 15+ 에서는 params가 Promise 타입입니다.
 interface PageProps {
     params: Promise<{ cardId: string }>;
 }
 
 export default async function CardPage({ params }: PageProps) {
-    const resolvedParams = await params;
-    const cardId = resolvedParams.cardId;
+    // [수정] params를 await 하여 cardId를 추출해야 합니다.
+    const { cardId } = await params;
 
     // 1. DB 조회
     const rawData = await prisma.invitations.findUnique({
@@ -22,7 +23,18 @@ export default async function CardPage({ params }: PageProps) {
 
     if (!rawData) return notFound();
 
-    // 2. 데이터 변환 (DB 형태 -> 컴포넌트 형태)
+    // 2. 메인 사진 JSON 파싱 (문자열 -> 배열)
+    let mainImages: string[] = [];
+    try {
+        if (rawData.main_photo_url) {
+            mainImages = JSON.parse(rawData.main_photo_url);
+        }
+    } catch (e) {
+        // 예외 처리: 만약 배열 형식이 아니라면 단일 문자열로 처리
+        if (rawData.main_photo_url) mainImages = [rawData.main_photo_url];
+    }
+
+    // 3. 데이터 변환 (DB -> 컴포넌트 Props)
     const formattedData = {
         groom: {
             name: rawData.groom_name,
@@ -46,8 +58,9 @@ export default async function CardPage({ params }: PageProps) {
         address: rawData.location_address,
         message: rawData.welcome_msg || "",
 
-        // 사진이 없으면 기본 이미지(placeholder) 사용
-        mainImage: rawData.main_photo_url || "",
+        // [중요] 배열로 넘겨줍니다.
+        mainImages: mainImages,
+        middleImage: rawData.middle_photo_url || "",
         gallery: rawData.invitation_photos.map(p => p.photo_url),
 
         transport: {
@@ -69,6 +82,5 @@ export default async function CardPage({ params }: PageProps) {
         }))
     };
 
-    // 3. 디자인 컴포넌트 렌더링
     return <Type1 data={formattedData} />;
 }
