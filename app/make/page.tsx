@@ -6,6 +6,7 @@ import { Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard, User, 
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Script from "next/script";
+import { processImage } from "@/lib/image";
 
 export default function MakePage() {
     const [loading, setLoading] = useState(false);
@@ -29,20 +30,26 @@ export default function MakePage() {
     }, [mainFiles]);
 
     // ① [메인] 파일 선택 핸들러
-    const handleMainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleMainChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const newFiles = Array.from(files).slice(0, 3); // 최대 3장
+        // 1. 최대 3장까지만 원본 파일 추출
+        const selectedFiles = Array.from(files).slice(0, 3);
 
-        for (let i = 0; i < newFiles.length; i++) {
-            if (newFiles[i].size > 5 * 1024 * 1024) {
-                alert(`"${newFiles[i].name}" 파일 용량이 5MB를 초과합니다.`);
-                e.target.value = "";
-                return;
-            }
+        try {
+            // 2. 리사이징 및 JPG 변환 (여기서 용량이 확 줄어듭니다)
+            const processedFiles = await Promise.all(
+                selectedFiles.map(file => processImage(file))
+            );
+
+            // 3. 변환된 파일들로 상태 업데이트 (용량 체크 없이 바로 저장)
+            updateMainState(processedFiles);
+
+        } catch (error) {
+            console.error("이미지 처리 중 오류:", error);
+            alert("이미지 처리 중 문제가 발생했습니다.");
         }
-        updateMainState(newFiles);
     };
 
     // ② [메인] 추가 핸들러
@@ -101,45 +108,59 @@ export default function MakePage() {
     }, [galleryFiles]);
 
     // ① [갤러리] 파일 선택 핸들러 (최초/전체)
-    const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const newFiles = Array.from(files).slice(0, 20); // 최대 20장
+        const selectedFiles = Array.from(files).slice(0, 20); // 최대 20장
 
-        for (let i = 0; i < newFiles.length; i++) {
-            if (newFiles[i].size > 5 * 1024 * 1024) {
-                alert(`"${newFiles[i].name}" 파일 용량이 5MB를 초과합니다.`);
-                e.target.value = "";
-                return;
-            }
+        try {
+            // [수정] 원본 파일을 루프 돌며 모두 변환
+            const processedFiles = await Promise.all(
+                selectedFiles.map(file => processImage(file))
+            );
+
+            // 변환된 파일들로 상태 업데이트
+            updateGalleryState(processedFiles);
+
+        } catch (error) {
+            console.error("갤러리 이미지 처리 오류:", error);
         }
-        updateGalleryState(newFiles);
     };
 
     // ② [갤러리] 추가 핸들러
-    const handleGalleryAppend = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryAppend = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const newFilesArr = Array.from(files);
-        // 용량 체크
-        for (let i = 0; i < newFilesArr.length; i++) {
-            if (newFilesArr[i].size > 5 * 1024 * 1024) {
-                alert(`"${newFilesArr[i].name}" 파일이 5MB를 초과합니다.`);
-                e.target.value = "";
-                return;
-            }
-        }
-        // 개수 체크
-        if (galleryFiles.length + newFilesArr.length > 20) {
+        const rawFilesArr = Array.from(files);
+
+        if (galleryFiles.length + rawFilesArr.length > 20) {
             alert("갤러리 사진은 최대 20장까지만 등록 가능합니다.");
             e.target.value = "";
             return;
         }
 
-        updateGalleryState([...galleryFiles, ...newFilesArr]);
-        e.target.value = "";
+        try {
+            const processedFiles = await Promise.all(
+                rawFilesArr.map(file => processImage(file))
+            );
+
+            // [핵심] 새 파일들만 합쳐서 상태 업데이트
+            const updatedFiles = [...galleryFiles, ...processedFiles];
+            updateGalleryState(updatedFiles);
+
+            // input의 FileList를 현재 상태와 강제 동기화 (폼 전송용)
+            if (galleryInputRef.current) {
+                const dataTransfer = new DataTransfer();
+                updatedFiles.forEach(file => dataTransfer.items.add(file));
+                galleryInputRef.current.files = dataTransfer.files;
+            }
+
+            e.target.value = "";
+        } catch (error) {
+            console.error("갤러리 추가 처리 오류:", error);
+        }
     };
 
     // ③ [갤러리] 상태 업데이트 공통 함수
@@ -168,23 +189,42 @@ export default function MakePage() {
     // 3. 중간(초대장) 이미지
     // --------------------------------------------------------
     const [middlePreview, setMiddlePreview] = useState<string | null>(null);
-    const handleMiddleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleMiddleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-        if (files[0].size > 5 * 1024 * 1024) {
-            alert("5MB 이하의 파일만 업로드 가능합니다.");
-            e.target.value = "";
-            return;
-        }
-        if (middlePreview) URL.revokeObjectURL(middlePreview);
-        setMiddlePreview(URL.createObjectURL(files[0]));
-    };
 
+        try {
+            // [수정] 1순위: 리사이징 및 JPG 변환
+            const processedFile = await processImage(files[0]);
+
+            if (middlePreview) URL.revokeObjectURL(middlePreview);
+            setMiddlePreview(URL.createObjectURL(processedFile));
+
+            // input에 변환된 파일 주입 (기존 폼 전송 로직 유지)
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(processedFile);
+            e.target.files = dataTransfer.files;
+
+        } catch (error) {
+            console.error("이미지 처리 중 오류:", error);
+        }
+    };
 
     // --------------------------------------------------------
     // 4. 폼 제출 검증
     // --------------------------------------------------------
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        const formData = new FormData(e.currentTarget);
+        const address = formData.get("location_address") as string;
+
+        if (!address || address.trim() === "") {
+            e.preventDefault(); // 폼 전송 중단
+            alert("주소를 입력해주세요. 주소 검색 버튼을 클릭하여 선택해야 합니다.");
+            // 해당 섹션으로 스크롤 이동 (UX 배려)
+            document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
         // [검증 1] 메인 사진 3장
         if (mainFiles.length < 3) {
             e.preventDefault();
