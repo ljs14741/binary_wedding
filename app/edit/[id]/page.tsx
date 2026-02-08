@@ -1,6 +1,7 @@
+// app/edit/[id]/page.tsx
 import { getInvitationById } from "@/app/actions";
 import { notFound } from "next/navigation";
-import EditForm from "@/components/EditForm"; // 2단계에서 만들 컴포넌트
+import EditFormGuard from "@/components/EditFormGuard";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -14,15 +15,18 @@ export default async function EditPage({ params }: PageProps) {
 
     if (!data) return notFound();
 
-    // 1. 날짜 포맷팅 (YYYY-MM-DDThh:mm) - input type="datetime-local"용
+    // 날짜 포맷팅 (input type="datetime-local" 호환용)
     const formatDate = (date: Date) => {
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
     };
 
-    // 2. 데이터 직렬화 (Server -> Client 넘겨주기 좋게 변환)
+    // 클라이언트로 보낼 데이터 정리
     const initialData = {
         url_id: data.url_id,
-        password: data.password, // 검증용 (보안상 주의 필요하지만 로직상 전달)
+        // DB에 저장된 암호화된 비밀번호 (Guard에서 비교용으로 사용)
+        hashedPassword: data.password,
 
         groom_name: data.groom_name,
         groom_contact: data.groom_contact || "",
@@ -48,14 +52,10 @@ export default async function EditPage({ params }: PageProps) {
         transport_bus: data.transport_bus || "",
         transport_parking: data.transport_parking || "",
 
-        // 사진 데이터 (Client에서 보여주기 위함)
         main_photo_url: data.main_photo_url || "[]",
         middle_photo_url: data.middle_photo_url || "",
         gallery: data.invitation_photos.map(p => p.photo_url),
 
-        // 계좌 정보 (배열 -> 객체 매핑 필요하지만, 여기선 단순화를 위해 생략하거나 별도 처리)
-        // *참고: 계좌 정보 수정은 복잡도가 높아 이번 코드에서는 텍스트/사진 위주로 구현합니다.
-        // 필요하다면 만들기 페이지와 동일한 state 로직으로 매핑해야 합니다.
         accounts: data.invitation_accounts,
         interviews: data.invitation_interviews,
     };
@@ -68,9 +68,11 @@ export default async function EditPage({ params }: PageProps) {
                     <div className="text-center mb-16 space-y-4">
                         <span className="text-blue-600 font-bold tracking-widest text-xs uppercase bg-blue-50 px-3 py-1 rounded-full">Edit Mode</span>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight">청첩장 수정하기</h1>
+                        <p className="text-slate-500 text-sm">정보 수정을 위해 본인 인증이 필요합니다.</p>
                     </div>
-                    {/* 클라이언트 컴포넌트에 데이터 전달 */}
-                    <EditForm initialData={initialData} />
+
+                    {/* [핵심] 바로 EditForm을 보여주지 않고 Guard로 감쌉니다. */}
+                    <EditFormGuard initialData={initialData} />
                 </div>
             </div>
             <SiteFooter />
