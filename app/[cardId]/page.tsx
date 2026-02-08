@@ -56,6 +56,8 @@ export default async function CardPage({ params }: PageProps) {
         location: rawData.location_name,
         detail: rawData.location_detail || "",
         address: rawData.location_address,
+        location_lat: rawData.location_lat ? Number(rawData.location_lat) : null,
+        location_lng: rawData.location_lng ? Number(rawData.location_lng) : null,
         message: rawData.welcome_msg || "",
 
         // [중요] 배열로 넘겨줍니다.

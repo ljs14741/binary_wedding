@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard, User, Users, ChevronRight, AlertCircle, Image as ImageIcon, X, ChevronLeft } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import Script from "next/script";
 
 export default function MakePage() {
     const [loading, setLoading] = useState(false);
@@ -285,17 +286,47 @@ export default function MakePage() {
                                     <InputGroup label="예식장 이름" name="location_name" defaultValue="더채플앳청담" required icon={<Heart size={16}/>}/>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="상세 홀 이름" name="location_detail" defaultValue="3층 커티지홀" icon={<MapPin size={16}/>}/>
-                                    <InputGroup label="주소 (지도 표시용)" name="location_address" defaultValue="서울 강남구 선릉로 757" required icon={<MapPin size={16}/>}/>
+                                    <InputGroup label="상세 홀 이름" name="location_detail" defaultValue="3층 커티지홀"
+                                                icon={<MapPin size={16}/>}/>
+                                    <div className="space-y-2 group">
+                                        <label
+                                            className="block text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                            <MapPin size={16} className="text-slate-400"/> 주소 (지도 표시용) <span
+                                            className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            required
+                                            name="location_address"
+                                            readOnly
+                                            placeholder="클릭하여 주소를 검색하세요"
+                                            onClick={() => {
+                                                new (window as any).daum.Postcode({
+                                                    oncomplete: function (data: any) {
+                                                        const fullAddr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
+                                                        (document.getElementsByName("location_address")[0] as HTMLInputElement).value = fullAddr;
+                                                    }
+                                                }).open();
+                                            }}
+                                            className="w-full px-5 py-4 rounded-2xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-white focus:ring-1 focus:ring-slate-800 transition-all outline-none text-sm font-medium text-slate-800"
+                                        />
+                                        {/* 스크립트 로드 - 폼 내부나 하단에 배치 */}
+                                        <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+                                                strategy="afterInteractive"/>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="block text-sm font-bold text-slate-700 ml-1">초대 문구</label>
-                                    <textarea name="welcome_msg" rows={6} defaultValue={`서로가 마주 보며 다진 약속을\n이제 여러분 앞에서 소중히 맺으려 합니다.\n저희의 새로운 시작을 위해\n따뜻한 축복을 보내주시면 감사하겠습니다.`} className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm leading-relaxed text-slate-800 resize-none"/>
+                                    <textarea name="welcome_msg" rows={6}
+                                              defaultValue={`서로가 마주 보며 다진 약속을\n이제 여러분 앞에서 소중히 맺으려 합니다.\n저희의 새로운 시작을 위해\n따뜻한 축복을 보내주시면 감사하겠습니다.`}
+                                              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm leading-relaxed text-slate-800 resize-none"/>
                                 </div>
                                 <div className="pt-6 border-t border-slate-100 space-y-6">
-                                    <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car size={18} className="text-slate-400"/> 오시는 길 안내</h4>
-                                    <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue="7호선, 수인분당선 강남구청역 3-1번 출구에서 500m (도보 8분)"/>
-                                    <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue="강남구청, 강남세무서 정류장 하차 (간선: 301, 342 / 지선: 3011)"/>
+                                    <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car
+                                        size={18} className="text-slate-400"/> 오시는 길 안내</h4>
+                                    <TextAreaGroup label="지하철 안내" name="transport_subway"
+                                                   defaultValue="7호선, 수인분당선 강남구청역 3-1번 출구에서 500m (도보 8분)"/>
+                                    <TextAreaGroup label="버스 안내" name="transport_bus"
+                                                   defaultValue="강남구청, 강남세무서 정류장 하차 (간선: 301, 342 / 지선: 3011)"/>
                                     <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue="웨딩홀 내 200대 주차 가능 (하객 2시간 무료)"/>
                                 </div>
                             </div>

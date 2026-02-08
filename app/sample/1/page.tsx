@@ -242,7 +242,7 @@ export default function PremiumSample1() {
             <meta property="og:image" content={DATA.mainImages[0]} />
             <meta property="og:type" content="website" />
 
-            <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=xmxkex3spn`} onLoad={initMap} />
+            <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID}`} onLoad={initMap}/>
             <Script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" onLoad={() => {
                 if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
             }} />

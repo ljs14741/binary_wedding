@@ -44,6 +44,8 @@ interface Type1Props {
         location: string;
         detail: string;
         address: string;
+        location_lat: number | null;
+        location_lng: number | null;
         message: string;
         mainImages: string[];
         middleImage: string;
@@ -123,16 +125,24 @@ export default function Type1({ data }: Type1Props) {
 
     // 지도
     const initMap = () => {
-        if (!mapRef.current || !window.naver) return;
+        const lat = Number(data.location_lat);
+        const lng = Number(data.location_lng);
+        // 좌표 데이터가 없으면 실행 안 함
+        if (!mapRef.current || !window.naver || isNaN(lat) || isNaN(lng) || lat === 0) {
+            console.error("지도를 로드할 수 없는 좌표입니다.", lat, lng);
+            return;
+        }
+
         const mapOptions = {
-            center: new window.naver.maps.LatLng(37.5225, 127.0392),
+            center: new window.naver.maps.LatLng(lat, lng),
             zoom: 16,
             zoomControl: false,
             scrollWheel: false,
         };
+
         const map = new window.naver.maps.Map(mapRef.current, mapOptions);
         new window.naver.maps.Marker({
-            position: new window.naver.maps.LatLng(37.5225, 127.0392),
+            position: new window.naver.maps.LatLng(data.location_lat, data.location_lng),
             map: map,
         });
     };
@@ -210,7 +220,7 @@ export default function Type1({ data }: Type1Props) {
 
     return (
         <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`}>
-            <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=xmxkex3spn`} onLoad={initMap} />
+            <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID}`} onLoad={initMap}/>
             <Script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" onLoad={() => window.Kakao?.init("ea07c2afa5b5a0a07737bab48ab8e3e8")} />
 
             <div className="w-full max-w-[430px] bg-white shadow-2xl relative flex flex-col overflow-hidden">

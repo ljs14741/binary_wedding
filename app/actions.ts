@@ -94,6 +94,7 @@ export async function createInvitation(formData: FormData) {
     const location_name = formData.get("location_name") as string;
     const location_detail = formData.get("location_detail") as string;
     const location_address = formData.get("location_address") as string;
+    const coords = await getCoords(location_address);
     const welcome_msg = formData.get("welcome_msg") as string;
 
     const transport_subway = formData.get("transport_subway") as string;
@@ -128,8 +129,8 @@ export async function createInvitation(formData: FormData) {
 
                 wedding_date: new Date(wedding_date_str),
                 location_name, location_detail, location_address,
-                location_lat: 37.5225,
-                location_lng: 127.0392,
+                location_lat: coords?.lat ?? null,
+                location_lng: coords?.lng ?? null,
 
                 transport_subway, transport_bus, transport_parking,
                 welcome_msg,
@@ -280,4 +281,33 @@ export async function updateInvitation(formData: FormData) {
     // [중요] 여기도 마찬가지로 try-catch가 없다면 바로 써도 되지만,
     // 안전하게 하단에 배치하는 습관이 좋습니다.
     redirect(`/${url_id}`);
+}
+
+async function getCoords(address: string) {
+    try {
+        const res = await fetch(`https://maps.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(address)}`, {
+            headers: {
+                "X-NCP-APIGW-API-KEY-ID": process.env.NAVER_CLIENT_ID!,
+                "X-NCP-APIGW-API-KEY": process.env.NAVER_CLIENT_SECRET!,
+                "Accept": "application/json" // 명시적으로 추가 권장
+            },
+        });
+
+        console.log("응답 상태 코드:", res.status); // 401이면 인증 실패, 403이면 권한 부족(API 미활성화)
+
+        const data = await res.json();
+        console.log("응답 내용:", data); // 여기서 에러 메시지를 확인하세요.
+
+        if (data.addresses && data.addresses.length > 0) {
+            return {
+                lat: parseFloat(data.addresses[0].y),
+                lng: parseFloat(data.addresses[0].x),
+            };
+        }
+        // 주소를 못 찾으면 null 반환
+        return null;
+    } catch (error) {
+        console.error("Geocoding API Error:", error);
+        return null;
+    }
 }
