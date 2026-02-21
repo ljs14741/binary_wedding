@@ -13,6 +13,7 @@ import {
 import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from "@/app/actions";
 import { useToast } from "@/components/ui/ToastProvider";
 import { FlowerPetals, KenBurnsImage } from "@/components/effects";
+import ReminderSection from "@/components/ReminderSection";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -392,7 +393,7 @@ export default function Type1({ data }: Type1Props) {
                 </section>
 
                 {/* 4. 오시는 길 */}
-                <section className="py-24 px-8 bg-white">
+                <section className="pt-24 pb-12 px-8 bg-white">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">오시는
                             길</h3>
@@ -433,6 +434,17 @@ export default function Type1({ data }: Type1Props) {
                                 <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm whitespace-pre-line">{data.transport.parking}</p>
                             </div>}
                         </div>
+                    </FadeIn>
+
+                    <FadeIn delay={0.15}>
+                        <ReminderSection
+                            groomName={data.groom.name}
+                            brideName={data.bride.name}
+                            date={weddingDate}
+                            location={data.location}
+                            address={data.address}
+                            detail={data.detail}
+                        />
                     </FadeIn>
                 </section>
 

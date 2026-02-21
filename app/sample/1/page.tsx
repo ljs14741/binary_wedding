@@ -15,6 +15,7 @@ import {
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { FlowerPetals, KenBurnsImage } from "@/components/effects";
+import ReminderSection from "@/components/ReminderSection";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -158,20 +159,7 @@ export default function PremiumSample1() {
     };
 
     const shareKakao = () => {
-        if (window.Kakao) {
-            const kakao = window.Kakao;
-            if (!kakao.isInitialized()) kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
-            kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: `${DATA.groom.name} ♥ ${DATA.bride.name} 결혼합니다`,
-                    description: `${weddingYear}년 ${weddingMonth + 1}월 ${DATA.date.getDate()}일`,
-                    imageUrl: DATA.mainImages[0],
-                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
-                },
-                buttons: [{ title: '청첩장 보기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }],
-            });
-        }
+        toast("샘플 화면에서는 카카오톡 공유를 사용할 수 없습니다.");
     };
 
     const initMap = () => {
@@ -401,7 +389,7 @@ export default function PremiumSample1() {
                     </section>
 
                     {/* [복구] 지도 섹션 (위치: 달력 다음) */}
-                    <section className="py-24 px-8 bg-white">
+                    <section className="pt-24 pb-12 px-8 bg-white">
                         <FadeIn>
                             <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">오시는 길</h3>
                             <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Location</p>
@@ -456,6 +444,18 @@ export default function PremiumSample1() {
                                         내 200대 주차 가능 <span className="text-rose-400 font-bold">(2시간 무료)</span></p>
                                 </div>
                             </div>
+                        </FadeIn>
+
+                        <FadeIn delay={0.15}>
+                            <ReminderSection
+                                groomName={DATA.groom.name}
+                                brideName={DATA.bride.name}
+                                date={DATA.date}
+                                location={DATA.location}
+                                address={DATA.address}
+                                detail={DATA.detailLocation}
+                                isSample
+                            />
                         </FadeIn>
                     </section>
 
@@ -677,8 +677,8 @@ export default function PremiumSample1() {
                                                     <div key={idx} className="flex justify-between items-center group">
                                                         <span className="text-base font-bold text-gray-700">{item.label} {item.person.name}</span>
                                                         <div className="flex gap-4">
-                                                            <a href={`tel:${item.person.phone}`} className="w-10 h-10 bg-[#FDFBF9] border border-rose-50 rounded-full flex items-center justify-center text-rose-300"><Phone size={18}/></a>
-                                                            <a href={`sms:${item.person.phone}`} className="w-10 h-10 bg-[#FDFBF9] border border-gray-100 rounded-full flex items-center justify-center text-gray-400"><MessageSquare size={18}/></a>
+                                                            <button type="button" onClick={() => toast("샘플 화면에서는 전화를 걸 수 없습니다.")} className="w-10 h-10 bg-[#FDFBF9] border border-rose-50 rounded-full flex items-center justify-center text-rose-300"><Phone size={18}/></button>
+                                                            <button type="button" onClick={() => toast("샘플 화면에서는 문자를 보낼 수 없습니다.")} className="w-10 h-10 bg-[#FDFBF9] border border-gray-100 rounded-full flex items-center justify-center text-gray-400"><MessageSquare size={18}/></button>
                                                         </div>
                                                     </div>
                                                 ))}

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { Coffee, Search, MessageCircle, X } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Coffee, Search, MessageCircle, X, Heart } from 'lucide-react';
 
 export default function SiteHeader() {
     const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -53,7 +54,12 @@ export default function SiteHeader() {
             {/* 2. 후원 모달 (헤더에 포함시킴) */}
             {isDonateOpen && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-sm w-full text-center relative shadow-2xl animate-fade-in-up">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-sm w-full text-center relative shadow-2xl"
+                    >
                         <button
                             onClick={() => setIsDonateOpen(false)}
                             className="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition"
@@ -62,9 +68,22 @@ export default function SiteHeader() {
                         </button>
 
                         <div className="space-y-6">
-                            <div className="w-16 h-16 bg-[#FEE500] rounded-full flex items-center justify-center mx-auto text-[#191919] shadow-md">
-                                <Coffee size={32} />
-                            </div>
+                            <motion.div
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
+                                className="w-16 h-16 bg-[#FEE500] rounded-full flex items-center justify-center mx-auto text-[#191919] shadow-md relative"
+                            >
+                                <Coffee size={32} className="relative z-10" />
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                                    className="absolute -top-1 -right-1"
+                                >
+                                    <Heart size={20} className="text-rose-400 fill-rose-400" />
+                                </motion.div>
+                            </motion.div>
                             <div>
                                 <h4 className="text-2xl font-serif font-bold text-slate-900 mb-2">개발자에게 커피 쏘기</h4>
                                 <p className="text-slate-500 text-sm">
@@ -84,12 +103,8 @@ export default function SiteHeader() {
                                     />
                                 </div>
                             </div>
-
-                            <p className="text-[11px] text-slate-400 font-medium">
-                                * 송금 시 실명은 노출되지 않으니 안심하세요! 😊
-                            </p>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             )}
         </>
