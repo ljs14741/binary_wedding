@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { FlowerPetals, KenBurnsImage } from "@/components/effects";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -31,9 +32,9 @@ declare global {
 const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 60 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.8, delay: delay, ease: "easeOut" }}
         >
             {children}
@@ -253,6 +254,7 @@ export default function PremiumSample1() {
 
             <div className="flex-1 flex justify-center pt-28 pb-20">
                 <div className="w-full max-w-[430px] bg-white shadow-2xl relative flex flex-col overflow-hidden">
+                    <FlowerPetals />
                     <audio ref={audioRef} loop src="/music/sample1.mp3"/>
 
                     {/* [수정] 음악 버튼: top-24 -> top-36으로 더 내려서 배치 */}
@@ -268,24 +270,26 @@ export default function PremiumSample1() {
 
                     {/* 메인 섹션 */}
                     <section className="relative h-[100vh] overflow-hidden">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={currentMainIdx}
-                                initial={{opacity: 0, scale: 1.1}}
-                                animate={{opacity: 1, scale: 1}}
-                                exit={{opacity: 0}}
-                                transition={{duration: 1.2}} // [수정] 전환 애니메이션 속도 일정하게
-                                className="absolute inset-0"
-                            >
-                                <Image
-                                    src={DATA.mainImages[currentMainIdx]}
-                                    alt="메인 사진"
-                                    fill
-                                    className="object-cover brightness-95"
-                                    priority
-                                />
-                            </motion.div>
-                        </AnimatePresence>
+                        <KenBurnsImage>
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={currentMainIdx}
+                                    initial={{opacity: 0, scale: 1.1}}
+                                    animate={{opacity: 1, scale: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 1.2}}
+                                    className="absolute inset-0"
+                                >
+                                    <Image
+                                        src={DATA.mainImages[currentMainIdx]}
+                                        alt="메인 사진"
+                                        fill
+                                        className="object-cover brightness-95"
+                                        priority
+                                    />
+                                </motion.div>
+                            </AnimatePresence>
+                        </KenBurnsImage>
 
                         <div className="absolute inset-0 flex flex-col items-center justify-between py-28 text-white text-center z-10">
                             <motion.div initial={{opacity: 0, y: 30}} animate={{opacity: 1, y: 0}}

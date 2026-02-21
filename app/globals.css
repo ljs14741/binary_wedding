@@ -59,3 +59,19 @@ body {
 .animate-fade-in-slow {
   animation: customFadeIn 2s ease-out forwards;
 }
+
+/* 꽃잎 날리는 효과 */
+@keyframes petal-fall {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) translateX(var(--petal-drift, 0)) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+.petal-fall {
+  animation: petal-fall linear infinite;
+  will-change: transform;
+}

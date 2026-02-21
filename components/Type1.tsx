@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from "@/app/actions";
 import { useToast } from "@/components/ui/ToastProvider";
+import { FlowerPetals, KenBurnsImage } from "@/components/effects";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -29,9 +30,9 @@ declare global {
 const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 60 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.8, delay: delay, ease: "easeOut" }}
         >
             {children}
@@ -240,6 +241,7 @@ export default function Type1({ data }: Type1Props) {
             <Script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" onLoad={() => window.Kakao?.init("ea07c2afa5b5a0a07737bab48ab8e3e8")} />
 
             <div className="w-full max-w-[430px] bg-white shadow-2xl relative flex flex-col overflow-hidden">
+                <FlowerPetals />
                 <audio ref={audioRef} loop src="/music/sample1.mp3"/>
 
                 {/* [수정] 음악 버튼: 헤더가 없으므로 top-8로 상단 배치 */}
@@ -254,29 +256,31 @@ export default function Type1({ data }: Type1Props) {
 
                 {/* 1. 메인 섹션 */}
                 <section className="relative h-[100vh] overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        {data.mainImages.length > 0 ? (
-                            <motion.div
-                                key={currentMainIdx}
-                                initial={{opacity: 0, scale: 1.1}}
-                                animate={{opacity: 1, scale: 1}}
-                                exit={{opacity: 0}}
-                                transition={{duration: 1.2}}
-                                className="absolute inset-0"
-                            >
-                                <Image
-                                    src={data.mainImages[currentMainIdx]}
-                                    alt="메인 웨딩 사진"
-                                    fill
-                                    className="object-cover brightness-95"
-                                    priority
-                                />
-                            </motion.div>
-                        ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">사진
-                                없음</div>
-                        )}
-                    </AnimatePresence>
+                    <KenBurnsImage>
+                        <AnimatePresence mode="wait">
+                            {data.mainImages.length > 0 ? (
+                                <motion.div
+                                    key={currentMainIdx}
+                                    initial={{opacity: 0, scale: 1.1}}
+                                    animate={{opacity: 1, scale: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 1.2}}
+                                    className="absolute inset-0"
+                                >
+                                    <Image
+                                        src={data.mainImages[currentMainIdx]}
+                                        alt="메인 웨딩 사진"
+                                        fill
+                                        className="object-cover brightness-95"
+                                        priority
+                                    />
+                                </motion.div>
+                            ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">사진
+                                    없음</div>
+                            )}
+                        </AnimatePresence>
+                    </KenBurnsImage>
 
                     <div
                         className="absolute inset-0 flex flex-col items-center justify-between py-28 text-white text-center z-10">
