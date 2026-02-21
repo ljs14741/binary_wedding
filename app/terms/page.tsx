@@ -3,8 +3,8 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-    title: "이용약관 | Binary Wedding",
-    description: "Binary Wedding 모바일 청첩장 서비스 이용약관",
+    title: "이용약관",
+    description: "Binary Wedding 무료 모바일 청첩장(모청) 서비스 이용약관. 서비스 이용 조건, 책임 한계 등",
 };
 
 export default function TermsPage() {

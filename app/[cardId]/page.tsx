@@ -1,10 +1,74 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Type1 from "@/components/Type1";
+import { getBaseUrl } from "@/lib/site";
+import type { Metadata } from "next";
 
 // [중요] Next.js 15+ 에서는 params가 Promise 타입입니다.
 interface PageProps {
     params: Promise<{ cardId: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { cardId } = await params;
+    const rawData = await prisma.invitations.findUnique({
+        where: { url_id: cardId },
+        select: {
+            groom_name: true,
+            bride_name: true,
+            wedding_date: true,
+            location_name: true,
+            middle_photo_url: true,
+            main_photo_url: true,
+        },
+    });
+
+    if (!rawData) return { title: "청첩장" };
+
+    const title = `${rawData.groom_name} & ${rawData.bride_name} 청첩장`;
+    const dateStr = rawData.wedding_date
+        ? new Date(rawData.wedding_date).toLocaleDateString("ko-KR", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+          })
+        : "";
+    const description = `${rawData.location_name}에서 ${dateStr} 예식을 진행합니다. 모바일 청첩장으로 축하 메시지를 남겨 주세요.`;
+    const baseUrl = getBaseUrl();
+
+    // OG 이미지: 1:1 초대장 대표사진 우선, 없으면 메인 슬라이드 첫 장
+    let ogImageUrl: string | undefined;
+    if (rawData.middle_photo_url?.startsWith("/")) {
+        ogImageUrl = `${baseUrl}${rawData.middle_photo_url}`;
+    } else if (rawData.main_photo_url) {
+        try {
+            const mainUrls = JSON.parse(rawData.main_photo_url) as string[];
+            const first = Array.isArray(mainUrls) ? mainUrls[0] : rawData.main_photo_url;
+            if (typeof first === "string" && first.startsWith("/")) ogImageUrl = `${baseUrl}${first}`;
+        } catch {
+            // fallback 없음
+        }
+    }
+
+    const openGraph: Metadata["openGraph"] = {
+        title,
+        description,
+        url: `${baseUrl}/${cardId}`,
+        type: "website",
+    };
+    if (ogImageUrl) {
+        openGraph.images = [
+            { url: ogImageUrl, width: 1200, height: 1200, alt: `${rawData.groom_name} & ${rawData.bride_name} 청첩장` },
+        ];
+    }
+
+    return {
+        title,
+        description,
+        openGraph,
+        twitter: ogImageUrl ? { card: "summary_large_image", images: [ogImageUrl] } : undefined,
+        alternates: { canonical: `${baseUrl}/${cardId}` },
+    };
 }
 
 export default async function CardPage({ params }: PageProps) {

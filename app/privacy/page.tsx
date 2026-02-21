@@ -3,8 +3,8 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-    title: "개인정보처리방침 | Binary Wedding",
-    description: "Binary Wedding 모바일 청첩장 서비스 개인정보처리방침",
+    title: "개인정보처리방침",
+    description: "Binary Wedding 무료 모바일 청첩장(모청) 서비스 개인정보처리방침. 수집 항목, 이용 목적, 보관 기간, 파기 방법 등",
 };
 
 export default function PrivacyPage() {

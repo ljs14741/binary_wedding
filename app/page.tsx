@@ -159,8 +159,8 @@ export default function Home() {
                             {[
                                 { q: "정말 비용이 발생하지 않나요?", a: "네, 100% 무료입니다. 청첩장 생성, 수정, 공유 등 모든 기능을 비용 없이 제공합니다. 서버 비용은 개발자의 사비와 여러분의 후원으로 충당됩니다." },
                                 { q: "수정이나 삭제는 어떻게 하나요?", a: "청첩장 생성 시 설정한 '비밀번호'와 '이름/전화번호'로 상단의 [내 청첩장 수정] 메뉴에서 언제든 수정 및 삭제가 가능합니다." },
-                                { q: "사진 용량 제한이 있나요?", a: "원활한 로딩을 위해 너무 큰 고용량 사진은 자동으로 최적화될 수 있습니다. 세로로 긴 사진이 모바일에서 가장 예쁘게 보입니다." },
-                                { q: "제작 후 보존 기간이 있나요?", a: "별도의 보존 기간 제한은 없으나, 예식일로부터 3개월이 지난 청첩장은 서버 용량 관리를 위해 정리될 수 있습니다." }
+                                { q: "사진 용량 제한이 있나요?", a: "사진 1장당 최대 15MB까지 업로드 가능합니다. 원활한 로딩을 위해 자동으로 최적화됩니다." },
+                                { q: "제작 후 보존 기간이 있나요?", a: "예식일로부터 1개월이 지나면 자동으로 삭제됩니다. 소중한 사진은 미리 백업해 두세요." }
                             ].map((item, idx) => (
                                 <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
                                     <button onClick={() => toggleFaq(idx)} className="w-full px-8 py-6 flex justify-between items-center text-left hover:bg-slate-50 transition-colors">
@@ -221,12 +221,18 @@ export default function Home() {
                             <h5 className="font-serif text-xl font-bold text-slate-900 mb-3 tracking-tight">정말 무료인가요?</h5>
                             <p className="text-sm text-slate-500 leading-[1.8] font-medium">
                                 네, 100% 무료입니다! 6년 차 개발자인 제가 <b>미래의 제 결혼식에 직접 쓰려고</b> 정성껏 만들었거든요. <br/><br/>
-                                예쁘게 사용해 주시고, 마음에 드신다면 커피 한 잔으로 제작자를 응원해 주세요. ☕
+                                예쁘게 사용해 주시고, 마음에 드신다면 커피 한 잔으로 제작자를 응원해 주세요. ☕ <span className="font-bold text-rose-500">사실 치킨 먹고 싶어요!! 🍗</span>
                             </p>
 
-                            <a href={KAKAO_CHAT_URL} target="_blank" className="w-full mt-6 py-3.5 bg-[#FEE500] text-[#191919] font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
-                                <Coffee size={14} /> 카카오톡으로 응원하기
-                            </a>
+                            <button
+                                onClick={() => {
+                                    setIsWelcomeOpen(false);
+                                    window.dispatchEvent(new CustomEvent('openDonateModal'));
+                                }}
+                                className="w-full mt-6 py-3.5 bg-[#FEE500] text-[#191919] font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                            >
+                                <Coffee size={14} /> 후원하기
+                            </button>
 
                             <div className="mt-6 flex gap-4 font-bold text-[10px] uppercase tracking-widest items-center">
                                 <Link href="/make" className="text-rose-600 hover:text-rose-400 transition underline underline-offset-4">만들기</Link>

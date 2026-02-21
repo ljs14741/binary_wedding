@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from "framer-motion";
@@ -9,6 +9,13 @@ import { Coffee, Search, MessageCircle, X, Heart } from 'lucide-react';
 export default function SiteHeader() {
     const [isDonateOpen, setIsDonateOpen] = useState(false);
     const KAKAO_CHAT_URL = "http://pf.kakao.com/_xdVEhX/chat";
+
+    // 메인 화면 '정말 무료인가요?' 모달에서 후원하기 클릭 시 열림
+    useEffect(() => {
+        const handler = () => setIsDonateOpen(true);
+        window.addEventListener('openDonateModal', handler);
+        return () => window.removeEventListener('openDonateModal', handler);
+    }, []);
 
     return (
         <>
