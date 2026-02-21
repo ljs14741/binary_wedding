@@ -36,6 +36,19 @@ model invitation_photos {
   @@index([invitation_id])
 }
 
+// 방명록
+model invitation_guestbook {
+  id            Int         @id @default(autoincrement())
+  invitation_id Int
+  author_name   String      @db.VarChar(50)
+  password      String      @db.VarChar(255)
+  message       String      @db.Text
+  created_at    DateTime    @default(now()) @db.Timestamp(0)
+  invitations   invitations @relation(fields: [invitation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([invitation_id])
+}
+
 // [신규] 인터뷰 테이블
 model invitation_interviews {
   id            Int         @id @default(autoincrement())
@@ -90,5 +103,6 @@ model invitations {
 
   invitation_accounts invitation_accounts[]
   invitation_photos   invitation_photos[]
-  invitation_interviews invitation_interviews[] // New Relation
+  invitation_interviews invitation_interviews[]
+  invitation_guestbook invitation_guestbook[]
 }

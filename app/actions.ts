@@ -386,3 +386,75 @@ async function getCoords(address: string) {
         return null;
     }
 }
+
+// ----------------------------------------------------------------------
+// 6. 방명록 작성
+// ----------------------------------------------------------------------
+export async function createGuestbookEntry(url_id: string, formData: FormData) {
+    const author_name = (formData.get("author_name") as string)?.trim();
+    const password = formData.get("password") as string;
+    const message = (formData.get("message") as string)?.trim();
+
+    if (!author_name || author_name.length > 50) {
+        return { success: false, message: "성함을 입력해 주세요. (50자 이내)" };
+    }
+    if (!password || password.length < 4 || password.length > 20) {
+        return { success: false, message: "비밀번호는 4~20자로 입력해 주세요." };
+    }
+    if (!message || message.length > 500) {
+        return { success: false, message: "메시지를 입력해 주세요. (500자 이내)" };
+    }
+
+    const invitation = await prisma.invitations.findUnique({ where: { url_id } });
+    if (!invitation) return { success: false, message: "청첩장을 찾을 수 없습니다." };
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.invitation_guestbook.create({
+        data: {
+            invitation_id: invitation.id,
+            author_name,
+            password: hashedPassword,
+            message,
+        },
+    });
+
+    return { success: true, message: "축하 메시지가 등록되었습니다." };
+}
+
+// ----------------------------------------------------------------------
+// 7. 방명록 수정 (성함, 메시지 둘 다 수정 가능)
+// ----------------------------------------------------------------------
+export async function updateGuestbookEntry(id: number, password: string, author_name: string, message: string) {
+    const entry = await prisma.invitation_guestbook.findUnique({ where: { id } });
+    if (!entry) return { success: false, message: "해당 메시지를 찾을 수 없습니다." };
+
+    const isMatch = await bcrypt.compare(password, entry.password);
+    if (!isMatch) return { success: false, message: "비밀번호가 일치하지 않습니다." };
+
+    const trimmedName = author_name?.trim();
+    if (!trimmedName || trimmedName.length > 50) return { success: false, message: "성함을 입력해 주세요. (50자 이내)" };
+
+    const trimmedMsg = message?.trim();
+    if (!trimmedMsg || trimmedMsg.length > 500) return { success: false, message: "메시지를 입력해 주세요. (500자 이내)" };
+
+    await prisma.invitation_guestbook.update({
+        where: { id },
+        data: { author_name: trimmedName, message: trimmedMsg },
+    });
+    return { success: true, message: "수정되었습니다." };
+}
+
+// ----------------------------------------------------------------------
+// 8. 방명록 삭제
+// ----------------------------------------------------------------------
+export async function deleteGuestbookEntry(id: number, password: string) {
+    const entry = await prisma.invitation_guestbook.findUnique({ where: { id } });
+    if (!entry) return { success: false, message: "해당 메시지를 찾을 수 없습니다." };
+
+    const isMatch = await bcrypt.compare(password, entry.password);
+    if (!isMatch) return { success: false, message: "비밀번호가 일치하지 않습니다." };
+
+    await prisma.invitation_guestbook.delete({ where: { id } });
+    return { success: true, message: "삭제되었습니다." };
+}

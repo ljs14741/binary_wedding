@@ -3,12 +3,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Script from "next/script";
+import { useRouter } from "next/navigation";
 import { Noto_Serif_KR } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Phone, Navigation, ChevronDown, ChevronUp, X,
     MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus
 } from "lucide-react";
+import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from "@/app/actions";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -36,6 +38,13 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
     );
 };
 
+interface GuestbookEntry {
+    id: number;
+    author_name: string;
+    message: string;
+    created_at: Date;
+}
+
 interface Type1Props {
     data: {
         groom: { name: string; contact: string; father: string; mother: string; father_contact?: string; mother_contact?: string };
@@ -53,10 +62,13 @@ interface Type1Props {
         transport: { subway: string; bus: string; parking: string };
         accounts: { side: string; bank: string; num: string; name: string }[];
         interviews: { q: string; a: string }[];
+        guestbook: GuestbookEntry[];
+        url_id: string;
     }
 }
 
 export default function Type1({ data }: Type1Props) {
+    const router = useRouter();
     const [isPlaying, setIsPlaying] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [isContactOpen, setIsContactOpen] = useState(false);
@@ -64,6 +76,8 @@ export default function Type1({ data }: Type1Props) {
     const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
     const [openAccount, setOpenAccount] = useState<string | null>(null);
     const [visibleCount, setVisibleCount] = useState(3);
+    const [editTarget, setEditTarget] = useState<GuestbookEntry | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<GuestbookEntry | null>(null);
 
     // 슬라이드 상태
     const [currentMainIdx, setCurrentMainIdx] = useState(0);
@@ -584,10 +598,39 @@ export default function Type1({ data }: Type1Props) {
                         <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Guestbook</p>
                     </FadeIn>
                     <div className="space-y-5 mb-12">
-                        <div
-                            className="bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-center text-gray-400 text-sm py-12 border border-gray-50">아직
-                            작성된 메시지가 없습니다.<br/>첫 번째 축하 글을 남겨주세요! 💌
-                        </div>
+                        {(!data.guestbook || data.guestbook.length === 0) ? (
+                            <div className="bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-center text-gray-400 text-sm py-12 border border-gray-50">
+                                아직 작성된 메시지가 없습니다.<br/>첫 번째 축하 글을 남겨주세요! 💌
+                            </div>
+                        ) : (
+                            <>
+                                {data.guestbook.slice(0, visibleCount).map((g) => (
+                                    <div key={g.id} className="group/card bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm border border-gray-50 relative">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <span className="font-bold text-gray-800">{g.author_name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[11px] text-gray-400">
+                                                    {new Date(g.created_at).toLocaleDateString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                                </span>
+                                                <div className="flex gap-1">
+                                                    <button type="button" onClick={() => setEditTarget(g)} className="text-[11px] text-gray-400 hover:text-rose-500 font-bold px-2 py-1 rounded">수정</button>
+                                                    <button type="button" onClick={() => setDeleteTarget(g)} className="text-[11px] text-gray-400 hover:text-rose-500 font-bold px-2 py-1 rounded">삭제</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{g.message}</p>
+                                    </div>
+                                ))}
+                                {visibleCount < data.guestbook.length && (
+                                    <button
+                                        onClick={() => setVisibleCount(data.guestbook.length)}
+                                        className="w-full py-4 text-gray-400 text-sm font-bold border border-dashed border-gray-200 rounded-2xl hover:bg-gray-50 transition"
+                                    >
+                                        더보기 ({data.guestbook.length - visibleCount}개)
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                     <FadeIn>
                         <button onClick={() => setIsWriteModalOpen(true)}
@@ -660,42 +703,195 @@ export default function Type1({ data }: Type1Props) {
                                 </div>))}</div>
                         </div>
                     </div>}
+                {editTarget && (
+                    <GuestbookEditModal
+                        entry={editTarget}
+                        onClose={() => setEditTarget(null)}
+                        onSuccess={() => { setEditTarget(null); router.refresh(); }}
+                    />
+                )}
+                {deleteTarget && (
+                    <GuestbookDeleteModal
+                        entry={deleteTarget}
+                        onClose={() => setDeleteTarget(null)}
+                        onSuccess={() => { setDeleteTarget(null); router.refresh(); }}
+                    />
+                )}
                 {isWriteModalOpen &&
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog"
-                         aria-modal="true">
-                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                             onClick={() => setIsWriteModalOpen(false)}/>
-                        <div
-                            className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 relative z-10 animate-fade-in-up shadow-2xl border border-rose-50">
-                            <button onClick={() => setIsWriteModalOpen(false)}
-                                    className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X/>
-                            </button>
-                            <div className="text-center mb-10 text-gray-800"><MessageSquare
-                                className="mx-auto text-rose-100 mb-4" size={36}/><h4
-                                className="font-serif text-xl font-bold italic underline underline-offset-8 decoration-rose-50 italic">축하
-                                메시지 작성</h4></div>
-                            <div className="space-y-6 text-left">
-                                <div className="space-y-2"><label htmlFor="writerName"
-                                                                  className="text-[13px] font-bold text-gray-800 ml-1">성함</label><input
-                                    id="writerName" type="text" placeholder="성함을 입력해주세요"
-                                    className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900 font-medium"/>
-                                </div>
-                                <div className="space-y-2"><label htmlFor="writerPw"
-                                                                  className="text-[13px] font-bold text-gray-800 ml-1">비밀번호</label><input
-                                    id="writerPw" type="password" placeholder="비밀번호 입력 (수정/삭제 시 필요)"
-                                    className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900"/>
-                                </div>
-                                <div className="space-y-2"><label htmlFor="writerMsg"
-                                                                  className="text-[13px] font-bold text-gray-800 ml-1">메시지</label><textarea
-                                    id="writerMsg" rows={4} placeholder="소중한 축하의 마음을 남겨주세요"
-                                    className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all resize-none text-gray-900 leading-relaxed"/>
-                                </div>
-                                <button onClick={() => alert("방명록 저장 기능은 준비 중입니다!")}
-                                        className="w-full py-5 bg-[#B19888] text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg shadow-rose-50/50 active:scale-[0.98] transition-all mt-4">등록하기
-                                </button>
-                            </div>
-                        </div>
-                    </div>}
+                    <GuestbookModal
+                        url_id={data.url_id}
+                        onClose={() => setIsWriteModalOpen(false)}
+                        onSuccess={() => {
+                            setIsWriteModalOpen(false);
+                            router.refresh();
+                        }}
+                    />}
+            </div>
+        </div>
+    );
+}
+
+function GuestbookModal({ url_id, onClose, onSuccess }: { url_id: string; onClose: () => void; onSuccess: () => void }) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError("");
+        const formData = new FormData(e.currentTarget);
+        formData.set("author_name", (formData.get("author_name") as string) || "");
+        formData.set("password", (formData.get("password") as string) || "");
+        formData.set("message", (formData.get("message") as string) || "");
+        const result = await createGuestbookEntry(url_id, formData);
+        setIsSubmitting(false);
+        if (result.success) {
+            alert(result.message);
+            onSuccess();
+        } else {
+            setError(result.message || "등록에 실패했습니다.");
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 relative z-10 animate-fade-in-up shadow-2xl border border-rose-50">
+                <button onClick={onClose} className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X /></button>
+                <div className="text-center mb-10 text-gray-800">
+                    <MessageSquare className="mx-auto text-rose-100 mb-4" size={36} />
+                    <h4 className="font-serif text-xl font-bold italic underline underline-offset-8 decoration-rose-50">축하 메시지 작성</h4>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                    <div className="space-y-2">
+                        <label htmlFor="writerName" className="text-[13px] font-bold text-gray-800 ml-1">성함</label>
+                        <input id="writerName" name="author_name" type="text" placeholder="성함을 입력해주세요" required maxLength={50}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900 font-medium" />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="writerPw" className="text-[13px] font-bold text-gray-800 ml-1">비밀번호</label>
+                        <input id="writerPw" name="password" type="password" placeholder="비밀번호 입력 (수정/삭제 시 필요)" required minLength={4} maxLength={20}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900" />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="writerMsg" className="text-[13px] font-bold text-gray-800 ml-1">메시지</label>
+                        <textarea id="writerMsg" name="message" rows={4} placeholder="소중한 축하의 마음을 남겨주세요" required maxLength={500}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all resize-none text-gray-900 leading-relaxed" />
+                    </div>
+                    {error && <p className="text-rose-500 text-sm font-bold">{error}</p>}
+                    <button type="submit" disabled={isSubmitting}
+                        className="w-full py-5 bg-[#B19888] text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg shadow-rose-50/50 active:scale-[0.98] transition-all mt-4 disabled:opacity-70">
+                        {isSubmitting ? "등록 중..." : "등록하기"}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function GuestbookEditModal({ entry, onClose, onSuccess }: { entry: GuestbookEntry; onClose: () => void; onSuccess: () => void }) {
+    const [author_name, setAuthorName] = useState(entry.author_name);
+    const [message, setMessage] = useState(entry.message);
+    const [password, setPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!password) { setError("비밀번호를 입력해 주세요."); return; }
+        setIsSubmitting(true);
+        setError("");
+        const result = await updateGuestbookEntry(entry.id, password, author_name, message);
+        setIsSubmitting(false);
+        if (result.success) {
+            alert(result.message);
+            onSuccess();
+        } else {
+            setError(result.message || "수정에 실패했습니다.");
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 relative z-10 animate-fade-in-up shadow-2xl border border-rose-50">
+                <button onClick={onClose} className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X /></button>
+                <div className="text-center mb-10 text-gray-800">
+                    <h4 className="font-serif text-xl font-bold italic underline underline-offset-8 decoration-rose-50">방명록 수정</h4>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-gray-800 ml-1">성함</label>
+                        <input type="text" value={author_name} onChange={(e) => setAuthorName(e.target.value)} required maxLength={50}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900 font-medium" />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-gray-800 ml-1">메시지</label>
+                        <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} required maxLength={500}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all resize-none text-gray-900 leading-relaxed" />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-gray-800 ml-1">비밀번호</label>
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="작성 시 입력한 비밀번호" required minLength={4} maxLength={20}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900" />
+                    </div>
+                    {error && <p className="text-rose-500 text-sm font-bold">{error}</p>}
+                    <button type="submit" disabled={isSubmitting}
+                        className="w-full py-5 bg-[#B19888] text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg shadow-rose-50/50 active:scale-[0.98] transition-all mt-4 disabled:opacity-70">
+                        {isSubmitting ? "수정 중..." : "수정하기"}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function GuestbookDeleteModal({ entry, onClose, onSuccess }: { entry: GuestbookEntry; onClose: () => void; onSuccess: () => void }) {
+    const [password, setPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!password) { setError("비밀번호를 입력해 주세요."); return; }
+        setIsSubmitting(true);
+        setError("");
+        const result = await deleteGuestbookEntry(entry.id, password);
+        setIsSubmitting(false);
+        if (result.success) {
+            alert(result.message);
+            onSuccess();
+        } else {
+            setError(result.message || "삭제에 실패했습니다.");
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 relative z-10 animate-fade-in-up shadow-2xl border border-rose-50">
+                <button onClick={onClose} className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X /></button>
+                <div className="text-center mb-10 text-gray-800">
+                    <h4 className="font-serif text-xl font-bold italic underline underline-offset-8 decoration-rose-50">방명록 삭제</h4>
+                    <p className="text-sm text-gray-500 mt-4 line-clamp-2">"{entry.message.slice(0, 50)}{entry.message.length > 50 ? "..." : ""}"</p>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-gray-800 ml-1">비밀번호</label>
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="작성 시 입력한 비밀번호" required minLength={4} maxLength={20}
+                            className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all text-gray-900" />
+                    </div>
+                    {error && <p className="text-rose-500 text-sm font-bold">{error}</p>}
+                    <div className="flex gap-3">
+                        <button type="button" onClick={onClose} className="flex-1 py-5 border border-gray-200 text-gray-600 rounded-[1.5rem] font-bold text-[15px] hover:bg-gray-50 transition">
+                            취소
+                        </button>
+                        <button type="submit" disabled={isSubmitting}
+                            className="flex-1 py-5 bg-rose-500 text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg active:scale-[0.98] transition-all disabled:opacity-70">
+                            {isSubmitting ? "삭제 중..." : "삭제하기"}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

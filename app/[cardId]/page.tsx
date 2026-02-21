@@ -18,6 +18,7 @@ export default async function CardPage({ params }: PageProps) {
             invitation_accounts: true,
             invitation_photos: { orderBy: { sort_order: 'asc' } },
             invitation_interviews: true,
+            invitation_guestbook: { orderBy: { created_at: 'desc' } },
         }
     });
 
@@ -81,7 +82,15 @@ export default async function CardPage({ params }: PageProps) {
         interviews: rawData.invitation_interviews.map(iv => ({
             q: iv.question,
             a: iv.answer
-        }))
+        })),
+
+        guestbook: rawData.invitation_guestbook.map(g => ({
+            id: g.id,
+            author_name: g.author_name,
+            message: g.message,
+            created_at: g.created_at,
+        })),
+        url_id: cardId,
     };
 
     return <Type1 data={formattedData} />;
