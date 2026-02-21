@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { uploadFile } from "@/lib/upload";
+import { uploadFile, deleteInvitationUploads } from "@/lib/upload";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 
@@ -83,22 +83,13 @@ export async function getMyInvitations(formData: FormData) {
 // 2. 청첩장 생성 (Create) - [수정됨: Redirect 위치 변경]
 // ----------------------------------------------------------------------
 export async function createInvitation(formData: FormData) {
-    // 1. 이미지 파일 처리
     const mainFiles = formData.getAll("mainImages") as File[];
-    const mainPhotoUrls = await Promise.all(mainFiles.map((file) => uploadFile(file)));
-    const validMainUrls = mainPhotoUrls.filter((url) => url !== "");
-
-    const middleFile = formData.get("middleImage") as File | null;
-    const middlePhotoUrl = await uploadFile(middleFile);
-
     const galleryFiles = formData.getAll("galleryImages") as File[];
-    const galleryUrls = await Promise.all(galleryFiles.map((file) => uploadFile(file)));
-    const validGalleryUrls = galleryUrls.filter((url) => url !== "");
 
-    // 서버 검증: 사진
-    if (validMainUrls.length < 3) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
-    if (!middlePhotoUrl) throw new Error("초대장 대표 사진 1장이 필요합니다.");
-    if (validGalleryUrls.length < 1) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
+    if (mainFiles.length < 3 || mainFiles[0].size === 0) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
+    const middleFile = formData.get("middleImage") as File | null;
+    if (!middleFile || middleFile.size === 0) throw new Error("초대장 대표 사진 1장이 필요합니다.");
+    if (galleryFiles.length < 1 || galleryFiles[0].size === 0) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
 
     // 2. 비밀번호 암호화
     const rawPassword = formData.get("password") as string;
@@ -149,9 +140,18 @@ export async function createInvitation(formData: FormData) {
     validateRequiredFields({ groom_name, bride_name, wedding_date_str, location_name, location_address });
 
     const url_id = await generateUniqueUrlId();
-    let successId = ""; // [중요] 성공 시 ID를 담을 변수
+    let successId = "";
 
     try {
+        // url_id 기준 폴더 구조로 업로드: uploads/{url_id}/main | middle | gallery
+        const mainPhotoUrls = await Promise.all(mainFiles.map((f) => uploadFile(f, `${url_id}/main`)));
+        const validMainUrls = mainPhotoUrls.filter((url) => url !== "");
+
+        const middlePhotoUrl = await uploadFile(middleFile, `${url_id}/middle`);
+
+        const galleryUrls = await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`)));
+        const validGalleryUrls = galleryUrls.filter((url) => url !== "");
+
         await prisma.invitations.create({
             data: {
                 url_id,
@@ -221,10 +221,14 @@ export async function getInvitationById(id: string) {
 }
 
 // ----------------------------------------------------------------------
-// 4. 청첩장 삭제 (Delete)
+// 4. 청첩장 삭제 (Delete) - DB + 업로드 폴더 삭제
 // ----------------------------------------------------------------------
 export async function deleteInvitation(id: number) {
-    await prisma.invitations.delete({ where: { id: id } });
+    const invitation = await prisma.invitations.findUnique({ where: { id } });
+    await prisma.invitations.delete({ where: { id } });
+    if (invitation?.url_id) {
+        await deleteInvitationUploads(invitation.url_id);
+    }
     return { success: true };
 }
 
@@ -243,8 +247,8 @@ export async function updateInvitation(formData: FormData) {
     let mainPhotoUrl = existing.main_photo_url;
 
     if (mainFiles.length > 0 && mainFiles[0].size > 0) {
-        const newMainUrls = await Promise.all(mainFiles.map(f => uploadFile(f)));
-        const validNewUrls = newMainUrls.filter(url => url !== "");
+        const newMainUrls = await Promise.all(mainFiles.map((f) => uploadFile(f, `${url_id}/main`)));
+        const validNewUrls = newMainUrls.filter((url) => url !== "");
         mainPhotoUrl = JSON.stringify(validNewUrls);
     }
 
@@ -253,7 +257,7 @@ export async function updateInvitation(formData: FormData) {
     let middlePhotoUrl = existing.middle_photo_url;
 
     if (middleFile && middleFile.size > 0) {
-        middlePhotoUrl = await uploadFile(middleFile);
+        middlePhotoUrl = await uploadFile(middleFile, `${url_id}/middle`);
     }
 
     // 4. 갤러리 업데이트
@@ -326,8 +330,8 @@ export async function updateInvitation(formData: FormData) {
             ...(hasNewGallery && {
                 invitation_photos: {
                     deleteMany: {},
-                    create: (await Promise.all(galleryFiles.map(f => uploadFile(f))))
-                        .filter(url => url !== "")
+                    create: (await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`))))
+                        .filter((url) => url !== "")
                         .map((url, i) => ({ photo_url: url, sort_order: i }))
                 }
             }),
