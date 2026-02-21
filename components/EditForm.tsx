@@ -161,7 +161,6 @@ export default function EditForm({ initialData }: EditFormProps) {
     return (
         <form action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
             <input type="hidden" name="url_id" value={initialData.url_id} />
-            <input type="hidden" name="password" value={initialData.password} />
             <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="afterInteractive" />
 
             {/* 🤵‍♂️ 신랑 정보 */}

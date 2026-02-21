@@ -52,8 +52,8 @@ export default function MakePage() {
         }
     };
 
-    // ② [메인] 추가 핸들러
-    const handleMainAppend = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ② [메인] 추가 핸들러 (processImage 적용 - 용량·화질 일관성)
+    const handleMainAppend = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
@@ -63,7 +63,13 @@ export default function MakePage() {
             e.target.value = "";
             return;
         }
-        updateMainState([...mainFiles, newFile]);
+        try {
+            const processed = await processImage(newFile);
+            updateMainState([...mainFiles, processed]);
+        } catch (err) {
+            console.error("이미지 처리 오류:", err);
+            alert("이미지 처리 중 문제가 발생했습니다.");
+        }
         e.target.value = "";
     };
 

@@ -10,6 +10,30 @@ function generateRandomId() {
     return Math.random().toString(36).substring(2, 10);
 }
 
+// url_id 중복 없이 생성 (최대 5회 재시도)
+async function generateUniqueUrlId(): Promise<string> {
+    for (let i = 0; i < 5; i++) {
+        const url_id = generateRandomId();
+        const existing = await prisma.invitations.findUnique({ where: { url_id } });
+        if (!existing) return url_id;
+    }
+    throw new Error("청첩장 ID 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+}
+
+// 필수 텍스트 필드 검증
+function validateRequiredFields(data: {
+    groom_name?: string; bride_name?: string;
+    wedding_date_str?: string; location_name?: string; location_address?: string;
+}) {
+    const errors: string[] = [];
+    if (!data.groom_name?.trim()) errors.push("신랑 성함");
+    if (!data.bride_name?.trim()) errors.push("신부 성함");
+    if (!data.wedding_date_str?.trim()) errors.push("예식 일시");
+    if (!data.location_name?.trim()) errors.push("예식장 이름");
+    if (!data.location_address?.trim()) errors.push("주소");
+    if (errors.length > 0) throw new Error(`필수 입력 항목을 확인해 주세요: ${errors.join(", ")}`);
+}
+
 // ----------------------------------------------------------------------
 // 1. 내 청첩장 조회 (로그인/관리 페이지용)
 // ----------------------------------------------------------------------
@@ -71,11 +95,19 @@ export async function createInvitation(formData: FormData) {
     const galleryUrls = await Promise.all(galleryFiles.map((file) => uploadFile(file)));
     const validGalleryUrls = galleryUrls.filter((url) => url !== "");
 
+    // 서버 검증: 사진
+    if (validMainUrls.length < 3) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
+    if (!middlePhotoUrl) throw new Error("초대장 대표 사진 1장이 필요합니다.");
+    if (validGalleryUrls.length < 1) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
+
     // 2. 비밀번호 암호화
     const rawPassword = formData.get("password") as string;
+    if (!rawPassword || rawPassword.length < 4 || rawPassword.length > 6) {
+        throw new Error("비밀번호는 4~6자리로 입력해 주세요.");
+    }
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
-    // 3. 텍스트 데이터 추출 (간략화 없이 전체 포함)
+    // 3. 텍스트 데이터 추출 및 검증
     const groom_name = formData.get("groom_name") as string;
     const groom_contact = formData.get("groom_contact") as string;
     const groom_father = formData.get("groom_father") as string;
@@ -114,7 +146,9 @@ export async function createInvitation(formData: FormData) {
         { q: formData.get("interview_q2") as string, a: formData.get("interview_a2") as string },
     ].filter(i => i.q && i.a);
 
-    const url_id = generateRandomId();
+    validateRequiredFields({ groom_name, bride_name, wedding_date_str, location_name, location_address });
+
+    const url_id = await generateUniqueUrlId();
     let successId = ""; // [중요] 성공 시 ID를 담을 변수
 
     try {
@@ -252,6 +286,26 @@ export async function updateInvitation(formData: FormData) {
 
     const welcome_msg = formData.get("welcome_msg") as string;
 
+    validateRequiredFields({ groom_name, bride_name, wedding_date_str, location_name, location_address });
+
+    // 6. 주소 변경 시 좌표 갱신 (지도 표시용)
+    const coords = location_address ? await getCoords(location_address) : null;
+
+    // 7. 계좌 정보 수집 (EditForm과 동일한 필드명)
+    const accounts = [];
+    if (formData.get("account_groom_bank")) accounts.push({ side: "groom", name: groom_name, bank: formData.get("account_groom_bank") as string, num: formData.get("account_groom_num") as string });
+    if (formData.get("account_groom_f_bank")) accounts.push({ side: "groom_f", name: groom_father, bank: formData.get("account_groom_f_bank") as string, num: formData.get("account_groom_f_num") as string });
+    if (formData.get("account_groom_m_bank")) accounts.push({ side: "groom_m", name: groom_mother, bank: formData.get("account_groom_m_bank") as string, num: formData.get("account_groom_m_num") as string });
+    if (formData.get("account_bride_bank")) accounts.push({ side: "bride", name: bride_name, bank: formData.get("account_bride_bank") as string, num: formData.get("account_bride_num") as string });
+    if (formData.get("account_bride_f_bank")) accounts.push({ side: "bride_f", name: bride_father, bank: formData.get("account_bride_f_bank") as string, num: formData.get("account_bride_f_num") as string });
+    if (formData.get("account_bride_m_bank")) accounts.push({ side: "bride_m", name: bride_mother, bank: formData.get("account_bride_m_bank") as string, num: formData.get("account_bride_m_num") as string });
+
+    // 8. 인터뷰 정보 수집
+    const interviews = [
+        { q: formData.get("interview_q1") as string, a: formData.get("interview_a1") as string },
+        { q: formData.get("interview_q2") as string, a: formData.get("interview_a2") as string },
+    ].filter(i => i.q && i.a);
+
     await prisma.invitations.update({
         where: { url_id },
         data: {
@@ -260,6 +314,8 @@ export async function updateInvitation(formData: FormData) {
 
             wedding_date: new Date(wedding_date_str),
             location_name, location_detail, location_address,
+            location_lat: coords?.lat ?? existing.location_lat,
+            location_lng: coords?.lng ?? existing.location_lng,
 
             transport_subway, transport_bus, transport_parking,
             welcome_msg,
@@ -274,7 +330,25 @@ export async function updateInvitation(formData: FormData) {
                         .filter(url => url !== "")
                         .map((url, i) => ({ photo_url: url, sort_order: i }))
                 }
-            })
+            }),
+
+            // 계좌·인터뷰 항상 전체 교체 (수정 반영)
+            invitation_accounts: {
+                deleteMany: {},
+                create: accounts.map(acc => ({
+                    side: acc.side,
+                    bank_name: acc.bank,
+                    account_number: acc.num,
+                    owner_name: acc.name
+                }))
+            },
+            invitation_interviews: {
+                deleteMany: {},
+                create: interviews.map(iv => ({
+                    question: iv.q,
+                    answer: iv.a
+                }))
+            }
         }
     });
 
@@ -293,10 +367,7 @@ async function getCoords(address: string) {
             },
         });
 
-        console.log("응답 상태 코드:", res.status); // 401이면 인증 실패, 403이면 권한 부족(API 미활성화)
-
         const data = await res.json();
-        console.log("응답 내용:", data); // 여기서 에러 메시지를 확인하세요.
 
         if (data.addresses && data.addresses.length > 0) {
             return {
