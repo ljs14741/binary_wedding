@@ -3,7 +3,7 @@ import { writeFile, mkdir, rm } from "fs/promises";
 import { join } from "path";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB (클라이언트 processImage로 압축됨)
 const UPLOADS_BASE = "public/uploads";
 
 /**
@@ -18,7 +18,7 @@ export async function uploadFile(file: File | null, subPath?: string): Promise<s
         throw new Error(`지원하지 않는 파일 형식입니다. (허용: JPG, PNG, GIF, WebP)`);
     }
     if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`파일 크기는 10MB 이하여야 합니다. (현재: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+        throw new Error(`파일 크기는 15MB 이하여야 합니다. (현재: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
     }
 
     // subPath 검증: url_id/용도 형식만 허용 (path traversal 방지)

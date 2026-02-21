@@ -58,8 +58,8 @@ export default function MakePage() {
         if (!files || files.length === 0) return;
 
         const newFile = files[0];
-        if (newFile.size > 5 * 1024 * 1024) {
-            alert("5MB 이하의 파일만 업로드 가능합니다.");
+        if (newFile.size > 15 * 1024 * 1024) {
+            alert("15MB 이하의 파일만 업로드 가능합니다.");
             e.target.value = "";
             return;
         }
@@ -443,7 +443,7 @@ export default function MakePage() {
                                                 <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-2"><Upload size={20}/></div>
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
                                                     <p>청첩장 최상단에 슬라이드로 보여질 사진입니다.</p>
-                                                    <p className="font-bold text-slate-500">권장: 9:16 비율 / <span className="text-rose-500">1장당 5MB 이하</span></p>
+                                                    <p className="font-bold text-slate-500">권장: 9:16 비율 / <span className="text-rose-500">1장당 15MB 이하</span></p>
                                                 </div>
                                             </div>
                                         )}
@@ -480,7 +480,7 @@ export default function MakePage() {
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
                                                     <p>'초대합니다' 문구 아래에 들어갈 사진입니다.</p>
                                                     <p className="font-bold text-slate-500">권장 사이즈: 1:1 비율 (정방형)</p>
-                                                    <p className="text-rose-400 font-bold">5MB 이하만 업로드 가능</p>
+                                                    <p className="text-rose-400 font-bold">15MB 이하만 업로드 가능</p>
                                                 </div>
                                             </div>
                                         )}
@@ -527,7 +527,7 @@ export default function MakePage() {
                                                 <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-2"><Upload size={20}/></div>
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
                                                     <p>하객들이 보게 될 갤러리 탭에 들어갈 사진입니다.</p>
-                                                    <p className="font-bold text-slate-500">권장: 1:1 비율 (정방형) / <span className="text-rose-500">1장당 5MB 이하</span></p>
+                                                    <p className="font-bold text-slate-500">권장: 1:1 비율 (정방형) / <span className="text-rose-500">1장당 15MB 이하</span></p>
                                                 </div>
                                             </div>
                                         )}
