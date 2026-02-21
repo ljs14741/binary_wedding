@@ -27,6 +27,7 @@ const config: Config = {
             },
             // 3. 애니메이션 별명 짓기
             animation: {
+                'fade-in': 'fadeIn 0.3s ease-out forwards',
                 'fade-in-up': 'fadeInUp 1s ease-out forwards',
                 'fade-in-slow': 'fadeIn 2s ease-out forwards',
             },

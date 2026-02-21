@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useToast } from "@/components/ui/ToastProvider";
 import Image from "next/image";
 import Script from "next/script";
 import { Noto_Serif_KR } from "next/font/google";
@@ -92,6 +93,7 @@ const DATA = {
 };
 
 export default function PremiumSample1() {
+    const { toast } = useToast();
     const [isPlaying, setIsPlaying] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [isContactOpen, setIsContactOpen] = useState(false);
@@ -230,7 +232,7 @@ export default function PremiumSample1() {
 
     const copyText = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert("복사되었습니다.");
+        toast("복사되었습니다.");
     };
 
     return (
@@ -726,7 +728,7 @@ export default function PremiumSample1() {
                                         <label htmlFor="writerMsg" className="text-[13px] font-bold text-gray-800 ml-1">메시지</label>
                                         <textarea id="writerMsg" rows={4} placeholder="소중한 축하의 마음을 남겨주세요" className="w-full px-5 py-4 bg-[#FDFBF9] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-rose-50 transition-all resize-none text-gray-900 leading-relaxed"/>
                                     </div>
-                                    <button onClick={() => alert("샘플 페이지에서는 작성이 불가능합니다.")} className="w-full py-5 bg-[#B19888] text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg shadow-rose-50/50 active:scale-[0.98] transition-all mt-4">등록하기</button>
+                                    <button onClick={() => toast("샘플 페이지에서는 작성이 불가능합니다.")} className="w-full py-5 bg-[#B19888] text-white rounded-[1.5rem] font-bold text-[15px] shadow-lg shadow-rose-50/50 active:scale-[0.98] transition-all mt-4">등록하기</button>
                                 </div>
                             </div>
                         </div>

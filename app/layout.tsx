@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Serif_KR, Playfair_Display, Pinyon_Script } from "next/font/google";
 import "./globals.css";
+import ToastProvider from "@/components/ui/ToastProvider";
 
 // 1. 한국어 명조체 (진지하고 고급짐)
 const notoserif = Noto_Serif_KR({
@@ -35,7 +36,7 @@ export default function RootLayout({
     return (
         <html lang="ko">
         <body className={`${notoserif.variable} ${playfair.variable} ${pinyon.variable} font-serif antialiased bg-[#F9F9F9]`}>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
         </body>
         </html>
     );

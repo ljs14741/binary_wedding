@@ -11,6 +11,7 @@ import {
     MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus
 } from "lucide-react";
 import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from "@/app/actions";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -69,6 +70,7 @@ interface Type1Props {
 
 export default function Type1({ data }: Type1Props) {
     const router = useRouter();
+    const { toast } = useToast();
     const [isPlaying, setIsPlaying] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [isContactOpen, setIsContactOpen] = useState(false);
@@ -226,7 +228,7 @@ export default function Type1({ data }: Type1Props) {
 
     const copyText = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert("복사되었습니다.");
+        toast("복사되었습니다.");
     };
 
     const groomAccounts = data.accounts.filter(acc => acc.side === 'groom' || acc.side.startsWith('groom_'));
@@ -599,44 +601,61 @@ export default function Type1({ data }: Type1Props) {
                     </FadeIn>
                     <div className="space-y-5 mb-12">
                         {(!data.guestbook || data.guestbook.length === 0) ? (
-                            <div className="bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-center text-gray-400 text-sm py-12 border border-gray-50">
-                                아직 작성된 메시지가 없습니다.<br/>첫 번째 축하 글을 남겨주세요! 💌
+                            <div className="bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-center py-12 border border-gray-50">
+                                <Heart size={24} className="mx-auto text-rose-200 fill-rose-100 mb-4" />
+                                <p className="text-gray-400 text-sm leading-relaxed">아직 작성된 메시지가 없습니다.</p>
+                                <p className="text-gray-400 text-sm mt-1">첫 번째 축하 글을 남겨주세요! 💌</p>
                             </div>
                         ) : (
                             <>
-                                {data.guestbook.slice(0, visibleCount).map((g) => (
-                                    <div key={g.id} className="group/card bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm border border-gray-50 relative">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <span className="font-bold text-gray-800">{g.author_name}</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[11px] text-gray-400">
-                                                    {new Date(g.created_at).toLocaleDateString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                                                </span>
-                                                <div className="flex gap-1">
-                                                    <button type="button" onClick={() => setEditTarget(g)} className="text-[11px] text-gray-400 hover:text-rose-500 font-bold px-2 py-1 rounded">수정</button>
-                                                    <button type="button" onClick={() => setDeleteTarget(g)} className="text-[11px] text-gray-400 hover:text-rose-500 font-bold px-2 py-1 rounded">삭제</button>
+                                {data.guestbook.slice(0, visibleCount).map((g, idx) => (
+                                    <FadeIn key={g.id} delay={idx * 0.05}>
+                                        <div className="group/card bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-[15px] text-gray-600 leading-relaxed border border-gray-50 animate-fade-in text-left">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Heart size={10} className="text-rose-100 fill-rose-100 shrink-0" />
+                                                    <span className="font-bold text-gray-400 text-[11px] font-sans uppercase tracking-tight">{g.author_name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[9px] text-gray-300 font-sans tracking-wider">
+                                                        {new Date(g.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                                    </span>
+                                                    <div className="flex gap-1">
+                                                        <button type="button" onClick={() => setEditTarget(g)} className="text-[10px] text-gray-400 hover:text-rose-500 font-bold">수정</button>
+                                                        <span className="text-gray-200">|</span>
+                                                        <button type="button" onClick={() => setDeleteTarget(g)} className="text-[10px] text-gray-400 hover:text-rose-500 font-bold">삭제</button>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <p className="whitespace-pre-line">{g.message}</p>
                                         </div>
-                                        <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{g.message}</p>
-                                    </div>
+                                    </FadeIn>
                                 ))}
-                                {visibleCount < data.guestbook.length && (
-                                    <button
-                                        onClick={() => setVisibleCount(data.guestbook.length)}
-                                        className="w-full py-4 text-gray-400 text-sm font-bold border border-dashed border-gray-200 rounded-2xl hover:bg-gray-50 transition"
-                                    >
-                                        더보기 ({data.guestbook.length - visibleCount}개)
-                                    </button>
-                                )}
                             </>
                         )}
                     </div>
                     <FadeIn>
-                        <button onClick={() => setIsWriteModalOpen(true)}
+                        <div className="flex flex-col gap-4">
+                            {data.guestbook && data.guestbook.length > 3 ? (
+                                <div className="flex justify-center gap-6">
+                                    {visibleCount < data.guestbook.length ? (
+                                        <button onClick={() => setVisibleCount(data.guestbook.length)}
+                                            className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">
+                                            전체 보기 <ChevronDown size={14} />
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => setVisibleCount(3)}
+                                            className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">
+                                            접기 <ChevronUp size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : null}
+                            <button onClick={() => setIsWriteModalOpen(true)}
                                 className="w-full py-5 border-2 border-[#E8E1D9] text-[#A68F7F] rounded-[1.8rem] font-bold text-[15px] bg-white shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98]">
-                            <MessageSquare size={18}/> 축하 메시지 남기기
-                        </button>
+                                <MessageSquare size={18} /> 축하 메시지 남기기
+                            </button>
+                        </div>
                     </FadeIn>
                 </section>
 
@@ -704,22 +723,21 @@ export default function Type1({ data }: Type1Props) {
                         </div>
                     </div>}
                 {editTarget && (
-                    <GuestbookEditModal
+                    <GuestbookEditModal toast={toast}
                         entry={editTarget}
                         onClose={() => setEditTarget(null)}
                         onSuccess={() => { setEditTarget(null); router.refresh(); }}
                     />
                 )}
                 {deleteTarget && (
-                    <GuestbookDeleteModal
+                    <GuestbookDeleteModal toast={toast}
                         entry={deleteTarget}
                         onClose={() => setDeleteTarget(null)}
                         onSuccess={() => { setDeleteTarget(null); router.refresh(); }}
                     />
                 )}
                 {isWriteModalOpen &&
-                    <GuestbookModal
-                        url_id={data.url_id}
+                    <GuestbookModal toast={toast} url_id={data.url_id}
                         onClose={() => setIsWriteModalOpen(false)}
                         onSuccess={() => {
                             setIsWriteModalOpen(false);
@@ -731,7 +749,7 @@ export default function Type1({ data }: Type1Props) {
     );
 }
 
-function GuestbookModal({ url_id, onClose, onSuccess }: { url_id: string; onClose: () => void; onSuccess: () => void }) {
+function GuestbookModal({ toast, url_id, onClose, onSuccess }: { toast: (m: string) => Promise<void>; url_id: string; onClose: () => void; onSuccess: () => void }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -746,7 +764,7 @@ function GuestbookModal({ url_id, onClose, onSuccess }: { url_id: string; onClos
         const result = await createGuestbookEntry(url_id, formData);
         setIsSubmitting(false);
         if (result.success) {
-            alert(result.message);
+            await toast(result.message);
             onSuccess();
         } else {
             setError(result.message || "등록에 실패했습니다.");
@@ -789,7 +807,7 @@ function GuestbookModal({ url_id, onClose, onSuccess }: { url_id: string; onClos
     );
 }
 
-function GuestbookEditModal({ entry, onClose, onSuccess }: { entry: GuestbookEntry; onClose: () => void; onSuccess: () => void }) {
+function GuestbookEditModal({ toast, entry, onClose, onSuccess }: { toast: (m: string) => Promise<void>; entry: GuestbookEntry; onClose: () => void; onSuccess: () => void }) {
     const [author_name, setAuthorName] = useState(entry.author_name);
     const [message, setMessage] = useState(entry.message);
     const [password, setPassword] = useState("");
@@ -804,7 +822,7 @@ function GuestbookEditModal({ entry, onClose, onSuccess }: { entry: GuestbookEnt
         const result = await updateGuestbookEntry(entry.id, password, author_name, message);
         setIsSubmitting(false);
         if (result.success) {
-            alert(result.message);
+            await toast(result.message);
             onSuccess();
         } else {
             setError(result.message || "수정에 실패했습니다.");
@@ -846,7 +864,7 @@ function GuestbookEditModal({ entry, onClose, onSuccess }: { entry: GuestbookEnt
     );
 }
 
-function GuestbookDeleteModal({ entry, onClose, onSuccess }: { entry: GuestbookEntry; onClose: () => void; onSuccess: () => void }) {
+function GuestbookDeleteModal({ toast, entry, onClose, onSuccess }: { toast: (m: string) => Promise<void>; entry: GuestbookEntry; onClose: () => void; onSuccess: () => void }) {
     const [password, setPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -859,7 +877,7 @@ function GuestbookDeleteModal({ entry, onClose, onSuccess }: { entry: GuestbookE
         const result = await deleteGuestbookEntry(entry.id, password);
         setIsSubmitting(false);
         if (result.success) {
-            alert(result.message);
+            await toast(result.message);
             onSuccess();
         } else {
             setError(result.message || "삭제에 실패했습니다.");

@@ -2,6 +2,7 @@
 
 import { getMyInvitations, deleteInvitation } from "@/app/actions";
 import { useState } from "react";
+import { useToast } from "@/components/ui/ToastProvider";
 import Link from "next/link";
 import { Search, Lock, User, Phone, ExternalLink, Edit, Trash2, Heart, Calendar, MapPin } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
@@ -20,6 +21,7 @@ interface Invitation {
 }
 
 export default function CheckPage() {
+    const { toast, confirm } = useToast();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<Invitation[] | null>(null);
     const [error, setError] = useState("");
@@ -44,17 +46,16 @@ export default function CheckPage() {
 
     // 삭제 핸들러
     const handleDelete = async (id: number) => {
-        if (confirm("정말로 이 청첩장을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.")) {
-            try {
-                const res = await deleteInvitation(id);
-                if (res.success) {
-                    alert("성공적으로 삭제되었습니다.");
-                    // 삭제된 항목 화면에서 제거
-                    setResult((prev) => prev ? prev.filter(item => item.id !== id) : null);
-                }
-            } catch (e) {
-                alert("삭제 중 오류가 발생했습니다.");
+        const ok = await confirm("정말로 이 청첩장을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.", { confirmText: "삭제" });
+        if (!ok) return;
+        try {
+            const res = await deleteInvitation(id);
+            if (res.success) {
+                await toast("성공적으로 삭제되었습니다.");
+                setResult((prev) => prev ? prev.filter(item => item.id !== id) : null);
             }
+        } catch (e) {
+            await toast("삭제 중 오류가 발생했습니다.");
         }
     };
 

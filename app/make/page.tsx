@@ -1,6 +1,7 @@
 "use client";
 
 import { createInvitation } from "@/app/actions";
+import { useToast } from "@/components/ui/ToastProvider";
 import { useState, useEffect, useRef } from "react";
 import { Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard, User, Users, ChevronRight, AlertCircle, Image as ImageIcon, X, ChevronLeft } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
@@ -9,6 +10,7 @@ import Script from "next/script";
 import { processImage } from "@/lib/image";
 
 export default function MakePage() {
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
 
     // --------------------------------------------------------
@@ -48,7 +50,7 @@ export default function MakePage() {
 
         } catch (error) {
             console.error("이미지 처리 중 오류:", error);
-            alert("이미지 처리 중 문제가 발생했습니다.");
+            toast("이미지 처리 중 문제가 발생했습니다.");
         }
     };
 
@@ -59,7 +61,7 @@ export default function MakePage() {
 
         const newFile = files[0];
         if (newFile.size > 15 * 1024 * 1024) {
-            alert("15MB 이하의 파일만 업로드 가능합니다.");
+            toast("15MB 이하의 파일만 업로드 가능합니다.");
             e.target.value = "";
             return;
         }
@@ -68,7 +70,7 @@ export default function MakePage() {
             updateMainState([...mainFiles, processed]);
         } catch (err) {
             console.error("이미지 처리 오류:", err);
-            alert("이미지 처리 중 문제가 발생했습니다.");
+            toast("이미지 처리 중 문제가 발생했습니다.");
         }
         e.target.value = "";
     };
@@ -142,7 +144,7 @@ export default function MakePage() {
         const rawFilesArr = Array.from(files);
 
         if (galleryFiles.length + rawFilesArr.length > 20) {
-            alert("갤러리 사진은 최대 20장까지만 등록 가능합니다.");
+            toast("갤러리 사진은 최대 20장까지만 등록 가능합니다.");
             e.target.value = "";
             return;
         }
@@ -224,23 +226,21 @@ export default function MakePage() {
         const address = formData.get("location_address") as string;
 
         if (!address || address.trim() === "") {
-            e.preventDefault(); // 폼 전송 중단
-            alert("주소를 입력해주세요. 주소 검색 버튼을 클릭하여 선택해야 합니다.");
+            e.preventDefault();
+            toast("주소를 입력해주세요. 주소 검색 버튼을 클릭하여 선택해야 합니다.");
             // 해당 섹션으로 스크롤 이동 (UX 배려)
             document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
-        // [검증 1] 메인 사진 3장
         if (mainFiles.length < 3) {
             e.preventDefault();
-            alert(`메인 슬라이드 사진은 3장이 필수입니다.\n(현재 ${mainFiles.length}장)`);
+            toast(`메인 슬라이드 사진은 3장이 필수입니다.\n(현재 ${mainFiles.length}장)`);
             return;
         }
-        // [검증 2] 갤러리 사진 최소 1장
         if (galleryFiles.length < 1) {
             e.preventDefault();
-            alert(`웨딩 갤러리 사진은 최소 1장이 필수입니다.`);
+            toast("웨딩 갤러리 사진은 최소 1장이 필수입니다.");
             return;
         }
         setLoading(true);

@@ -1,6 +1,7 @@
 "use client";
 
 import { updateInvitation } from "@/app/actions";
+import { useToast } from "@/components/ui/ToastProvider";
 import { useState, useEffect, useRef } from "react";
 import {
     Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard,
@@ -14,6 +15,7 @@ interface EditFormProps {
 }
 
 export default function EditForm({ initialData }: EditFormProps) {
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
 
     // --------------------------------------------------------
@@ -137,13 +139,13 @@ export default function EditForm({ initialData }: EditFormProps) {
         const address = formData.get("location_address") as string;
         if (!address || address.trim() === "") {
             e.preventDefault();
-            alert("주소를 입력해주세요. 주소 검색 버튼을 클릭하여 선택해야 합니다.");
+            toast("주소를 입력해주세요. 주소 검색 버튼을 클릭하여 선택해야 합니다.");
             document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
         if (mainFiles.length > 0 && mainFiles.length < 3) {
             e.preventDefault();
-            alert(`메인 사진 교체 시 3장을 모두 새로 등록해야 합니다. (현재 ${mainFiles.length}장)`);
+            toast(`메인 사진 교체 시 3장을 모두 새로 등록해야 합니다. (현재 ${mainFiles.length}장)`);
             return;
         }
         setLoading(true);
