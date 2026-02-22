@@ -11,9 +11,9 @@ COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 RUN npm ci && npx prisma generate
 
-# 소스 복사 후 빌드
+# 소스 복사 후 빌드 (--webpack: Next.js 16 기본 Turbopack은 standalone 미생성 이슈 있음)
 COPY . .
-RUN npm run build
+RUN npx next build --webpack
 
 # ===== Stage 2: 실행 =====
 FROM node:20-slim AS runner
