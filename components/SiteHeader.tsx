@@ -29,7 +29,7 @@ export default function SiteHeader() {
                 </Link>
                 <nav className="flex gap-4 md:gap-6 text-[13px] md:text-[14px] font-bold text-slate-700 items-center">
 
-                    <a href={KAKAO_CHAT_URL} target="_blank" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
+                    <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
                         <MessageCircle size={16} /> 문의하기
                     </a>
 

@@ -53,6 +53,8 @@ export default function CheckPage() {
             if (res.success) {
                 await toast("성공적으로 삭제되었습니다.");
                 setResult((prev) => prev ? prev.filter(item => item.id !== id) : null);
+            } else {
+                await toast(res.message || "삭제에 실패했습니다.");
             }
         } catch (e) {
             await toast("삭제 중 오류가 발생했습니다.");
@@ -179,7 +181,7 @@ export default function CheckPage() {
 
                                     {/* 액션 버튼들 */}
                                     <div className="grid grid-cols-3 gap-3 pt-2">
-                                        <a href={`/${item.url_id}`} target="_blank" className="flex items-center justify-center gap-1.5 py-3.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-md active:scale-95">
+                                        <a href={`/${item.url_id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-3.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-md active:scale-95">
                                             <ExternalLink size={16} /> 보기
                                         </a>
 

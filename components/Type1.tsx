@@ -406,12 +406,12 @@ export default function Type1({ data }: Type1Props) {
                              className="w-full h-[350px] rounded-3xl bg-[#F9F9F9] mb-12 shadow-inner border border-gray-100 overflow-hidden"></div>
                         <div className="grid grid-cols-3 gap-3 mb-12">
                             <a href={`https://map.naver.com/v5/search/${encodeURIComponent(data.address)}`}
-                               target="_blank"
+                               target="_blank" rel="noopener noreferrer"
                                className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50"><Navigation
                                 size={18} className="text-[#03C75A]"/> <span
                                 className="text-[11px] text-gray-500 font-bold">네이버 지도</span></a>
                             <a href={`https://map.kakao.com/link/search/${encodeURIComponent(data.address)}`}
-                               target="_blank"
+                               target="_blank" rel="noopener noreferrer"
                                className="flex flex-col items-center gap-2 py-4 bg-[#FBFBFB] rounded-2xl border border-gray-50 active:bg-gray-100 transition shadow-sm hover:bg-gray-50"><Navigation
                                 size={18} className="text-[#FEE500]"/> <span
                                 className="text-[11px] text-gray-500 font-bold">카카오 내비</span></a>

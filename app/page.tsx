@@ -192,7 +192,7 @@ export default function Home() {
                         </p>
 
                         <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href={KAKAO_CHAT_URL} target="_blank" className="px-10 py-5 bg-slate-900 text-white font-bold rounded-[1.5rem] shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 active:scale-95 cursor-pointer">
+                            <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" className="px-10 py-5 bg-slate-900 text-white font-bold rounded-[1.5rem] shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 active:scale-95 cursor-pointer">
                                 <MessageCircle size={20} /> 개발자에게 문의하기
                             </a>
                         </div>

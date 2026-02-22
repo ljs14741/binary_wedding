@@ -232,8 +232,11 @@ export async function getInvitationById(id: string) {
 // ----------------------------------------------------------------------
 export async function deleteInvitation(id: number) {
     const invitation = await prisma.invitations.findUnique({ where: { id } });
+    if (!invitation) {
+        return { success: false, message: "청첩장을 찾을 수 없습니다." };
+    }
     await prisma.invitations.delete({ where: { id } });
-    if (invitation?.url_id) {
+    if (invitation.url_id) {
         await deleteInvitationUploads(invitation.url_id);
     }
     return { success: true };
