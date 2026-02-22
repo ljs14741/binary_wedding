@@ -1,5 +1,8 @@
 # ===== Stage 1: 의존성 설치 및 빌드 =====
+# node:20-slim에 OpenSSL 추가 (Prisma가 libssl.so.1.1 필요)
 FROM node:20-slim AS builder
+
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
