@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             bride_name: true,
             wedding_date: true,
             location_name: true,
+            og_photo_url: true,
             middle_photo_url: true,
             main_photo_url: true,
         },
@@ -36,9 +37,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description = `${rawData.location_name}에서 ${dateStr} 예식을 진행합니다. 모바일 청첩장으로 축하 메시지를 남겨 주세요.`;
     const baseUrl = getBaseUrl();
 
-    // OG 이미지: 1:1 초대장 대표사진 우선, 없으면 메인 슬라이드 첫 장
+    // OG 이미지: 카톡 공유용 > 1:1 대표사진 > 메인 슬라이드 첫 장
     let ogImageUrl: string | undefined;
-    if (rawData.middle_photo_url?.startsWith("/")) {
+    if (rawData.og_photo_url?.startsWith("/")) {
+        ogImageUrl = `${baseUrl}${rawData.og_photo_url}`;
+    } else if (rawData.middle_photo_url?.startsWith("/")) {
         ogImageUrl = `${baseUrl}${rawData.middle_photo_url}`;
     } else if (rawData.main_photo_url) {
         try {
@@ -57,8 +60,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         type: "website",
     };
     if (ogImageUrl) {
+        // 카톡 공유용(1200x630 권장) vs 1:1 대표사진 구분하여 크기 힌트
+        const isCustomOg = !!rawData.og_photo_url?.startsWith("/");
         openGraph.images = [
-            { url: ogImageUrl, width: 1200, height: 1200, alt: `${rawData.groom_name} & ${rawData.bride_name} 청첩장` },
+            { url: ogImageUrl, width: 1200, height: isCustomOg ? 630 : 1200, alt: `${rawData.groom_name} & ${rawData.bride_name} 청첩장` },
         ];
     }
 

@@ -3,7 +3,7 @@
 import { createInvitation } from "@/app/actions";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useState, useEffect, useRef } from "react";
-import { Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard, User, Users, ChevronRight, AlertCircle, Image as ImageIcon, X, ChevronLeft } from "lucide-react";
+import { Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard, User, Users, ChevronRight, AlertCircle, Image as ImageIcon, X, ChevronLeft, Share2, Trash2 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Script from "next/script";
@@ -36,38 +36,41 @@ export default function MakePage() {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        // 1. 최대 3장까지만 원본 파일 추출
+        if (files.length > 3) {
+            toast("메인 슬라이드는 최대 3장입니다. 처음 3장만 적용됩니다.");
+        }
         const selectedFiles = Array.from(files).slice(0, 3);
 
         try {
-            // 2. 리사이징 및 JPG 변환 (여기서 용량이 확 줄어듭니다)
             const processedFiles = await Promise.all(
                 selectedFiles.map(file => processImage(file))
             );
 
-            // 3. 변환된 파일들로 상태 업데이트 (용량 체크 없이 바로 저장)
             updateMainState(processedFiles);
-
         } catch (error) {
             console.error("이미지 처리 중 오류:", error);
             toast("이미지 처리 중 문제가 발생했습니다.");
         }
     };
 
-    // ② [메인] 추가 핸들러 (processImage 적용 - 용량·화질 일관성)
+    // ② [메인] 추가 핸들러 - 여러 장 한 번에 선택 가능
     const handleMainAppend = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const newFile = files[0];
-        if (newFile.size > 15 * 1024 * 1024) {
-            toast("15MB 이하의 파일만 업로드 가능합니다.");
+        const toAdd = Math.min(files.length, 3 - mainFiles.length);
+        if (toAdd <= 0) {
+            toast("메인 슬라이드는 최대 3장입니다.");
             e.target.value = "";
             return;
         }
+        if (files.length > toAdd) {
+            toast(`메인 슬라이드는 최대 3장입니다. 필요한 ${toAdd}장만 적용됩니다.`);
+        }
         try {
-            const processed = await processImage(newFile);
-            updateMainState([...mainFiles, processed]);
+            const selected = Array.from(files).slice(0, toAdd);
+            const processed = await Promise.all(selected.map(f => processImage(f)));
+            updateMainState([...mainFiles, ...processed]);
         } catch (err) {
             console.error("이미지 처리 오류:", err);
             toast("이미지 처리 중 문제가 발생했습니다.");
@@ -95,6 +98,9 @@ export default function MakePage() {
     const removeMainFile = (index: number) => {
         updateMainState(mainFiles.filter((_, i) => i !== index));
     };
+    const clearAllMainFiles = () => {
+        updateMainState([]);
+    };
 
 
     // --------------------------------------------------------
@@ -120,19 +126,19 @@ export default function MakePage() {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const selectedFiles = Array.from(files).slice(0, 20); // 최대 20장
+        if (files.length > 20) {
+            toast("갤러리는 최대 20장입니다. 처음 20장만 적용됩니다.");
+        }
+        const selectedFiles = Array.from(files).slice(0, 20);
 
         try {
-            // [수정] 원본 파일을 루프 돌며 모두 변환
             const processedFiles = await Promise.all(
                 selectedFiles.map(file => processImage(file))
             );
-
-            // 변환된 파일들로 상태 업데이트
             updateGalleryState(processedFiles);
-
         } catch (error) {
             console.error("갤러리 이미지 처리 오류:", error);
+            toast("이미지 처리 중 문제가 발생했습니다.");
         }
     };
 
@@ -143,22 +149,24 @@ export default function MakePage() {
 
         const rawFilesArr = Array.from(files);
 
-        if (galleryFiles.length + rawFilesArr.length > 20) {
-            toast("갤러리 사진은 최대 20장까지만 등록 가능합니다.");
+        const canAdd = 20 - galleryFiles.length;
+        if (canAdd <= 0) {
+            toast("갤러리는 최대 20장입니다.");
             e.target.value = "";
             return;
         }
+        if (rawFilesArr.length > canAdd) {
+            toast(`갤러리는 최대 20장입니다. ${canAdd}장만 추가됩니다.`);
+        }
+        const toProcess = rawFilesArr.slice(0, canAdd);
 
         try {
             const processedFiles = await Promise.all(
-                rawFilesArr.map(file => processImage(file))
+                toProcess.map(file => processImage(file))
             );
-
-            // [핵심] 새 파일들만 합쳐서 상태 업데이트
             const updatedFiles = [...galleryFiles, ...processedFiles];
             updateGalleryState(updatedFiles);
 
-            // input의 FileList를 현재 상태와 강제 동기화 (폼 전송용)
             if (galleryInputRef.current) {
                 const dataTransfer = new DataTransfer();
                 updatedFiles.forEach(file => dataTransfer.items.add(file));
@@ -168,6 +176,7 @@ export default function MakePage() {
             e.target.value = "";
         } catch (error) {
             console.error("갤러리 추가 처리 오류:", error);
+            toast("이미지 처리 중 문제가 발생했습니다.");
         }
     };
 
@@ -191,12 +200,19 @@ export default function MakePage() {
     const removeGalleryFile = (index: number) => {
         updateGalleryState(galleryFiles.filter((_, i) => i !== index));
     };
+    const clearAllGalleryFiles = () => {
+        updateGalleryState([]);
+    };
 
 
     // --------------------------------------------------------
     // 3. 중간(초대장) 이미지
     // --------------------------------------------------------
     const [middlePreview, setMiddlePreview] = useState<string | null>(null);
+    const middleInputRef = useRef<HTMLInputElement>(null);
+    const [ogPreview, setOgPreview] = useState<string | null>(null);
+    const ogInputRef = useRef<HTMLInputElement>(null);
+
     const handleMiddleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -209,12 +225,48 @@ export default function MakePage() {
             setMiddlePreview(URL.createObjectURL(processedFile));
 
             // input에 변환된 파일 주입 (기존 폼 전송 로직 유지)
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(processedFile);
-            e.target.files = dataTransfer.files;
-
+            if (middleInputRef.current) {
+                const dt = new DataTransfer();
+                dt.items.add(processedFile);
+                middleInputRef.current.files = dt.files;
+            }
         } catch (error) {
             console.error("이미지 처리 중 오류:", error);
+            toast("이미지 처리 중 문제가 발생했습니다.");
+        }
+    };
+    const clearMiddleFile = () => {
+        if (middlePreview) URL.revokeObjectURL(middlePreview);
+        setMiddlePreview(null);
+        if (middleInputRef.current) {
+            middleInputRef.current.value = "";
+            middleInputRef.current.files = new DataTransfer().files;
+        }
+    };
+
+    const handleOgChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        try {
+            const processed = await processImage(files[0]);
+            if (ogPreview) URL.revokeObjectURL(ogPreview);
+            setOgPreview(URL.createObjectURL(processed));
+            if (ogInputRef.current) {
+                const dt = new DataTransfer();
+                dt.items.add(processed);
+                ogInputRef.current.files = dt.files;
+            }
+        } catch (err) {
+            console.error("이미지 처리 오류:", err);
+            toast("이미지 처리 중 문제가 발생했습니다.");
+        }
+    };
+    const clearOgFile = () => {
+        if (ogPreview) URL.revokeObjectURL(ogPreview);
+        setOgPreview(null);
+        if (ogInputRef.current) {
+            ogInputRef.current.value = "";
+            ogInputRef.current.files = new DataTransfer().files;
         }
     };
 
@@ -252,6 +304,7 @@ export default function MakePage() {
             mainPreviews.forEach(u => URL.revokeObjectURL(u));
             galleryPreviews.forEach(u => URL.revokeObjectURL(u));
             if (middlePreview) URL.revokeObjectURL(middlePreview);
+            if (ogPreview) URL.revokeObjectURL(ogPreview);
         };
     }, []);
 
@@ -383,16 +436,19 @@ export default function MakePage() {
                             <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
                                 <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span><span className="flex-1">신랑신부 인터뷰</span>
                             </h3>
+                            <p className="text-xs text-slate-500 mb-6">질문과 답변 모두 수정할 수 있습니다.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Question 01</label>
-                                    <input name="interview_q1" defaultValue="서로의 첫 만남은?" className="w-full bg-transparent font-bold text-slate-800 border-b border-slate-200 focus:border-purple-500 focus:outline-none pb-2 transition-colors"/>
-                                    <textarea name="interview_a1" rows={3} defaultValue="벚꽃이 흩날리던 어느 봄날이었습니다. 수줍게 웃던 모습에 이끌려 오늘까지 오게 되었네요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200"/>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 01</label>
+                                    <input name="interview_q1" defaultValue="서로의 첫 만남은?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors"/>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
+                                    <textarea name="interview_a1" rows={3} defaultValue="벚꽃이 흩날리던 어느 봄날이었습니다. 수줍게 웃던 모습에 이끌려 오늘까지 오게 되었네요." placeholder="답변을 입력하세요" className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200"/>
                                 </div>
                                 <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Question 02</label>
-                                    <input name="interview_q2" defaultValue="서로에게 바라는 점?" className="w-full bg-transparent font-bold text-slate-800 border-b border-slate-200 focus:border-purple-500 focus:outline-none pb-2 transition-colors"/>
-                                    <textarea name="interview_a2" rows={3} defaultValue="지금처럼 서로를 아끼고 웃음 가득한 예쁜 가정을 함께 만들어가고 싶어요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200"/>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 02</label>
+                                    <input name="interview_q2" defaultValue="서로에게 바라는 점?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors"/>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
+                                    <textarea name="interview_a2" rows={3} defaultValue="지금처럼 서로를 아끼고 웃음 가득한 예쁜 가정을 함께 만들어가고 싶어요." placeholder="답변을 입력하세요" className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200"/>
                                 </div>
                             </div>
                         </section>
@@ -407,36 +463,46 @@ export default function MakePage() {
                             <div className="space-y-10">
                                 {/* 메인 사진 */}
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-base font-bold text-slate-700">
                                             메인 슬라이드 사진 <span className="text-rose-500 text-sm">(3장 필수)</span>
                                         </label>
-                                        <span className="text-[11px] text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-bold">화살표로 순서 변경 가능</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-bold">화살표로 순서 변경</span>
+                                            {mainPreviews.length > 0 && (
+                                                <button type="button" onClick={clearAllMainFiles} className="text-[11px] text-rose-500 bg-rose-50 px-2 py-1 rounded-full font-bold hover:bg-rose-100 flex items-center gap-1">
+                                                    <Trash2 size={12}/> 전부 삭제
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
+                                    <p className="text-xs text-slate-500">권장: 9:16 비율 / 1장당 15MB 이하</p>
 
                                     <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden">
                                         {mainPreviews.length > 0 ? (
-                                            <div className="absolute inset-0 z-10 bg-white flex items-center justify-center gap-4 p-4">
-                                                {mainPreviews.map((src, idx) => (
-                                                    <div key={idx} className="relative w-1/3 h-full rounded-2xl overflow-hidden border border-slate-100 shadow-lg group/item">
-                                                        <img src={src} alt={`Main ${idx}`} className="w-full h-full object-cover"/>
-                                                        <div className="absolute top-3 left-3 bg-black/70 text-white w-6 h-6 flex items-center justify-center text-xs font-bold rounded-full shadow-md z-20">{idx + 1}</div>
-                                                        <div className="absolute bottom-0 inset-x-0 bg-black/60 p-2 flex justify-between items-center opacity-0 group-hover/item:opacity-100 transition-opacity z-20">
-                                                            <button type="button" onClick={() => moveMainFile(idx, 'left')} disabled={idx === 0} className="p-1.5 text-white hover:bg-white/20 rounded-full disabled:opacity-30"><ChevronLeft size={16}/></button>
-                                                            <button type="button" onClick={() => removeMainFile(idx)} className="p-1.5 text-rose-400 hover:bg-white/20 rounded-full"><X size={16}/></button>
-                                                            <button type="button" onClick={() => moveMainFile(idx, 'right')} disabled={idx === mainPreviews.length - 1} className="p-1.5 text-white hover:bg-white/20 rounded-full disabled:opacity-30"><ChevronRight size={16}/></button>
+                                            <div className="absolute inset-0 z-10 bg-white flex items-center justify-center p-4 overflow-auto">
+                                                <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
+                                                    {mainPreviews.map((src, idx) => (
+                                                        <div key={idx} className="relative aspect-[9/16] rounded-2xl overflow-hidden border border-slate-100 shadow-lg group/item min-w-0">
+                                                            <img src={src} alt={`Main ${idx}`} className="w-full h-full object-cover"/>
+                                                            <div className="absolute top-3 left-3 bg-black/70 text-white w-6 h-6 flex items-center justify-center text-xs font-bold rounded-full shadow-md z-20">{idx + 1}</div>
+                                                            <div className="absolute bottom-0 inset-x-0 bg-black/60 p-2 flex justify-between items-center opacity-0 group-hover/item:opacity-100 transition-opacity z-20">
+                                                                <button type="button" onClick={() => moveMainFile(idx, 'left')} disabled={idx === 0} className="p-1.5 text-white hover:bg-white/20 rounded-full disabled:opacity-30"><ChevronLeft size={16}/></button>
+                                                                <button type="button" onClick={() => removeMainFile(idx)} className="p-1.5 text-rose-400 hover:bg-white/20 rounded-full"><X size={16}/></button>
+                                                                <button type="button" onClick={() => moveMainFile(idx, 'right')} disabled={idx === mainPreviews.length - 1} className="p-1.5 text-white hover:bg-white/20 rounded-full disabled:opacity-30"><ChevronRight size={16}/></button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
-                                                {mainPreviews.length < 3 && (
-                                                    <div
-                                                        className="relative w-1/3 h-full rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 gap-2 cursor-pointer hover:bg-slate-50 transition-colors"
-                                                        onClick={() => addMainInputRef.current?.click()}
-                                                    >
-                                                        <Upload size={24}/>
-                                                        <span className="text-xs font-bold">추가하기</span>
-                                                    </div>
-                                                )}
+                                                    ))}
+                                                    {mainPreviews.length < 3 && (
+                                                        <div
+                                                            className="aspect-[9/16] rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 gap-2 cursor-pointer hover:bg-slate-50 transition-colors min-w-0"
+                                                            onClick={() => addMainInputRef.current?.click()}
+                                                        >
+                                                            <Upload size={24}/>
+                                                            <span className="text-xs font-bold">추가하기</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-3 py-6 pointer-events-none">
@@ -458,20 +524,28 @@ export default function MakePage() {
                                             className={`absolute inset-0 w-full h-full cursor-pointer opacity-0 ${mainPreviews.length > 0 ? 'hidden' : 'block z-20'}`}
                                         />
                                     </div>
-                                    <input ref={addMainInputRef} type="file" accept="image/*" className="hidden" onChange={handleMainAppend} />
+                                    <input ref={addMainInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleMainAppend} />
                                 </div>
 
                                 {/* 중간(초대장) 사진 */}
                                 <div className="space-y-4">
-                                    <label className="text-base font-bold text-slate-700">초대장 대표 사진 <span className="text-rose-500 text-sm">(1장 필수)</span></label>
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <label className="text-base font-bold text-slate-700">초대장 대표 사진 <span className="text-rose-500 text-sm">(1장 필수)</span></label>
+                                        {middlePreview && (
+                                            <button type="button" onClick={clearMiddleFile} className="text-[11px] text-rose-500 bg-rose-50 px-2 py-1 rounded-full font-bold hover:bg-rose-100 flex items-center gap-1">
+                                                <Trash2 size={12}/> 삭제
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-slate-500">권장: 1:1 비율 (정방형) / 1장당 15MB 이하</p>
                                     <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
                                         {middlePreview ? (
                                             <div className="absolute inset-0 z-10 bg-white flex items-center justify-center p-4">
                                                 <div className="relative w-full max-w-[200px] h-full rounded-2xl overflow-hidden border border-slate-100 shadow-sm aspect-square">
                                                     <img src={middlePreview} alt="Middle" className="w-full h-full object-cover"/>
                                                 </div>
-                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <p className="bg-white px-4 py-2 rounded-full text-sm font-bold shadow-lg text-slate-800 flex items-center gap-2"><ImageIcon size={16}/> 사진 변경하기</p>
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                    <p className="bg-white px-4 py-2 rounded-full text-sm font-bold shadow-lg text-slate-800"><ImageIcon size={16} className="inline mr-1"/> 클릭하면 변경</p>
                                                 </div>
                                             </div>
                                         ) : (
@@ -484,17 +558,59 @@ export default function MakePage() {
                                                 </div>
                                             </div>
                                         )}
-                                        {/* [수정됨] opacity-0 추가 */}
-                                        <input name="middleImage" type="file" required accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                                        <input ref={middleInputRef} name="middleImage" type="file" required accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                                    </div>
+                                </div>
+
+                                {/* 카톡 공유용 이미지 (선택) */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <Share2 size={18} className="text-slate-500" />
+                                            <label className="text-base font-bold text-slate-700">카톡 공유용 이미지</label>
+                                            <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-1 rounded-full font-bold">선택</span>
+                                        </div>
+                                        {ogPreview && (
+                                            <button type="button" onClick={clearOgFile} className="text-[11px] text-rose-500 bg-rose-50 px-2 py-1 rounded-full font-bold hover:bg-rose-100 flex items-center gap-1">
+                                                <Trash2 size={12}/> 삭제
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        청첩장 링크를 카톡으로 보낼 때 미리보기로 나올 사진입니다. 따로 올리지 않으면 위의 1:1 대표사진이 사용됩니다. <span className="text-amber-600 font-medium">1:1 대표사진은 가운데 위주로 나와서 조금 짤릴 수 있습니다.</span> 최적 표시를 원하면 1200×630 비율로 업로드해 주세요. <span className="text-rose-500 font-bold">1장당 15MB 이하</span>
+                                    </p>
+                                    <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[200px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
+                                        {ogPreview ? (
+                                            <div className="absolute inset-0 z-10 bg-white flex flex-col items-center justify-center p-4">
+                                                <div className="relative w-full max-w-[280px] aspect-[1200/630] rounded-xl overflow-hidden border border-slate-100 shadow-sm">
+                                                    <img src={ogPreview} alt="카톡 공유용" className="w-full h-full object-cover"/>
+                                                </div>
+                                                <p className="mt-3 text-xs text-slate-500 font-medium">클릭하면 변경</p>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 py-4">
+                                                <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center"><Share2 size={20}/></div>
+                                                <p className="text-xs text-slate-400 font-medium">클릭하여 등록 (1200×630 권장 / 15MB 이하)</p>
+                                            </div>
+                                        )}
+                                        <input ref={ogInputRef} name="ogImage" type="file" accept="image/*" onChange={handleOgChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
                                     </div>
                                 </div>
 
                                 {/* 갤러리 사진 */}
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-base font-bold text-slate-700">웨딩 갤러리 사진 <span className="text-rose-500 text-sm">(1~20장)</span></label>
-                                        <span className="text-[11px] text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-bold">화살표로 순서 변경 가능</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-bold">화살표로 순서 변경</span>
+                                            {galleryPreviews.length > 0 && (
+                                                <button type="button" onClick={clearAllGalleryFiles} className="text-[11px] text-rose-500 bg-rose-50 px-2 py-1 rounded-full font-bold hover:bg-rose-100 flex items-center gap-1">
+                                                    <Trash2 size={12}/> 전부 삭제
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
+                                    <p className="text-xs text-slate-500">권장: 1:1 비율 (정방형) / 1장당 15MB 이하</p>
 
                                     <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden">
                                         {galleryPreviews.length > 0 ? (

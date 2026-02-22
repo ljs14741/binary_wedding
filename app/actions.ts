@@ -89,6 +89,7 @@ export async function createInvitation(formData: FormData) {
     if (mainFiles.length < 3 || mainFiles[0].size === 0) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
     const middleFile = formData.get("middleImage") as File | null;
     if (!middleFile || middleFile.size === 0) throw new Error("초대장 대표 사진 1장이 필요합니다.");
+    const ogFile = formData.get("ogImage") as File | null;
     if (galleryFiles.length < 1 || galleryFiles[0].size === 0) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
 
     // 2. 비밀번호 암호화
@@ -149,6 +150,11 @@ export async function createInvitation(formData: FormData) {
 
         const middlePhotoUrl = await uploadFile(middleFile, `${url_id}/middle`);
 
+        let ogPhotoUrl: string | null = null;
+        if (ogFile && ogFile.size > 0) {
+            ogPhotoUrl = await uploadFile(ogFile, `${url_id}/og`);
+        }
+
         const galleryUrls = await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`)));
         const validGalleryUrls = galleryUrls.filter((url) => url !== "");
 
@@ -171,6 +177,7 @@ export async function createInvitation(formData: FormData) {
 
                 main_photo_url: JSON.stringify(validMainUrls),
                 middle_photo_url: middlePhotoUrl,
+                og_photo_url: ogPhotoUrl,
 
                 invitation_photos: {
                     create: validGalleryUrls.map((url, i) => ({ photo_url: url, sort_order: i }))
@@ -260,6 +267,13 @@ export async function updateInvitation(formData: FormData) {
         middlePhotoUrl = await uploadFile(middleFile, `${url_id}/middle`);
     }
 
+    // 3-1. 카톡 공유용 이미지 업데이트 (선택)
+    const ogFile = formData.get("ogImage") as File | null;
+    let ogPhotoUrl = existing.og_photo_url;
+    if (ogFile && ogFile.size > 0) {
+        ogPhotoUrl = await uploadFile(ogFile, `${url_id}/og`);
+    }
+
     // 4. 갤러리 업데이트
     const galleryFiles = formData.getAll("galleryImages") as File[];
     const hasNewGallery = galleryFiles.length > 0 && galleryFiles[0].size > 0;
@@ -326,6 +340,7 @@ export async function updateInvitation(formData: FormData) {
 
             main_photo_url: mainPhotoUrl,
             middle_photo_url: middlePhotoUrl,
+            og_photo_url: ogPhotoUrl,
 
             ...(hasNewGallery && {
                 invitation_photos: {

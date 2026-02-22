@@ -22,7 +22,7 @@ export async function uploadFile(file: File | null, subPath?: string): Promise<s
     }
 
     // subPath 검증: url_id/용도 형식만 허용 (path traversal 방지)
-    const safePath = subPath && /^[a-zA-Z0-9]{6,12}\/(main|middle|gallery)$/.test(subPath) ? subPath : "temp";
+    const safePath = subPath && /^[a-zA-Z0-9]{6,12}\/(main|middle|gallery|og)$/.test(subPath) ? subPath : "temp";
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
