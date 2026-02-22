@@ -168,12 +168,14 @@ export default function Type1({ data }: Type1Props) {
     const shareKakao = () => {
         if (window.Kakao) {
             if (!window.Kakao.isInitialized()) window.Kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
+            const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://wedding.binaryworld.kr";
+            const imageUrl = data.mainImages[0] ? (data.mainImages[0].startsWith("http") ? data.mainImages[0] : `${baseUrl}${data.mainImages[0]}`) : "";
             window.Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: `${data.groom.name} ♥ ${data.bride.name} 결혼합니다`,
                     description: `${weddingYear}년 ${weddingMonth + 1}월 ${weddingDay}일 ${data.location}`,
-                    imageUrl: data.mainImages[0] || "",
+                    imageUrl,
                     link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
                 },
                 buttons: [{ title: '청첩장 보기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }],

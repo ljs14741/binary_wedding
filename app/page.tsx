@@ -186,7 +186,6 @@ export default function Home() {
                         </h2>
                         <p className="text-[17px] text-slate-600 leading-loose">
                             안녕하세요, 6년 차 개발자 Binary입니다. <br />
-                            결혼 준비 과정의 거품을 빼고 싶은 마음도 컸지만, <br />
                             <b>미래의 제 결혼식에 직접 쓰기 위해</b> 퇴근 후 정성을 다해 개발했습니다. <br />
                             이용 중 오류가 있거나 개선이 필요하면 언제든 알려주세요.
                         </p>
