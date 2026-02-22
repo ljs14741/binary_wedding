@@ -7,6 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 이용후기 (실제 사용자 후기)
+model reviews {
+  id          Int       @id @default(autoincrement())
+  author_name String    @db.VarChar(50)
+  password    String    @db.VarChar(255)
+  content     String    @db.Text
+  rating      Int?      // 1~5 별점 (선택)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime? @updatedAt @default(now()) @db.Timestamp(0)
+}
+
 model admins {
   id         Int       @id @default(autoincrement())
   username   String    @unique(map: "username") @db.VarChar(50)

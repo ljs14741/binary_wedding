@@ -473,3 +473,103 @@ export async function deleteGuestbookEntry(id: number, password: string) {
     await prisma.invitation_guestbook.delete({ where: { id } });
     return { success: true, message: "삭제되었습니다." };
 }
+
+// ----------------------------------------------------------------------
+// 9. 이용후기 CRUD
+// ----------------------------------------------------------------------
+const REVIEWS_PER_PAGE = 12;
+
+export async function getReviews(page: number = 1) {
+    const skip = (page - 1) * REVIEWS_PER_PAGE;
+    const [items, total, stats] = await Promise.all([
+        prisma.reviews.findMany({
+            orderBy: { created_at: "desc" },
+            skip,
+            take: REVIEWS_PER_PAGE,
+        }),
+        prisma.reviews.count(),
+        prisma.reviews.aggregate({
+            where: { rating: { not: null } },
+            _avg: { rating: true },
+            _count: { rating: true },
+        }),
+    ]);
+    const avg = stats._avg.rating != null ? Math.round(stats._avg.rating * 10) / 10 : null;
+    return {
+        items,
+        total,
+        totalPages: Math.ceil(total / REVIEWS_PER_PAGE),
+        currentPage: page,
+        averageRating: avg,
+        ratingCount: stats._count.rating,
+    };
+}
+
+export async function createReview(formData: FormData) {
+    const author_name = (formData.get("author_name") as string)?.trim();
+    const password = formData.get("password") as string;
+    const content = (formData.get("content") as string)?.trim();
+    const ratingRaw = formData.get("rating") as string | null;
+
+    if (!author_name || author_name.length > 50) {
+        return { success: false, message: "닉네임을 입력해 주세요. (50자 이내)" };
+    }
+    if (!password || password.length < 4 || password.length > 20) {
+        return { success: false, message: "비밀번호는 4~20자로 입력해 주세요." };
+    }
+    if (!content || content.length > 1000) {
+        return { success: false, message: "내용을 입력해 주세요. (1000자 이내)" };
+    }
+
+    let rating: number | null = null;
+    if (ratingRaw) {
+        const r = parseInt(ratingRaw, 10);
+        if (r >= 1 && r <= 5) rating = r;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.reviews.create({
+        data: {
+            author_name,
+            password: hashedPassword,
+            content,
+            rating,
+        },
+    });
+
+    return { success: true, message: "후기가 등록되었습니다." };
+}
+
+export async function updateReview(id: number, password: string, author_name: string, content: string, rating: number | null = null) {
+    const entry = await prisma.reviews.findUnique({ where: { id } });
+    if (!entry) return { success: false, message: "해당 후기를 찾을 수 없습니다." };
+
+    const isMatch = await bcrypt.compare(password, entry.password);
+    if (!isMatch) return { success: false, message: "비밀번호가 일치하지 않습니다." };
+
+    const trimmedName = author_name?.trim();
+    if (!trimmedName || trimmedName.length > 50) return { success: false, message: "닉네임을 입력해 주세요. (50자 이내)" };
+
+    const trimmedContent = content?.trim();
+    if (!trimmedContent || trimmedContent.length > 1000) return { success: false, message: "내용을 입력해 주세요. (1000자 이내)" };
+
+    const validRating = rating != null && rating >= 1 && rating <= 5 ? rating : null;
+
+    await prisma.reviews.update({
+        where: { id },
+        data: { author_name: trimmedName, content: trimmedContent, rating: validRating },
+    });
+    return { success: true, message: "수정되었습니다." };
+}
+
+export async function deleteReview(id: number, password: string) {
+    const entry = await prisma.reviews.findUnique({ where: { id } });
+    if (!entry) return { success: false, message: "해당 후기를 찾을 수 없습니다." };
+
+    const isMatch = await bcrypt.compare(password, entry.password);
+    if (!isMatch) return { success: false, message: "비밀번호가 일치하지 않습니다." };
+
+    await prisma.reviews.delete({ where: { id } });
+    return { success: true, message: "삭제되었습니다." };
+}

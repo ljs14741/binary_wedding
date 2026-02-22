@@ -44,6 +44,10 @@ export default function SiteHeader() {
                         샘플 보기
                     </Link>
 
+                    <Link href="/reviews" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
+                        이용후기
+                    </Link>
+
                     <Link href="/#faq" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
                         자주 묻는 질문
                     </Link>
