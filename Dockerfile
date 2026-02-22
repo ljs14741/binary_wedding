@@ -15,7 +15,8 @@ RUN npm run build
 # ===== Stage 2: 실행 (standalone 미사용, next start 방식) =====
 FROM node:20-slim AS runner
 
-RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+# Sharp(Next.js Image 최적화)에 필요
+RUN apt-get update -y && apt-get install -y openssl ca-certificates libvips && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
