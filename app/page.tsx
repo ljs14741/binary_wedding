@@ -39,7 +39,7 @@ export default function Home() {
                 <section className="relative h-[95vh] flex flex-col justify-center items-center px-6 text-center overflow-hidden">
                     <div className="absolute inset-0 z-0">
                         <Image
-                            src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop"
+                            src="/images/hero.jpg"
                             alt="Main Background"
                             fill
                             priority
@@ -89,7 +89,7 @@ export default function Home() {
                             <Link href="/sample/1" className="group block">
                                 <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-xl group-hover:shadow-rose-100 group-hover:shadow-2xl transition-all duration-500 border border-slate-50">
                                     <Image
-                                        src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070"
+                                        src="/images/card1.jpg"
                                         alt="클래식 화이트"
                                         fill
                                         className="object-cover group-hover:scale-110 transition duration-700"
@@ -105,7 +105,7 @@ export default function Home() {
 
                             <div className="group relative grayscale opacity-60">
                                 <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-lg border border-slate-50">
-                                    <Image src="https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=2070" alt="내추럴 가든" fill className="object-cover" />
+                                    <Image src="/images/card2.jpg" alt="내추럴 가든" fill className="object-cover" />
                                     <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
                                         <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase">Coming Soon</span>
                                     </div>
@@ -115,7 +115,7 @@ export default function Home() {
 
                             <div className="group relative grayscale opacity-60">
                                 <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-lg border border-slate-50">
-                                    <Image src="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2070" alt="모던 미니멀" fill className="object-cover" />
+                                    <Image src="/images/card3.jpg" alt="모던 미니멀" fill className="object-cover" />
                                     <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
                                         <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase">Coming Soon</span>
                                     </div>
