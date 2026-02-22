@@ -5,6 +5,13 @@ RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /v
 
 WORKDIR /app
 
+# NEXT_PUBLIC_* 는 빌드 시점에 번들에 포함되므로 여기서 설정
+# Jenkins에서 --build-arg 로 덮어쓸 수 있음
+ARG NEXT_PUBLIC_NAVER_MAP_CLIENT_ID=xmxkex3spn
+ARG NEXT_PUBLIC_SITE_URL=https://wedding.binaryworld.kr
+ENV NEXT_PUBLIC_NAVER_MAP_CLIENT_ID=$NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 RUN npm ci && npx prisma generate
