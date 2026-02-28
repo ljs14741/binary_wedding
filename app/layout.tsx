@@ -90,8 +90,8 @@ export const metadata: Metadata = {
         canonical: baseUrl,
     },
     verification: {
-        // 나중에 Google Search Console 등에서 발급받은 값으로 추가
-        // google: "google-site-verification-code",
+        // Google Search Console: google: "발급코드" 추가
+        other: { "naver-site-verification": "0d7c6650f829bee40b0dfbf0d8bb3e7ab51181a1" },
     },
     category: "wedding",
 };

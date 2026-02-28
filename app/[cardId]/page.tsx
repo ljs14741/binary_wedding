@@ -70,6 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
         title,
         description,
+        robots: { index: false, follow: false },
         openGraph,
         twitter: ogImageUrl ? { card: "summary_large_image", images: [ogImageUrl] } : undefined,
         alternates: { canonical: `${baseUrl}/${cardId}` },
