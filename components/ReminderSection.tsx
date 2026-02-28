@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
 interface ReminderSectionProps {
@@ -56,6 +56,8 @@ export default function ReminderSection({
   isSample = false,
 }: ReminderSectionProps) {
   const { toast } = useToast();
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [guideStep, setGuideStep] = useState(0);
   const mapUrl = getNaverMapUrl(address);
   const dateFormatted = formatDateForSms(date);
   const icsDateStart = formatDateForIcs(date);
@@ -145,7 +147,7 @@ export default function ReminderSection({
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(typeof window !== "undefined" ? window.location.href : "");
-      toast("링크가 복사되었습니다. Chrome/Safari 주소창에 붙여넣어 열어주세요.");
+      toast("링크가 복사되었습니다. Safari 주소창에 붙여넣어 열어주세요.");
     } catch {
       toast("링크 복사에 실패했습니다.");
     }
@@ -180,7 +182,7 @@ export default function ReminderSection({
         <div className="mb-6 p-5 rounded-2xl bg-[#FBF7F4] border border-rose-50">
           <h4 className="font-bold text-[15px] text-gray-800 mb-1.5 flex items-center gap-2">🔔 전날 푸시알람 받기</h4>
           <p className="text-[12px] text-gray-600 font-sans mb-3">캘린더에 일정을 저장하면 예식 24시간 전 알림을 받을 수 있어요.</p>
-          <p className="text-[11px] text-amber-700 font-sans mb-3">카카오톡에서는 다운로드가 안 될 수 있어요. 링크 복사 후 브라우저에서 열어 진행해 주세요.</p>
+          <p className="text-[11px] text-amber-700 font-sans mb-3">카카오톡에서는 다운로드가 안 될 수 있어요. 링크 복사 후 <strong>Safari</strong>에서 열어 진행해 주세요. (Chrome에서는 동작하지 않아요)</p>
           <div className="flex gap-2 mb-2">
             <button
               type="button"
@@ -197,8 +199,58 @@ export default function ReminderSection({
               푸시알람 받기
             </button>
           </div>
-          <p className="text-[10px] text-gray-500">버튼을 누르면 wedding-reminder.ics가 다운로드돼요. 파일을 연 뒤 <strong>완료가 아니라 공유(↑) 버튼 → 캘린더에 추가</strong>를 선택해야 일정이 저장돼요.</p>
+          <p className="text-[10px] text-gray-500">
+            Safari에서 링크를 연 뒤 푸시알람 버튼을 누르세요. 자세한 절차는{" "}
+            <button
+              type="button"
+              onClick={() => { setIsGuideOpen(true); setGuideStep(0); }}
+              className="text-teal-600 underline font-bold hover:text-teal-700"
+            >
+              📖 가이드 보기
+            </button>
+          </p>
         </div>
+
+        {/* 가이드 모달 */}
+        {isGuideOpen && (
+          <div
+            className="fixed inset-0 z-50 flex flex-col bg-black/90"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guide-title"
+          >
+            <div className="flex items-center justify-between px-4 py-3 bg-black/50 shrink-0">
+              <span id="guide-title" className="text-white font-bold text-sm">푸시알람 가이드 {guideStep + 1}/3</span>
+              <button
+                type="button"
+                onClick={() => setIsGuideOpen(false)}
+                className="p-2 text-white hover:bg-white/20 rounded-full"
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center p-4 pb-8">
+              <img
+                src={`/images/pushGuide${guideStep + 1}.png`}
+                alt={`푸시알람 가이드 ${guideStep + 1}`}
+                className="w-full max-w-[400px] h-auto object-contain rounded-lg shadow-lg"
+                style={{ maxHeight: "min(75vh, 600px)" }}
+              />
+              <div className="flex gap-2 mt-4">
+                {[0, 1, 2].map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setGuideStep(i)}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${guideStep === i ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
+                    aria-label={`${i + 1}단계`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 문자 섹션 */}
         <div className="p-5 rounded-2xl bg-[#FBF7F4] border border-rose-50">
