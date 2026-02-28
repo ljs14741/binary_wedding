@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { uploadFile, deleteInvitationUploads } from "@/lib/upload";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
 
 // 랜덤 ID 생성 헬퍼
 function generateRandomId() {
@@ -38,6 +39,10 @@ function validateRequiredFields(data: {
 // 1. 내 청첩장 조회 (로그인/관리 페이지용)
 // ----------------------------------------------------------------------
 export async function getMyInvitations(formData: FormData) {
+    const ip = await getClientIp();
+    const { limited, message: limitMsg } = await checkRateLimit("getMyInvitations", ip);
+    if (limited) return { success: false, message: limitMsg ?? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." };
+
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
     const inputPassword = formData.get("password") as string;
@@ -83,6 +88,10 @@ export async function getMyInvitations(formData: FormData) {
 // 2. 청첩장 생성 (Create) - [수정됨: Redirect 위치 변경]
 // ----------------------------------------------------------------------
 export async function createInvitation(formData: FormData) {
+    const ip = await getClientIp();
+    const { limited, message: limitMsg } = await checkRateLimit("createInvitation", ip);
+    if (limited) throw new Error(limitMsg ?? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.");
+
     const mainFiles = formData.getAll("mainImages") as File[];
     const galleryFiles = formData.getAll("galleryImages") as File[];
 
@@ -409,6 +418,10 @@ async function getCoords(address: string) {
 // 6. 방명록 작성
 // ----------------------------------------------------------------------
 export async function createGuestbookEntry(url_id: string, formData: FormData) {
+    const ip = await getClientIp();
+    const { limited, message: limitMsg } = await checkRateLimit("createGuestbook", ip);
+    if (limited) return { success: false, message: limitMsg ?? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." };
+
     const author_name = (formData.get("author_name") as string)?.trim();
     const password = formData.get("password") as string;
     const message = (formData.get("message") as string)?.trim();
@@ -509,6 +522,10 @@ export async function getReviews(page: number = 1) {
 }
 
 export async function createReview(formData: FormData) {
+    const ip = await getClientIp();
+    const { limited, message: limitMsg } = await checkRateLimit("createReview", ip);
+    if (limited) return { success: false, message: limitMsg ?? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." };
+
     const author_name = (formData.get("author_name") as string)?.trim();
     const password = formData.get("password") as string;
     const content = (formData.get("content") as string)?.trim();

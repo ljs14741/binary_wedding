@@ -26,7 +26,7 @@ export default function Home() {
         setOpenFaq(openFaq === index ? null : index);
     };
 
-    const KAKAO_CHAT_URL = "http://pf.kakao.com/_xdVEhX";
+    const KAKAO_CHAT_URL = "https://pf.kakao.com/_xdVEhX";
 
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-slate-900 font-sans selection:bg-rose-500 selection:text-white scroll-smooth">

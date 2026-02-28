@@ -9,10 +9,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
-    // 외부 호출 방지: CRON_SECRET이 설정되어 있으면 일치해야 함
-    const authHeader = request.headers.get("authorization");
+    // 외부 호출 방지: CRON_SECRET 필수, 미설정 시 모든 요청 거부
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+        return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 503 });
+    }
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

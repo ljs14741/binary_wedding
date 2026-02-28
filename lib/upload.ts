@@ -6,6 +6,33 @@ const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB (클라이언트 processImage로 압축됨)
 const UPLOADS_BASE = "public/uploads";
 
+/** 이미지 파일 시그니처(매직 바이트) 검증 - file.type 위조 방지 */
+const IMAGE_SIGNATURES: { ext: string; signatures: number[][] }[] = [
+    { ext: "jpg", signatures: [[0xff, 0xd8, 0xff]] },
+    { ext: "png", signatures: [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]] },
+    { ext: "gif", signatures: [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]] },
+    { ext: "webp", signatures: [[0x52, 0x49, 0x46, 0x46]] }, // RIFF... (추가로 bytes 8-11에 57 45 42 50 필요)
+];
+
+function isValidImageBuffer(buffer: Buffer): boolean {
+    if (buffer.length < 3) return false;
+    const arr = new Uint8Array(buffer);
+
+    for (const { ext, signatures } of IMAGE_SIGNATURES) {
+        for (const sig of signatures) {
+            const match = sig.every((byte, i) => arr[i] === byte);
+            if (!match) continue;
+            // WebP: RIFF....WEBP 확인
+            if (ext === "webp" && arr.length >= 12) {
+                const webp = [0x57, 0x45, 0x42, 0x50]; // WEBP
+                if (!webp.every((b, i) => arr[8 + i] === b)) continue;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * 파일 업로드 - 청첩장별 폴더 구조로 저장
  * @param file - 업로드할 파일 (null/empty 시 "" 반환)
@@ -21,11 +48,16 @@ export async function uploadFile(file: File | null, subPath?: string): Promise<s
         throw new Error(`파일 크기는 15MB 이하여야 합니다. (현재: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
     }
 
-    // subPath 검증: url_id/용도 형식만 허용 (path traversal 방지)
-    const safePath = subPath && /^[a-zA-Z0-9]{6,12}\/(main|middle|gallery|og)$/.test(subPath) ? subPath : "temp";
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    // 실제 파일 시그니처(매직 바이트) 검증 - file.type 위조 방지
+    if (!isValidImageBuffer(buffer)) {
+        throw new Error(`유효한 이미지 파일이 아닙니다. (허용: JPG, PNG, GIF, WebP)`);
+    }
+
+    // subPath 검증: url_id/용도 형식만 허용 (path traversal 방지)
+    const safePath = subPath && /^[a-zA-Z0-9]{6,12}\/(main|middle|gallery|og)$/.test(subPath) ? subPath : "temp";
 
     const uploadDir = join(process.cwd(), UPLOADS_BASE, safePath);
 
@@ -41,8 +73,12 @@ export async function uploadFile(file: File | null, subPath?: string): Promise<s
     return `/uploads/${safePath}/${filename}`;
 }
 
+/** url_id 형식 검증 (path traversal 방지) */
+const URL_ID_REGEX = /^[a-zA-Z0-9]{6,12}$/;
+
 /** 청첩장 삭제 시 해당 url_id의 업로드 폴더 전체 삭제 */
 export async function deleteInvitationUploads(url_id: string): Promise<void> {
+    if (!url_id || !URL_ID_REGEX.test(url_id)) return;
     const folderPath = join(process.cwd(), UPLOADS_BASE, url_id);
     try {
         await rm(folderPath, { recursive: true });
