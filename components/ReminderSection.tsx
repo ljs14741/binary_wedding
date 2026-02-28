@@ -66,47 +66,80 @@ export default function ReminderSection({
       toast("샘플 화면에서는 실제 알림 기능을 사용할 수 없습니다.");
       return;
     }
+  
     const invitationUrl = typeof window !== "undefined" ? window.location.href : "";
     const summary = `[내일 결혼식] ${groomName} & ${brideName}`;
     const loc = `${location} (${address})`;
-    const desc = `예식 시간: ${date.toLocaleString("ko-KR", { dateStyle: "long", timeStyle: "short" })} / 상세위치: ${detail} / 청첩장: ${invitationUrl}`;
-
+    const desc = `예식 시간: ${date.toLocaleString("ko-KR", {
+      dateStyle: "long",
+      timeStyle: "short",
+    })} / 상세위치: ${detail} / 청첩장: ${invitationUrl}`;
+  
+    // 1. 필수 표준 데이터 생성 (iOS 인식률 향상 핵심)
+    const now = new Date();
+    const dtStamp = formatDateForIcs(now); // 생성 시간
+    const uid = Math.random().toString(36).substring(2, 11) + "@wedding-invitation"; // 고유 ID
+  
     const rawIcs = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
       "PRODID:-//Wedding//KO",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
       "BEGIN:VEVENT",
+      `UID:${uid}`,          // 일정 고유 식별자 추가
+      `DTSTAMP:${dtStamp}`,  // 일정 생성 시간 추가
       foldIcsLine(`SUMMARY:${escapeIcsValue(summary)}`),
       foldIcsLine(`LOCATION:${escapeIcsValue(loc)}`),
       foldIcsLine(`DESCRIPTION:${escapeIcsValue(desc)}`),
       `DTSTART:${icsDateStart}`,
       `DTEND:${icsDateEnd}`,
+      "STATUS:CONFIRMED",    // 확정된 일정임을 명시
+      "TRANSP:OPAQUE",       // 바쁨 상태 표시
       "BEGIN:VALARM",
-      "TRIGGER:-PT1440M",
+      "TRIGGER:-PT1440M",    // 24시간 전 알림
       "ACTION:DISPLAY",
       foldIcsLine(`DESCRIPTION:${escapeIcsValue(summary)}`),
       "END:VALARM",
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
-
-    const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile) {
-      // 모바일: data URL로 직접 열기 — Safari/Chrome이 캘린더 앱 연동을 더 잘 함 (다운로드 후 '완료' 눌러도 저장 안 되는 iOS 이슈 회피)
-      const dataUrl = "data:text/calendar;charset=utf-8," + encodeURIComponent(rawIcs);
-      window.location.href = dataUrl;
-      toast("캘린더 앱이 열렸을 거예요. '추가' 또는 '완료'를 눌러 일정을 저장해 주세요. 저장 후 캘린더 앱에서 확인해 보세요.");
-    } else {
-      const blob = new Blob([rawIcs], { type: "text/calendar;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
+  
+    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isIOS = /iPhone|iPad|iPod/.test(userAgent);
+    const isChrome = /CriOS/.test(userAgent); // iOS용 크롬 감지
+  
+    // 2. 파일 생성 (Blob 방식이 브라우저 호환성이 더 좋습니다)
+    const blob = new Blob([rawIcs], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+  
+    if (isIOS) {
+      // iOS (Safari/Chrome 공통 대응)
       const a = document.createElement("a");
       a.href = url;
       a.download = "wedding-reminder.ics";
       a.click();
-      URL.revokeObjectURL(url);
-      toast("wedding-reminder.ics 파일이 다운로드되었습니다. 다운로드한 파일을 더블클릭해 캘린더에 추가해 주세요.");
+  
+      if (isChrome) {
+        // 크롬 사용자를 위한 별도 안내
+        toast(
+          "파일을 연 후, 하단 '공유' 버튼을 눌러 '캘린더'를 선택하거나 '추가'를 눌러주세요!"
+        );
+      } else {
+        // 사파리 사용자를 위한 안내
+        toast("'캘린더에 추가' 또는 '모두 추가'를 눌러 일정을 저장해 주세요.");
+      }
+    } else {
+      // 안드로이드 및 PC
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wedding-reminder.ics";
+      a.click();
+      toast("일정 파일이 다운로드되었습니다. 파일을 열어 캘린더에 추가해 주세요.");
     }
+  
+    // 메모리 해제
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handleCopyLink = async () => {
@@ -164,7 +197,7 @@ export default function ReminderSection({
               푸시알람 받기
             </button>
           </div>
-          <p className="text-[10px] text-gray-500">푸시알람 받기 버튼을 누르면 wedding-reminder.ics가 다운로드돼요. 다운로드/파일 앱에서 열어 캘린더에 추가하세요.</p>
+          <p className="text-[10px] text-gray-500">버튼을 누르면 wedding-reminder.ics가 다운로드돼요. 파일을 연 뒤 <strong>완료가 아니라 공유(↑) 버튼 → 캘린더에 추가</strong>를 선택해야 일정이 저장돼요.</p>
         </div>
 
         {/* 문자 섹션 */}
