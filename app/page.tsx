@@ -50,11 +50,11 @@ export default function Home() {
                     <div className="relative z-10 space-y-8 animate-fade-in-up">
                         <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-white text-xs font-bold tracking-[0.1em]">
                             <CheckCircle2 size={14} className="text-rose-300" />
-                            회원가입 없이 바로 제작 가능
+                            모바일 청첩장 · 회원가입 없이 바로 제작
                         </div>
                         <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-[1.1] drop-shadow-2xl">
-                            가장 아름다운 약속, <br />
-                            <span className="font-light italic text-rose-50 underline underline-offset-[12px] decoration-white/30">번거로움 없이</span>
+                            무료 <span className="font-semibold">모바일 청첩장</span> <br />
+                            <span className="font-light italic text-rose-50 underline underline-offset-[12px] decoration-white/30">가장 아름다운 약속을 담아</span>
                         </h1>
                         <p className="text-base md:text-xl text-white/90 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-lg">
                             지저분한 광고와 <b>불필요한 가입 절차</b>는 모두 걷어내고<br className="hidden md:block"/>
