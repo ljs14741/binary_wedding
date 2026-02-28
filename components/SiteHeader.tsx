@@ -7,12 +7,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Coffee, Search, MessageCircle, X, Heart, Menu } from 'lucide-react';
 
 /** QR 코드와 동일한 후원 URL (카카오페이 등). 설정 시 모바일에서 '바로 후원하기' 버튼으로 사용 */
-const DONATE_LINK = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_DONATE_URL ?? "" : "";
+const DONATE_LINK = process.env.NEXT_PUBLIC_DONATE_URL ?? "https://qr.kakaopay.com/Ej9JnRsvn";
+
+/** 후원 계좌 (모바일에서 QR 스캔이 어려운 케이스 대응) */
+const DONATE_ACCOUNT = {
+    bank: "국민은행",
+    numberDisplay: "204202-04-331256",
+    numberCopy: "20420204331256", // 하이픈 없이 복사
+    owner: "이진수",
+};
 
 export default function SiteHeader() {
     const [isDonateOpen, setIsDonateOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const KAKAO_CHAT_URL = "https://pf.kakao.com/_xdVEhX/chat";
 
     // 메인 화면 '정말 무료인가요?' 모달에서 후원하기 클릭 시 열림
@@ -29,6 +38,17 @@ export default function SiteHeader() {
         window.addEventListener("resize", check);
         return () => window.removeEventListener("resize", check);
     }, []);
+
+    const copyDonateAccount = async () => {
+        try {
+            await navigator.clipboard.writeText(DONATE_ACCOUNT.numberCopy);
+            setIsCopied(true);
+            window.setTimeout(() => setIsCopied(false), 1200);
+        } catch {
+            // clipboard 권한이 막힌 환경 대비
+            window.prompt("아래 계좌번호를 복사해 주세요.", DONATE_ACCOUNT.numberCopy);
+        }
+    };
 
     return (
         <>
@@ -161,7 +181,7 @@ export default function SiteHeader() {
                                 </p>
                             </div>
 
-                            {/* 모바일: 바로 열기 링크 (NEXT_PUBLIC_DONATE_URL 설정 시) */}
+                            {/* 모바일: 카카오페이로 바로 이동 */}
                             {isMobile && DONATE_LINK && (
                                 <a
                                     href={DONATE_LINK}
@@ -169,21 +189,26 @@ export default function SiteHeader() {
                                     rel="noopener noreferrer"
                                     className="block w-full py-4 bg-[#FEE500] text-[#191919] font-black rounded-2xl text-center hover:opacity-90 active:scale-[0.98] transition-all"
                                 >
-                                    휴대폰에서 바로 후원하기
+                                    카카오페이로 후원하기
                                 </a>
                             )}
 
-                            {/* 모바일 + 링크 없음: 문의 유도 */}
-                            {isMobile && !DONATE_LINK && (
-                                <a
-                                    href={KAKAO_CHAT_URL}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block w-full py-3.5 bg-slate-100 text-slate-600 font-bold rounded-2xl text-center hover:bg-slate-200 transition-all text-sm"
-                                >
-                                    후원 방법 문의하기 (카카오톡)
-                                </a>
-                            )}
+                            {/* 계좌 안내 + 복사 (모바일에서 특히 유용) */}
+                            <div className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-5 text-left space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 mt-1">{DONATE_ACCOUNT.bank} {DONATE_ACCOUNT.numberDisplay}</p>
+                                        <p className="text-xs text-slate-500 mt-1">예금주: <b className="text-slate-700">{DONATE_ACCOUNT.owner}</b></p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={copyDonateAccount}
+                                        className="shrink-0 px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-100 active:scale-95 transition"
+                                    >
+                                        {isCopied ? "복사됨" : "복사"}
+                                    </button>
+                                </div>
+                            </div>
 
                             {/* PC 또는 QR 표시 */}
                             <div className={`bg-slate-50 p-6 rounded-3xl border border-slate-100 mx-auto ${isMobile && !DONATE_LINK ? "opacity-60" : ""}`}>

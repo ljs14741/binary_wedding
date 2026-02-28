@@ -9,9 +9,22 @@ import SiteFooter from "@/components/SiteFooter";
 import Script from "next/script";
 import { processImage } from "@/lib/image";
 
+const CLIENT_ID_KEY = "wedding_client_id";
+
+function getOrCreateClientId(): string {
+    if (typeof window === "undefined") return "";
+    let id = localStorage.getItem(CLIENT_ID_KEY);
+    if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem(CLIENT_ID_KEY, id);
+    }
+    return id;
+}
+
 export default function MakePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [clientId, setClientId] = useState("");
 
     // --------------------------------------------------------
     // 1. 메인 사진 상태 관리 (순서 변경, 추가, 삭제)
@@ -21,6 +34,11 @@ export default function MakePage() {
 
     const mainInputRef = useRef<HTMLInputElement>(null); // 폼 전송용
     const addMainInputRef = useRef<HTMLInputElement>(null); // 추가 버튼용
+
+    // 페이지 로드 시 고유 식별자(UUID) 생성·저장 (중복 생성 방지용)
+    useEffect(() => {
+        setClientId(getOrCreateClientId());
+    }, []);
 
     // React 상태 -> Input FileList 동기화
     useEffect(() => {
@@ -271,31 +289,41 @@ export default function MakePage() {
     };
 
     // --------------------------------------------------------
-    // 4. 폼 제출 검증
+    // 4. 폼 제출 (즉시 disabled + 로딩, UUID 포함, 중복 요청 방지)
     // --------------------------------------------------------
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        const formData = new FormData(e.currentTarget);
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        const form = e.currentTarget;
+        const formData = new FormData(form);
         const address = formData.get("location_address") as string;
 
         if (!address || address.trim() === "") {
-            e.preventDefault();
             toast("주소를 입력해주세요. 주소 검색 버튼을 클릭하여 선택해야 합니다.");
-            // 해당 섹션으로 스크롤 이동 (UX 배려)
-            document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: "smooth", block: "center" });
             return;
         }
-
         if (mainFiles.length < 3) {
-            e.preventDefault();
             toast(`메인 슬라이드 사진은 3장이 필수입니다.\n(현재 ${mainFiles.length}장)`);
             return;
         }
         if (galleryFiles.length < 1) {
-            e.preventDefault();
             toast("웨딩 갤러리 사진은 최소 1장이 필수입니다.");
             return;
         }
+
         setLoading(true);
+        const id = clientId || getOrCreateClientId();
+        if (!id) setClientId(getOrCreateClientId());
+        formData.set("_clientId", id);
+
+        try {
+            await createInvitation(formData);
+        } catch (err) {
+            if (err && typeof err === "object" && (err as { digest?: string }).digest === "NEXT_REDIRECT") throw err;
+            setLoading(false);
+            toast(err instanceof Error ? err.message : "청첩장 생성에 실패했습니다.");
+        }
     };
 
     // 메모리 정리
@@ -320,7 +348,7 @@ export default function MakePage() {
                         <p className="text-slate-500 text-sm md:text-base font-medium">테스트를 위해 <span className="text-rose-500 font-bold">샘플 데이터가 자동 입력</span>되어 있습니다.</p>
                     </div>
 
-                    <form action={createInvitation} className="space-y-10" onSubmit={handleSubmit}>
+                    <form className="space-y-10" onSubmit={handleSubmit}>
 
                         {/* 신랑 정보 */}
                         <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
@@ -656,21 +684,42 @@ export default function MakePage() {
                             </div>
                         </section>
 
-                        {/* 비밀번호 설정 */}
-                        <section className="bg-slate-900 p-8 md:p-10 rounded-[2.5rem] shadow-xl text-white">
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-3 border-b border-slate-700 pb-4">
-                                <span className="w-10 h-10 rounded-2xl bg-slate-800 text-yellow-400 flex items-center justify-center shadow-sm">🔒</span>
+                        {/* 비밀번호 설정 + 만들기 완료 (한 카드로 통일) */}
+                        <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
+                            <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
+                                <span className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">🔒</span>
                                 <span className="flex-1">비밀번호 설정 <span className="text-xs font-normal text-slate-400 ml-2">(필수)</span></span>
                             </h3>
-                            <div className="space-y-4">
-                                <p className="text-sm text-slate-300 leading-relaxed">청첩장 내용을 <b>수정하거나 삭제할 때</b> 필요한 비밀번호입니다.<br/>숫자 4~6자리로 입력해 주세요.</p>
-                                <div className="max-w-xs relative"><input name="password" type="password" maxLength={6} minLength={4} placeholder="예: 1234" required className="w-full px-6 py-4 rounded-2xl border border-slate-700 bg-slate-800 text-white text-lg tracking-widest focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-all placeholder:text-slate-600 font-bold text-center"/></div>
+                            <p className="text-sm text-slate-500 leading-relaxed mb-6">청첩장 내용을 <b className="text-slate-700">수정하거나 삭제할 때</b> 필요한 비밀번호입니다. 숫자 4~6자리로 입력해 주세요.</p>
+                            <div className="mb-8">
+                                <input
+                                    name="password"
+                                    type="password"
+                                    maxLength={6}
+                                    minLength={4}
+                                    placeholder="예: 1234"
+                                    required
+                                    className="w-full max-w-[200px] mx-auto block px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 text-center text-lg tracking-[0.4em] font-semibold placeholder:text-slate-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none transition-all"
+                                />
                             </div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-5 bg-rose-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-rose-900/20 hover:bg-rose-800 active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:bg-rose-700 flex justify-center items-center gap-3"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        생성 중입니다...
+                                    </>
+                                ) : (
+                                    <>
+                                        청첩장 만들기 완료
+                                        <ChevronRight size={20} />
+                                    </>
+                                )}
+                            </button>
                         </section>
-
-                        <div className="pt-6">
-                            <button type="submit" disabled={loading} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-bold text-xl shadow-2xl shadow-slate-900/30 hover:bg-slate-800 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3">{loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> 생성 중입니다...</> : <>청첩장 만들기 완료 <ChevronRight size={20}/></>}</button>
-                        </div>
                     </form>
                 </div>
             </div>

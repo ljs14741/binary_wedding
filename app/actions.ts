@@ -35,6 +35,26 @@ function validateRequiredFields(data: {
     if (errors.length > 0) throw new Error(`필수 입력 항목을 확인해 주세요: ${errors.join(", ")}`);
 }
 
+/** 청첩장 생성 중복 요청 차단: clientId + 신랑/신부/예식일 조합으로 짧은 시간 내 동일 요청 거부 */
+const CREATE_DEDUPE_WINDOW_MS = 15_000;
+const createDedupeStore = new Map<string, number>();
+
+function checkCreateDedupe(clientId: string, groom_name: string, bride_name: string, wedding_date_str: string): void {
+    const key = `create:${clientId}:${String(groom_name).trim()}:${String(bride_name).trim()}:${String(wedding_date_str).trim()}`;
+    const now = Date.now();
+    const last = createDedupeStore.get(key);
+    if (last != null && now - last < CREATE_DEDUPE_WINDOW_MS) {
+        throw new Error("잠시 전에 동일한 요청이 처리되었습니다. 중복 생성이 방지되었습니다.");
+    }
+    createDedupeStore.set(key, now);
+    // 오래된 항목 정리 (60초 초과)
+    if (createDedupeStore.size > 500) {
+        for (const [k, t] of createDedupeStore.entries()) {
+            if (now - t > 60_000) createDedupeStore.delete(k);
+        }
+    }
+}
+
 // ----------------------------------------------------------------------
 // 1. 내 청첩장 조회 (로그인/관리 페이지용)
 // ----------------------------------------------------------------------
@@ -92,6 +112,14 @@ export async function createInvitation(formData: FormData) {
     const { limited, message: limitMsg } = await checkRateLimit("createInvitation", ip);
     if (limited) throw new Error(limitMsg ?? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.");
 
+    const _clientId = (formData.get("_clientId") as string) ?? "";
+    const groom_name = (formData.get("groom_name") as string) ?? "";
+    const bride_name = (formData.get("bride_name") as string) ?? "";
+    const wedding_date_str = (formData.get("wedding_date") as string) ?? "";
+    if (_clientId) {
+        checkCreateDedupe(_clientId, groom_name, bride_name, wedding_date_str);
+    }
+
     const mainFiles = formData.getAll("mainImages") as File[];
     const galleryFiles = formData.getAll("galleryImages") as File[];
 
@@ -108,22 +136,19 @@ export async function createInvitation(formData: FormData) {
     }
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
-    // 3. 텍스트 데이터 추출 및 검증
-    const groom_name = formData.get("groom_name") as string;
+    // 3. 텍스트 데이터 추출 및 검증 (groom_name, bride_name, wedding_date_str는 상단 dedupe에서 이미 추출)
     const groom_contact = formData.get("groom_contact") as string;
     const groom_father = formData.get("groom_father") as string;
     const groom_father_contact = formData.get("groom_father_contact") as string;
     const groom_mother = formData.get("groom_mother") as string;
     const groom_mother_contact = formData.get("groom_mother_contact") as string;
 
-    const bride_name = formData.get("bride_name") as string;
     const bride_contact = formData.get("bride_contact") as string;
     const bride_father = formData.get("bride_father") as string;
     const bride_father_contact = formData.get("bride_father_contact") as string;
     const bride_mother = formData.get("bride_mother") as string;
     const bride_mother_contact = formData.get("bride_mother_contact") as string;
 
-    const wedding_date_str = formData.get("wedding_date") as string;
     const location_name = formData.get("location_name") as string;
     const location_detail = formData.get("location_detail") as string;
     const location_address = formData.get("location_address") as string;
