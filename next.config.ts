@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
     output: "standalone",
     images: {
         unoptimized: true,
+        localPatterns: [{ pathname: "/uploads/**" }],
     },
     /* config options here */
 };

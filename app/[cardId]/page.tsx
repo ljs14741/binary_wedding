@@ -131,7 +131,7 @@ export default async function CardPage({ params }: PageProps) {
         message: rawData.welcome_msg || "",
 
         // [중요] 배열로 넘겨줍니다.
-        mainImages: mainImages,
+        mainImages,
         middleImage: rawData.middle_photo_url || "",
         gallery: rawData.invitation_photos.map(p => p.photo_url),
 

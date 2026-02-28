@@ -29,11 +29,44 @@ export default function MakePage() {
     // --------------------------------------------------------
     // 1. 메인 사진 상태 관리 (순서 변경, 추가, 삭제)
     // --------------------------------------------------------
+    const [showPostcode, setShowPostcode] = useState(false);
     const [mainFiles, setMainFiles] = useState<File[]>([]);
     const [mainPreviews, setMainPreviews] = useState<string[]>([]);
 
     const mainInputRef = useRef<HTMLInputElement>(null); // 폼 전송용
     const addMainInputRef = useRef<HTMLInputElement>(null); // 추가 버튼용
+    const postcodeWrapRef = useRef<HTMLDivElement>(null);
+
+    // 주소 검색 열기 (embed 모드: 모바일/카카오톡 WebView에서 window.open 대신 사용 → 카카오톡 채널로 튕기는 현상 방지)
+    const openPostcode = () => {
+        const Daum = (window as any).daum;
+        if (!Daum?.Postcode) {
+            toast("주소 검색 스크립트를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+        setShowPostcode(true);
+    };
+
+    // showPostcode true 시 DOM 반영 후 embed 실행
+    useEffect(() => {
+        if (!showPostcode) return;
+        const el = postcodeWrapRef.current;
+        const Daum = (window as any).daum;
+        if (!el || !Daum?.Postcode) return;
+        new Daum.Postcode({
+            oncomplete(data: any) {
+                const fullAddr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+                const input = document.getElementsByName("location_address")[0] as HTMLInputElement;
+                if (input) input.value = fullAddr;
+                setShowPostcode(false);
+            },
+            onresize(size: { height: number }) {
+                el.style.height = size.height + "px";
+            },
+            width: "100%",
+            height: "100%",
+        }).embed(el);
+    }, [showPostcode]);
 
     // 페이지 로드 시 고유 식별자(UUID) 생성·저장 (중복 생성 방지용)
     useEffect(() => {
@@ -320,9 +353,16 @@ export default function MakePage() {
         try {
             await createInvitation(formData);
         } catch (err) {
-            if (err && typeof err === "object" && (err as { digest?: string }).digest === "NEXT_REDIRECT") throw err;
+            // redirect() 성공 시 Next.js가 던지는 신호 — 토스트 노출 금지, 그대로 rethrow
+            const digest = err && typeof err === "object" ? (err as { digest?: string }).digest : undefined;
+            const msg = err instanceof Error ? err.message : String(err);
+            if (digest === "NEXT_REDIRECT" || msg === "NEXT_REDIRECT") throw err;
+
             setLoading(false);
-            toast(err instanceof Error ? err.message : "청첩장 생성에 실패했습니다.");
+            const safeMsg = (msg && msg.trim().length > 3 && !/^(fail|error|failed|NEXT_REDIRECT)$/i.test(msg.trim()))
+                ? msg
+                : "청첩장 생성에 실패했습니다. 네트워크 상태를 확인하고 잠시 후 다시 시도해 주세요.";
+            toast(safeMsg);
         }
     };
 
@@ -339,6 +379,14 @@ export default function MakePage() {
     return (
         <div className="min-h-screen bg-[#FDFCFB] font-sans selection:bg-rose-100 flex flex-col">
             <SiteHeader />
+
+            {/* 주소 검색 레이어 (embed 모드) - 모바일/카카오톡에서 window.open → 카카오톡 채널로 튕기는 현상 방지 */}
+            {showPostcode && (
+                <div className="fixed inset-0 z-[200] bg-slate-900/40 flex flex-col justify-end">
+                    <div ref={postcodeWrapRef} className="bg-white rounded-t-3xl shadow-2xl overflow-hidden min-h-[400px]" style={{ height: "70vh" }} />
+                    <button type="button" onClick={() => setShowPostcode(false)} className="py-4 bg-white border-t border-slate-200 text-slate-600 font-bold text-sm">닫기</button>
+                </div>
+            )}
 
             <div className="flex-1 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto">
@@ -426,14 +474,7 @@ export default function MakePage() {
                                             name="location_address"
                                             readOnly
                                             placeholder="클릭하여 주소를 검색하세요"
-                                            onClick={() => {
-                                                new (window as any).daum.Postcode({
-                                                    oncomplete: function (data: any) {
-                                                        const fullAddr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
-                                                        (document.getElementsByName("location_address")[0] as HTMLInputElement).value = fullAddr;
-                                                    }
-                                                }).open();
-                                            }}
+                                            onClick={openPostcode}
                                             className="w-full px-5 py-4 rounded-2xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-white focus:ring-1 focus:ring-slate-800 transition-all outline-none text-sm font-medium text-slate-800"
                                         />
                                         {/* 스크립트 로드 - 폼 내부나 하단에 배치 */}
