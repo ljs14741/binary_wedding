@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { Noto_Serif_KR } from "next/font/google";
@@ -270,12 +269,12 @@ export default function Type1({ data }: Type1Props) {
                                     transition={{duration: 1.2}}
                                     className="absolute inset-0"
                                 >
-                                    <Image
+                                    {/* img 사용: Next.js Image는 /_next/image로 요청 → 400, Caddy가 /uploads/ 직접 서빙하므로 img로 요청 */}
+                                    <img
                                         src={data.mainImages[currentMainIdx]}
                                         alt="메인 웨딩 사진"
-                                        fill
-                                        className="object-cover brightness-95"
-                                        priority
+                                        className="absolute inset-0 w-full h-full object-cover brightness-95"
+                                        fetchPriority="high"
                                     />
                                 </motion.div>
                             ) : (
@@ -320,7 +319,7 @@ export default function Type1({ data }: Type1Props) {
                         <FadeIn delay={0.2}>
                             <div
                                 className="relative aspect-[4/5] w-full rounded-[2.5rem] overflow-hidden mb-16 shadow-xl shadow-rose-50/50">
-                                <Image src={data.middleImage} alt="서브 사진" fill className="object-cover"/>
+                                <img src={data.middleImage} alt="서브 사진" className="absolute inset-0 w-full h-full object-cover"/>
                             </div>
                         </FadeIn>
                     )}
@@ -489,9 +488,9 @@ export default function Type1({ data }: Type1Props) {
                                             transition={{duration: 0.5}}
                                             className="absolute inset-0"
                                         >
-                                            <Image src={data.gallery[currentGalleryIdx]}
-                                                   alt={`갤러리 사진 ${currentGalleryIdx + 1}`} fill
-                                                   className="object-cover"/>
+                                            <img src={data.gallery[currentGalleryIdx]}
+                                                 alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
+                                                 className="absolute inset-0 w-full h-full object-cover"/>
                                         </motion.div>
                                     </AnimatePresence>
                                     <button onClick={(e) => {
@@ -515,7 +514,7 @@ export default function Type1({ data }: Type1Props) {
                                     {data.gallery.slice(0, isGalleryExpanded ? undefined : 4).map((img, idx) => (
                                         <button key={idx} onClick={() => selectGallery(idx)}
                                                 className={`relative aspect-square rounded-xl overflow-hidden shadow-sm transition-all ${currentGalleryIdx === idx ? 'ring-2 ring-rose-300 opacity-100' : 'opacity-60 hover:opacity-100'}`}>
-                                            <Image src={img} alt={`썸네일 ${idx + 1}`} fill className="object-cover"/>
+                                            <img src={img} alt={`썸네일 ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover"/>
                                         </button>
                                     ))}
                                 </div>
