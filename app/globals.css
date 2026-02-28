@@ -26,6 +26,10 @@
   }
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -33,6 +37,7 @@ body {
   /* 텍스트 가독성을 위해 안티앨리어싱 추가 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* 애니메이션 코드 */

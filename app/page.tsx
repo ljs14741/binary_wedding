@@ -77,7 +77,7 @@ export default function Home() {
                 </section>
 
                 {/* 3. 샘플 미리보기 섹션 */}
-                <section id="samples" className="py-32 bg-white px-6">
+                <section id="samples" className="py-20 sm:py-32 bg-white px-4 sm:px-6 overflow-x-hidden">
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-20 space-y-4">
                             <span className="text-rose-500 text-sm font-black tracking-widest uppercase italic">Theme Gallery</span>
@@ -127,7 +127,7 @@ export default function Home() {
                 </section>
 
                 {/* 4. 특장점 섹션 */}
-                <section className="py-32 px-6 bg-rose-50/30">
+                <section className="py-20 sm:py-32 px-4 sm:px-6 bg-rose-50/30 overflow-x-hidden">
                     <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
                         <div className="space-y-6 p-10 bg-white rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
                             <div className="text-5xl">✨</div>
@@ -148,7 +148,7 @@ export default function Home() {
                 </section>
 
                 {/* 5. FAQ 섹션 */}
-                <section id="faq" className="py-32 px-6 bg-[#F8F7F5]">
+                <section id="faq" className="py-20 sm:py-32 px-4 sm:px-6 bg-[#F8F7F5] overflow-x-hidden">
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center mb-16 space-y-4">
                             <span className="text-slate-400 text-xs font-bold tracking-widest uppercase border border-slate-200 px-3 py-1 rounded-full bg-white">Q&A</span>
@@ -163,11 +163,11 @@ export default function Home() {
                                 { q: "제작 후 보존 기간이 있나요?", a: "예식일로부터 1개월이 지나면 자동으로 삭제됩니다. 소중한 사진은 미리 백업해 두세요." }
                             ].map((item, idx) => (
                                 <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-                                    <button onClick={() => toggleFaq(idx)} className="w-full px-8 py-6 flex justify-between items-center text-left hover:bg-slate-50 transition-colors">
-                                        <span className="font-bold text-slate-800 text-lg flex gap-3"><span className="text-rose-500">Q.</span> {item.q}</span>
-                                        <ChevronDown className={`text-slate-400 transition-transform duration-300 ${openFaq === idx ? 'rotate-180' : ''}`} />
+                                    <button onClick={() => toggleFaq(idx)} className="w-full px-6 sm:px-8 py-5 sm:py-6 flex justify-between items-start sm:items-center gap-3 text-left hover:bg-slate-50 transition-colors">
+                                        <span className="font-bold text-slate-800 text-base sm:text-lg flex gap-2 sm:gap-3 min-w-0 flex-1"><span className="text-rose-500 shrink-0">Q.</span> <span className="break-words">{item.q}</span></span>
+                                        <ChevronDown className={`text-slate-400 shrink-0 transition-transform duration-300 ${openFaq === idx ? 'rotate-180' : ''}`} size={20} />
                                     </button>
-                                    <div className={`px-8 transition-all duration-300 overflow-hidden ${openFaq === idx ? 'max-h-40 py-6 border-t border-slate-50' : 'max-h-0'}`}>
+                                    <div className={`px-6 sm:px-8 transition-all duration-300 overflow-hidden ${openFaq === idx ? 'max-h-64 py-6 border-t border-slate-50 overflow-y-auto' : 'max-h-0'}`}>
                                         <p className="text-slate-600 leading-relaxed text-sm">{item.a}</p>
                                     </div>
                                 </div>
@@ -177,7 +177,7 @@ export default function Home() {
                 </section>
 
                 {/* 6. 후원 및 문의 섹션 */}
-                <section id="donate" className="bg-white py-32 text-center px-6 relative overflow-hidden">
+                <section id="donate" className="bg-white py-20 sm:py-32 text-center px-4 sm:px-6 relative overflow-hidden">
                     <div className="max-w-3xl mx-auto space-y-10 relative z-10 font-medium">
                         <div className="inline-block px-4 py-1.5 bg-slate-100 rounded-full text-slate-500 text-xs font-bold tracking-widest uppercase italic mb-4">Developer Story</div>
                         <h2 className="text-4xl md:text-5xl font-serif text-slate-900 tracking-tight leading-tight">
@@ -203,9 +203,9 @@ export default function Home() {
             {/* 7. 푸터 컴포넌트 사용 */}
             <SiteFooter />
 
-            {/* 8. 접속 시 안내 모달 (기존 유지) */}
+            {/* 8. 접속 시 안내 모달 (모바일: 화면에 맞게 중앙 하단 배치) */}
             {isWelcomeOpen && (
-                <div className="fixed bottom-8 right-8 z-[200] max-w-[320px] animate-fade-in-up">
+                <div className="fixed left-4 right-4 bottom-4 sm:left-auto sm:right-8 sm:bottom-8 z-[200] max-w-[320px] sm:max-w-[320px] mx-auto sm:mx-0 animate-fade-in-up">
                     <div className="bg-white rounded-[2rem] shadow-2xl border border-rose-50 p-8 relative overflow-hidden group">
                         <button
                             onClick={() => setIsWelcomeOpen(false)}

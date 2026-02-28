@@ -423,17 +423,17 @@ export default function Type1({ data }: Type1Props) {
                                 className="text-[11px] text-gray-500 font-bold">T맵</span></a>
                         </div>
                         <div className="space-y-8 text-[14px] border-t border-gray-50 pt-10 text-left">
-                            {data.transport.subway && <div className="flex gap-5"><span
-                                className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">지하철</span>
-                                <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm whitespace-pre-line">{data.transport.subway}</p>
+                            {data.transport.subway && <div className="flex gap-4 sm:gap-5 min-w-0"><span
+                                className="shrink-0 w-12 sm:w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">지하철</span>
+                                <p className="text-gray-500 font-light flex-1 min-w-0 leading-relaxed text-sm whitespace-pre-line break-words">{data.transport.subway}</p>
                             </div>}
-                            {data.transport.bus && <div className="flex gap-5"><span
-                                className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">버스</span>
-                                <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm whitespace-pre-line">{data.transport.bus}</p>
+                            {data.transport.bus && <div className="flex gap-4 sm:gap-5 min-w-0"><span
+                                className="shrink-0 w-12 sm:w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">버스</span>
+                                <p className="text-gray-500 font-light flex-1 min-w-0 leading-relaxed text-sm whitespace-pre-line break-words">{data.transport.bus}</p>
                             </div>}
-                            {data.transport.parking && <div className="flex gap-5"><span
-                                className="shrink-0 w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">주차</span>
-                                <p className="text-gray-500 font-light flex-1 leading-relaxed text-sm whitespace-pre-line">{data.transport.parking}</p>
+                            {data.transport.parking && <div className="flex gap-4 sm:gap-5 min-w-0"><span
+                                className="shrink-0 w-12 sm:w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">주차</span>
+                                <p className="text-gray-500 font-light flex-1 min-w-0 leading-relaxed text-sm whitespace-pre-line break-words">{data.transport.parking}</p>
                             </div>}
                         </div>
                     </FadeIn>

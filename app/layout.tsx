@@ -26,6 +26,13 @@ const pinyon = Pinyon_Script({
 
 const baseUrl = getBaseUrl();
 
+export const viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+};
+
 export const metadata: Metadata = {
     metadataBase: new URL(baseUrl),
     title: {

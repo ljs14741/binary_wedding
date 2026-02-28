@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from "framer-motion";
-import { Coffee, Search, MessageCircle, X, Heart } from 'lucide-react';
+import { motion, AnimatePresence } from "framer-motion";
+import { Coffee, Search, MessageCircle, X, Heart, Menu } from 'lucide-react';
 
 export default function SiteHeader() {
     const [isDonateOpen, setIsDonateOpen] = useState(false);
-    const KAKAO_CHAT_URL = "http://pf.kakao.com/_xdVEhX/chat";
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const KAKAO_CHAT_URL = "https://pf.kakao.com/_xdVEhX/chat";
 
     // 메인 화면 '정말 무료인가요?' 모달에서 후원하기 클릭 시 열림
     useEffect(() => {
@@ -20,47 +21,82 @@ export default function SiteHeader() {
     return (
         <>
             {/* 1. 헤더 본문 */}
-            <header className="fixed top-0 w-full z-[100] bg-white/90 backdrop-blur-md py-4 px-6 flex justify-between items-center border-b border-rose-50 shadow-sm transition-all">
-                <Link href="/" className="flex flex-col group cursor-pointer">
-                    <span className="text-xl font-serif font-black tracking-tighter text-slate-900 group-hover:text-rose-600 transition-colors">
+            <header className="fixed top-0 w-full z-[100] bg-white/90 backdrop-blur-md py-3 sm:py-4 px-4 sm:px-6 flex justify-between items-center border-b border-rose-50 shadow-sm transition-all">
+                <Link href="/" className="flex flex-col group cursor-pointer min-w-0">
+                    <span className="text-base sm:text-xl font-serif font-black tracking-tighter text-slate-900 group-hover:text-rose-600 transition-colors truncate">
                         Binary Wedding
                     </span>
-                    <span className="text-[10px] text-rose-500 font-bold tracking-widest leading-none mt-1">로그인 · 광고 없는 무료 청첩장</span>
+                    <span className="text-[9px] sm:text-[10px] text-rose-500 font-bold tracking-widest leading-none mt-1 hidden sm:block">로그인 · 광고 없는 무료 청첩장</span>
                 </Link>
-                <nav className="flex gap-4 md:gap-6 text-[13px] md:text-[14px] font-bold text-slate-700 items-center">
-
+                <nav className="flex gap-2 sm:gap-4 md:gap-6 text-[12px] sm:text-[13px] md:text-[14px] font-bold text-slate-700 items-center shrink-0">
+                    {/* 데스크톱 네비 */}
                     <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
                         <MessageCircle size={16} /> 문의하기
                     </a>
-
                     <button onClick={() => setIsDonateOpen(true)} className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
                         <Coffee size={16} /> 후원하기
                     </button>
-
                     <div className="w-px h-3 bg-slate-300 hidden lg:block mx-1"></div>
-
-                    {/* 메인 페이지의 ID로 이동하려면 절대 경로(/)를 붙여줘야 다른 페이지에서도 작동함 */}
                     <Link href="/#samples" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
                         샘플 보기
                     </Link>
-
                     <Link href="/reviews" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
                         이용후기
                     </Link>
-
                     <Link href="/#faq" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
                         자주 묻는 질문
                     </Link>
 
-                    <Link href="/check" className="hover:text-rose-600 transition-colors flex items-center gap-1">
-                        <Search size={16} /> <span className="hidden md:inline">내 청첩장</span> 수정
+                    <Link href="/check" className="hover:text-rose-600 transition-colors flex items-center gap-1 py-2 px-2 sm:px-0">
+                        <Search size={16} className="shrink-0" /> <span className="hidden md:inline">내 청첩장</span> 수정
                     </Link>
 
-                    <Link href="/make" className="bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md active:scale-95">
+                    <Link href="/make" className="bg-slate-900 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md active:scale-95 text-sm sm:text-base shrink-0">
                         만들기
                     </Link>
+
+                    {/* 모바일 햄버거 버튼 (md 미만) */}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="md:hidden p-2 -mr-2 text-slate-600 hover:text-rose-600 transition-colors"
+                        aria-label="메뉴 열기"
+                    >
+                        <Menu size={22} />
+                    </button>
                 </nav>
             </header>
+
+            {/* 모바일 메뉴 드로어 (md 미만) */}
+            <AnimatePresence>
+            {isMobileMenuOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm md:hidden"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        aria-hidden="true"
+                    />
+                    <motion.div
+                        initial={{ x: "100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        className="fixed top-0 right-0 bottom-0 w-[min(280px,85vw)] z-[160] bg-white shadow-2xl md:hidden flex flex-col pt-20 px-6 pb-8 overflow-y-auto"
+                    >
+                        <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={24} /></button>
+                        <nav className="flex flex-col gap-1">
+                            <Link href="/#samples" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">샘플 보기</Link>
+                            <Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">이용후기</Link>
+                            <Link href="/#faq" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">자주 묻는 질문</Link>
+                            <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600 flex items-center gap-2"><MessageCircle size={18} /> 문의하기</a>
+                            <button onClick={() => { setIsMobileMenuOpen(false); setIsDonateOpen(true); }} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600 flex items-center gap-2 text-left w-full"><Coffee size={18} /> 후원하기</button>
+                        </nav>
+                    </motion.div>
+                </>
+            )}
+            </AnimatePresence>
 
             {/* 2. 후원 모달 (헤더에 포함시킴) */}
             {isDonateOpen && (
