@@ -133,6 +133,7 @@ wedding/
 |------|------|------|
 | `DATABASE_URL` | ✅ | MySQL 연결 문자열 |
 | `NEXT_PUBLIC_SITE_URL` | ❌ | 사이트 기본 URL (SEO, OG, canonical용) |
+| `NEXT_PUBLIC_DONATE_URL` | ❌ | 후원 링크 (QR과 동일 URL). 설정 시 모바일에서 "바로 후원하기" 버튼 노출 |
 | `VERCEL_URL` | ❌ | Vercel 배포 시 자동 설정 (URL 우선 사용) |
 
 ---

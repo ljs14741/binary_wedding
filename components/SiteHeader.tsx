@@ -6,9 +6,13 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from "framer-motion";
 import { Coffee, Search, MessageCircle, X, Heart, Menu } from 'lucide-react';
 
+/** QR 코드와 동일한 후원 URL (카카오페이 등). 설정 시 모바일에서 '바로 후원하기' 버튼으로 사용 */
+const DONATE_LINK = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_DONATE_URL ?? "" : "";
+
 export default function SiteHeader() {
     const [isDonateOpen, setIsDonateOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const KAKAO_CHAT_URL = "https://pf.kakao.com/_xdVEhX/chat";
 
     // 메인 화면 '정말 무료인가요?' 모달에서 후원하기 클릭 시 열림
@@ -16,6 +20,14 @@ export default function SiteHeader() {
         const handler = () => setIsDonateOpen(true);
         window.addEventListener('openDonateModal', handler);
         return () => window.removeEventListener('openDonateModal', handler);
+    }, []);
+
+    // 휴대폰 여부 (모바일에서는 QR 스캔 불가 → 바로 열기 링크 노출용)
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
     }, []);
 
     return (
@@ -134,13 +146,47 @@ export default function SiteHeader() {
                             <div>
                                 <h4 className="text-2xl font-serif font-bold text-slate-900 mb-2">개발자에게 커피 쏘기</h4>
                                 <p className="text-slate-500 text-sm">
-                                    카카오톡 카메라로 QR을 스캔해주세요.<br/>
+                                    {isMobile ? (
+                                        DONATE_LINK ? (
+                                            <>휴대폰에서는 아래 버튼을 누르면 바로 후원할 수 있어요.</>
+                                        ) : (
+                                            <>PC에서 이 페이지를 열고, 휴대폰 카메라로 QR을 스캔해 주세요.<br/>또는 채팅 문의 시 후원 링크를 보내 드려요.</>
+                                        )
+                                    ) : (
+                                        <>카카오톡 카메라로 QR을 스캔해주세요.</>
+                                    )}
+                                    <br/>
                                     보내주신 후원은 서버비에 소중히 사용됩니다.<br/>
                                     <span className="font-bold text-rose-500">사실 치킨 먹고 싶어요!! 🍗</span>
                                 </p>
                             </div>
 
-                            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mx-auto">
+                            {/* 모바일: 바로 열기 링크 (NEXT_PUBLIC_DONATE_URL 설정 시) */}
+                            {isMobile && DONATE_LINK && (
+                                <a
+                                    href={DONATE_LINK}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-full py-4 bg-[#FEE500] text-[#191919] font-black rounded-2xl text-center hover:opacity-90 active:scale-[0.98] transition-all"
+                                >
+                                    휴대폰에서 바로 후원하기
+                                </a>
+                            )}
+
+                            {/* 모바일 + 링크 없음: 문의 유도 */}
+                            {isMobile && !DONATE_LINK && (
+                                <a
+                                    href={KAKAO_CHAT_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-full py-3.5 bg-slate-100 text-slate-600 font-bold rounded-2xl text-center hover:bg-slate-200 transition-all text-sm"
+                                >
+                                    후원 방법 문의하기 (카카오톡)
+                                </a>
+                            )}
+
+                            {/* PC 또는 QR 표시 */}
+                            <div className={`bg-slate-50 p-6 rounded-3xl border border-slate-100 mx-auto ${isMobile && !DONATE_LINK ? "opacity-60" : ""}`}>
                                 <div className="relative w-48 h-48 mx-auto">
                                     <Image
                                         src="/qrcode.jpg"
@@ -149,6 +195,9 @@ export default function SiteHeader() {
                                         className="object-contain rounded-xl"
                                     />
                                 </div>
+                                {isMobile && !DONATE_LINK && (
+                                    <p className="text-xs text-slate-400 mt-2">PC에서 열어 스캔해 주세요</p>
+                                )}
                             </div>
                         </div>
                     </motion.div>
