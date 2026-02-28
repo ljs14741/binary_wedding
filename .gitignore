@@ -45,3 +45,6 @@ next-env.d.ts
 # IntelliJ
 .idea
 *.iml
+
+# 업로드된 사용자 이미지 (커밋 제외)
+/public/uploads
