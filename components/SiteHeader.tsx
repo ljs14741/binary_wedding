@@ -69,7 +69,7 @@ export default function SiteHeader() {
                         <Coffee size={16} /> 후원하기
                     </button>
                     <div className="w-px h-3 bg-slate-300 hidden lg:block mx-1"></div>
-                    <Link href="/#samples" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
+                    <Link href="/#samples" className="hover:text-rose-600 transition-colors cursor-pointer flex items-center py-2 px-2 sm:px-0">
                         샘플 보기
                     </Link>
                     <Link href="/reviews" className="hover:text-rose-600 transition-colors cursor-pointer hidden md:block">
@@ -79,8 +79,8 @@ export default function SiteHeader() {
                         자주 묻는 질문
                     </Link>
 
-                    <Link href="/check" className="hover:text-rose-600 transition-colors flex items-center gap-1 py-2 px-2 sm:px-0">
-                        <Search size={16} className="shrink-0" /> <span className="hidden md:inline">내 청첩장</span> 수정
+                    <Link href="/check" className="hover:text-rose-600 transition-colors flex items-center gap-1 py-2 px-2 sm:px-0 hidden md:flex">
+                        <Search size={16} className="shrink-0" /> <span className="hidden lg:inline">내 청첩장</span> 수정
                     </Link>
 
                     <Link href="/make" className="bg-slate-900 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:bg-rose-600 transition-all shadow-md active:scale-95 text-sm sm:text-base shrink-0">
@@ -119,6 +119,7 @@ export default function SiteHeader() {
                     >
                         <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={24} /></button>
                         <nav className="flex flex-col gap-1">
+                            <Link href="/check" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600 flex items-center gap-2"><Search size={18} /> 내 청첩장 수정</Link>
                             <Link href="/#samples" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">샘플 보기</Link>
                             <Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">이용후기</Link>
                             <Link href="/#faq" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">자주 묻는 질문</Link>
