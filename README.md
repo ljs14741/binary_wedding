@@ -63,6 +63,10 @@ DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
 
 # 사이트 URL (선택, 미설정 시 기본값 사용)
 NEXT_PUBLIC_SITE_URL="https://wedding.binaryworld.kr"
+
+# 관리자 페이지 (선택, /admin 접근 시 필요)
+# 12자 이상의 비밀번호 또는 랜덤 문자열 (예: openssl rand -base64 32)
+ADMIN_SECRET="your-secure-admin-password"
 ```
 
 ### 3. 데이터베이스 마이그레이션
@@ -103,9 +107,11 @@ wedding/
 │   ├── reviews/          # 이용 후기
 │   ├── terms/            # 이용약관
 │   ├── privacy/          # 개인정보처리방침
+│   ├── admin/            # 관리자 대시보드 (통계, 청첩장 목록)
 │   ├── api/
 │   │   └── cron/         # 만료 청첩장 자동 삭제 등
-│   └── actions.ts        # Server Actions
+│   ├── actions.ts        # Server Actions
+│   └── actions-admin.ts  # 관리자 전용 Server Actions
 ├── components/
 │   ├── SiteHeader.tsx
 │   ├── SiteFooter.tsx
@@ -135,6 +141,7 @@ wedding/
 | `NEXT_PUBLIC_SITE_URL` | ❌ | 사이트 기본 URL (SEO, OG, canonical용) |
 | `NEXT_PUBLIC_DONATE_URL` | ❌ | 후원 링크 (QR과 동일 URL). 설정 시 모바일에서 "바로 후원하기" 버튼 노출 |
 | `VERCEL_URL` | ❌ | Vercel 배포 시 자동 설정 (URL 우선 사용) |
+| `ADMIN_SECRET` | ❌ | 관리자 페이지 (`/admin`) 로그인 비밀번호 (12자 이상 권장) |
 
 ---
 
