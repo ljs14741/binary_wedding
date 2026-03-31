@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Type1 from "@/components/Type1";
 import { getBaseUrl } from "@/lib/site";
+import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 import type { Metadata } from "next";
 
 // [중요] Next.js 15+ 에서는 params가 Promise 타입입니다.
@@ -26,16 +27,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!rawData) return { title: "청첩장" };
 
-    const title = `${rawData.groom_name} ♥ ${rawData.bride_name} 결혼합니다`;
-    const dateStr = rawData.wedding_date
-        ? new Date(rawData.wedding_date).toLocaleDateString("ko-KR", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              weekday: "long",
-          })
-        : "";
-    const description = `${dateStr}, ${rawData.location_name}에서 두 사람의 시작을 함께해 주세요.`;
+    const title = buildShareTitle(rawData.groom_name, rawData.bride_name);
+    const description = buildShareDescription(rawData.wedding_date, rawData.location_name);
     const baseUrl = getBaseUrl();
 
     // OG 이미지: 카톡 공유용 > 1:1 대표사진 > 메인 슬라이드 첫 장

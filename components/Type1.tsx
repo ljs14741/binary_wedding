@@ -13,6 +13,7 @@ import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from
 import { useToast } from "@/components/ui/ToastProvider";
 import { FlowerPetals } from "@/components/effects";
 import ReminderSection from "@/components/ReminderSection";
+import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -98,7 +99,6 @@ export default function Type1({ data }: Type1Props) {
     const weddingYear = weddingDate.getFullYear();
     const weddingMonth = weddingDate.getMonth();
     const weddingDay = weddingDate.getDate();
-    const weddingWeekdayKor = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'][weddingDate.getDay()];
     const weddingWeekdayShortEn = weddingDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
     const weddingWeekdayLongEn = weddingDate.toLocaleDateString("en-US", { weekday: "long" });
     const weddingTimeEn = weddingDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
@@ -179,8 +179,8 @@ export default function Type1({ data }: Type1Props) {
             window.Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
-                    title: `${data.groom.name} ♥ ${data.bride.name} 결혼합니다`,
-                    description: `${weddingYear}년 ${weddingMonth + 1}월 ${weddingDay}일 ${weddingWeekdayKor}, ${data.location}에서 두 사람의 시작을 함께해 주세요.`,
+                    title: buildShareTitle(data.groom.name, data.bride.name),
+                    description: buildShareDescription(weddingDate, data.location),
                     imageUrl,
                     link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
                 },
