@@ -54,10 +54,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         type: "website",
     };
     if (ogImageUrl) {
-        // 카톡 공유용(1200x630 권장) vs 1:1 대표사진 구분하여 크기 힌트
-        const isCustomOg = !!rawData.og_photo_url?.startsWith("/");
+        // 링크 공유도 카카오 버튼 공유와 맞추기 위해 1:1 비율 힌트로 통일
         openGraph.images = [
-            { url: ogImageUrl, width: 1200, height: isCustomOg ? 630 : 1200, alt: `${rawData.groom_name} ♥ ${rawData.bride_name} 결혼합니다` },
+            { url: ogImageUrl, width: 1200, height: 1200, alt: `${rawData.groom_name} ♥ ${rawData.bride_name} 결혼합니다` },
         ];
     }
 
