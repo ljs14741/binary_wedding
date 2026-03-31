@@ -34,8 +34,21 @@ export default function EditForm({ initialData }: EditFormProps) {
 
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+    const [galleryUploadedUrls, setGalleryUploadedUrls] = useState<string[]>([]);
+    const [isGalleryUploading, setIsGalleryUploading] = useState(false);
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const addGalleryInputRef = useRef<HTMLInputElement>(null);
+
+    const uploadGalleryImage = async (file: File): Promise<string> => {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/uploads/image", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok || !data?.success || !data?.url) {
+            throw new Error(data?.message || "갤러리 업로드에 실패했습니다.");
+        }
+        return data.url as string;
+    };
 
     // 기존 데이터 파싱
     const existingMainPhotos = initialData.main_photo_url ? JSON.parse(initialData.main_photo_url) : [];
@@ -47,18 +60,14 @@ export default function EditForm({ initialData }: EditFormProps) {
     const getAccount = (side: string) => initialData.accounts?.find((acc: any) => acc.side === side);
     const getInterview = (idx: number) => initialData.interviews?.[idx] || { question: "", answer: "" };
 
-    // ① 파일 동기화 (이미지_ce9b5d.png 에러 해결 버전)
+    // ① 파일 동기화 (메인만 유지, 갤러리는 사전 업로드 방식으로 변경)
     useEffect(() => {
-        const syncFiles = (ref: React.RefObject<HTMLInputElement | null>, files: File[]) => {
-            if (ref.current) {
-                const dt = new DataTransfer();
-                files.forEach(f => dt.items.add(f));
-                ref.current.files = dt.files;
-            }
-        };
-        syncFiles(mainInputRef, mainFiles);
-        syncFiles(galleryInputRef, galleryFiles);
-    }, [mainFiles, galleryFiles]);
+        if (mainInputRef.current) {
+            const dt = new DataTransfer();
+            mainFiles.forEach(f => dt.items.add(f));
+            mainInputRef.current.files = dt.files;
+        }
+    }, [mainFiles]);
 
     // --------------------------------------------------------
     // 2. 이미지 처리 핸들러 (리사이징 적용)
@@ -139,8 +148,17 @@ export default function EditForm({ initialData }: EditFormProps) {
         if (files.length > 20) {
             toast("갤러리는 최대 20장입니다. 처음 20장만 적용됩니다.");
         }
-        const processed = await Promise.all(Array.from(files).slice(0, 20).map(f => processImage(f)));
-        updateGalleryState(processed);
+        try {
+            setIsGalleryUploading(true);
+            const processed = await Promise.all(Array.from(files).slice(0, 20).map(f => processImage(f)));
+            const uploadedUrls = await Promise.all(processed.map(f => uploadGalleryImage(f)));
+            updateGalleryState(processed, uploadedUrls);
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : "이미지 처리 중 문제가 발생했습니다.";
+            toast(msg);
+        } finally {
+            setIsGalleryUploading(false);
+        }
     };
 
     const handleGalleryAppend = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,20 +173,26 @@ export default function EditForm({ initialData }: EditFormProps) {
         if (files.length > canAdd) {
             toast(`갤러리는 최대 20장입니다. ${canAdd}장만 추가됩니다.`);
         }
-        const toProcess = Array.from(files).slice(0, canAdd);
-        const processed = await Promise.all(toProcess.map(f => processImage(f)));
-        const updated = [...galleryFiles, ...processed];
-        updateGalleryState(updated);
-        if (galleryInputRef.current) {
-            const dt = new DataTransfer();
-            updated.forEach(f => dt.items.add(f));
-            galleryInputRef.current.files = dt.files;
+        try {
+            setIsGalleryUploading(true);
+            const toProcess = Array.from(files).slice(0, canAdd);
+            const processed = await Promise.all(toProcess.map(f => processImage(f)));
+            const uploadedUrls = await Promise.all(processed.map(f => uploadGalleryImage(f)));
+            const updatedFiles = [...galleryFiles, ...processed];
+            const updatedUrls = [...galleryUploadedUrls, ...uploadedUrls];
+            updateGalleryState(updatedFiles, updatedUrls);
+            e.target.value = "";
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : "이미지 처리 중 문제가 발생했습니다.";
+            toast(msg);
+        } finally {
+            setIsGalleryUploading(false);
         }
-        e.target.value = "";
     };
 
-    const updateGalleryState = (files: File[]) => {
+    const updateGalleryState = (files: File[], uploadedUrls: string[]) => {
         setGalleryFiles(files);
+        setGalleryUploadedUrls(uploadedUrls);
         galleryPreviews.forEach(u => URL.revokeObjectURL(u));
         setGalleryPreviews(files.map(f => URL.createObjectURL(f)));
     };
@@ -200,13 +224,24 @@ export default function EditForm({ initialData }: EditFormProps) {
         }
     };
 
-    const clearAllGalleryFiles = () => updateGalleryState([]);
+    const clearAllGalleryFiles = () => updateGalleryState([], []);
+
+    const removeGalleryFile = (idx: number) => updateGalleryState(
+        galleryFiles.filter((_, i) => i !== idx),
+        galleryUploadedUrls.filter((_, i) => i !== idx)
+    );
 
     const moveGalleryFile = (idx: number, dir: 'left'|'right') => {
         const newFiles = [...galleryFiles];
-        if (dir === 'left' && idx > 0) [newFiles[idx], newFiles[idx-1]] = [newFiles[idx-1], newFiles[idx]];
-        else if (dir === 'right' && idx < newFiles.length-1) [newFiles[idx], newFiles[idx+1]] = [newFiles[idx+1], newFiles[idx]];
-        updateGalleryState(newFiles);
+        const newUrls = [...galleryUploadedUrls];
+        if (dir === 'left' && idx > 0) {
+            [newFiles[idx], newFiles[idx-1]] = [newFiles[idx-1], newFiles[idx]];
+            [newUrls[idx], newUrls[idx-1]] = [newUrls[idx-1], newUrls[idx]];
+        } else if (dir === 'right' && idx < newFiles.length-1) {
+            [newFiles[idx], newFiles[idx+1]] = [newFiles[idx+1], newFiles[idx]];
+            [newUrls[idx], newUrls[idx+1]] = [newUrls[idx+1], newUrls[idx]];
+        }
+        updateGalleryState(newFiles, newUrls);
     };
 
     // --------------------------------------------------------
@@ -224,6 +259,11 @@ export default function EditForm({ initialData }: EditFormProps) {
         if (mainFiles.length > 0 && mainFiles.length < 3) {
             e.preventDefault();
             toast(`메인 사진 교체 시 3장을 모두 새로 등록해야 합니다. (현재 ${mainFiles.length}장)`);
+            return;
+        }
+        if (isGalleryUploading) {
+            e.preventDefault();
+            toast("갤러리 업로드가 진행 중입니다. 잠시만 기다려주세요.");
             return;
         }
         setLoading(true);
@@ -513,7 +553,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                             <img src={src} className="w-full h-full object-cover" alt="new gallery"/>
                                             <div className="absolute bottom-0 inset-x-0 bg-black/60 p-1 flex justify-between opacity-0 group-hover/item:opacity-100 transition-opacity">
                                                 <button type="button" onClick={() => moveGalleryFile(i, 'left')} disabled={i === 0} className="text-white p-0.5"><ChevronLeft size={14}/></button>
-                                                <button type="button" onClick={() => setGalleryFiles(galleryFiles.filter((_, idx) => idx !== i))} className="text-rose-400 p-0.5"><X size={14}/></button>
+                                                <button type="button" onClick={() => removeGalleryFile(i)} className="text-rose-400 p-0.5"><X size={14}/></button>
                                                 <button type="button" onClick={() => moveGalleryFile(i, 'right')} disabled={i === galleryFiles.length-1} className="text-white p-0.5"><ChevronRight size={14}/></button>
                                             </div>
                                         </div>
@@ -527,15 +567,21 @@ export default function EditForm({ initialData }: EditFormProps) {
                                     <p className="text-[11px] text-slate-400">권장: 1:1 비율 / 1장당 15MB 이하</p>
                                 </div>
                             )}
-                            <input name="galleryImages" ref={galleryInputRef} type="file" multiple accept="image/*" onChange={handleGalleryChange} className={`absolute inset-0 w-full h-full cursor-pointer opacity-0 ${galleryPreviews.length > 0 ? 'hidden' : 'block z-20'}`} />
+                            <input ref={galleryInputRef} type="file" multiple accept="image/*" onChange={handleGalleryChange} className={`absolute inset-0 w-full h-full cursor-pointer opacity-0 ${galleryPreviews.length > 0 ? 'hidden' : 'block z-20'}`} />
                             <input ref={addGalleryInputRef} type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryAppend} />
                         </div>
+                        {galleryUploadedUrls.map((url, idx) => (
+                            <input key={`${url}-${idx}`} type="hidden" name="galleryImageUrls" value={url} />
+                        ))}
+                        {isGalleryUploading && (
+                            <p className="text-[11px] text-blue-500 text-center">갤러리 사진 업로드 중입니다...</p>
+                        )}
                     </div>
                 </div>
             </section>
 
             <div className="pt-6 pb-20">
-                <button type="submit" disabled={loading} className="w-full py-6 bg-blue-600 text-white rounded-3xl font-bold text-xl shadow-2xl hover:bg-blue-700 transition-all flex justify-center items-center gap-3 active:scale-[0.98] disabled:opacity-50">
+                <button type="submit" disabled={loading || isGalleryUploading} className="w-full py-6 bg-blue-600 text-white rounded-3xl font-bold text-xl shadow-2xl hover:bg-blue-700 transition-all flex justify-center items-center gap-3 active:scale-[0.98] disabled:opacity-50">
                     {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : <><Save size={20} /> 수정 완료하기</>}
                 </button>
             </div>

@@ -334,7 +334,11 @@ export async function updateInvitation(formData: FormData) {
 
     // 4. 갤러리 업데이트
     const galleryFiles = formData.getAll("galleryImages") as File[];
-    const hasNewGallery = galleryFiles.length > 0 && galleryFiles[0].size > 0;
+    const galleryImageUrls = formData
+        .getAll("galleryImageUrls")
+        .map((v) => String(v).trim())
+        .filter((v) => v.startsWith("/uploads/"));
+    const hasNewGallery = (galleryFiles.length > 0 && galleryFiles[0].size > 0) || galleryImageUrls.length > 0;
 
     // 5. 텍스트 데이터
     const groom_name = formData.get("groom_name") as string;
@@ -403,9 +407,11 @@ export async function updateInvitation(formData: FormData) {
             ...(hasNewGallery && {
                 invitation_photos: {
                     deleteMany: {},
-                    create: (await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`))))
-                        .filter((url) => url !== "")
-                        .map((url, i) => ({ photo_url: url, sort_order: i }))
+                    create: (
+                        galleryImageUrls.length > 0
+                            ? await Promise.all(galleryImageUrls.map((url) => moveTempGalleryUrlToInvitation(url, url_id)))
+                            : (await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`)))).filter((url) => url !== "")
+                    ).map((url, i) => ({ photo_url: url, sort_order: i }))
                 }
             }),
 
