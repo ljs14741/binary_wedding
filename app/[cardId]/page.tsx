@@ -26,15 +26,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!rawData) return { title: "청첩장" };
 
-    const title = `${rawData.groom_name} & ${rawData.bride_name} 청첩장`;
+    const title = `${rawData.groom_name} ♥ ${rawData.bride_name} 결혼합니다`;
     const dateStr = rawData.wedding_date
         ? new Date(rawData.wedding_date).toLocaleDateString("ko-KR", {
               year: "numeric",
               month: "long",
               day: "numeric",
+              weekday: "long",
           })
         : "";
-    const description = `${rawData.location_name}에서 ${dateStr} 예식을 진행합니다. 모바일 청첩장으로 축하 메시지를 남겨 주세요.`;
+    const description = `${dateStr}, ${rawData.location_name}에서 두 사람의 시작을 함께해 주세요.`;
     const baseUrl = getBaseUrl();
 
     // OG 이미지: 카톡 공유용 > 1:1 대표사진 > 메인 슬라이드 첫 장
@@ -63,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         // 카톡 공유용(1200x630 권장) vs 1:1 대표사진 구분하여 크기 힌트
         const isCustomOg = !!rawData.og_photo_url?.startsWith("/");
         openGraph.images = [
-            { url: ogImageUrl, width: 1200, height: isCustomOg ? 630 : 1200, alt: `${rawData.groom_name} & ${rawData.bride_name} 청첩장` },
+            { url: ogImageUrl, width: 1200, height: isCustomOg ? 630 : 1200, alt: `${rawData.groom_name} ♥ ${rawData.bride_name} 결혼합니다` },
         ];
     }
 
@@ -134,6 +135,7 @@ export default async function CardPage({ params }: PageProps) {
         // [중요] 배열로 넘겨줍니다.
         mainImages,
         middleImage: rawData.middle_photo_url || "",
+        ogImage: rawData.og_photo_url || "",
         gallery: rawData.invitation_photos.map(p => p.photo_url),
 
         transport: {

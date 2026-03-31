@@ -60,6 +60,7 @@ interface Type1Props {
         message: string;
         mainImages: string[];
         middleImage: string;
+        ogImage?: string;
         gallery: string[];
         transport: { subway: string; bus: string; parking: string };
         accounts: { side: string; bank: string; num: string; name: string }[];
@@ -97,6 +98,7 @@ export default function Type1({ data }: Type1Props) {
     const weddingYear = weddingDate.getFullYear();
     const weddingMonth = weddingDate.getMonth();
     const weddingDay = weddingDate.getDate();
+    const weddingWeekdayKor = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'][weddingDate.getDay()];
     const weddingWeekdayShortEn = weddingDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
     const weddingWeekdayLongEn = weddingDate.toLocaleDateString("en-US", { weekday: "long" });
     const weddingTimeEn = weddingDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
@@ -170,12 +172,15 @@ export default function Type1({ data }: Type1Props) {
         if (window.Kakao) {
             if (!window.Kakao.isInitialized()) window.Kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
             const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://wedding.binaryworld.kr";
-            const imageUrl = data.mainImages[0] ? (data.mainImages[0].startsWith("http") ? data.mainImages[0] : `${baseUrl}${data.mainImages[0]}`) : "";
+            const kakaoImagePath = data.ogImage || data.middleImage || data.mainImages[0] || "";
+            const imageUrl = kakaoImagePath
+                ? (kakaoImagePath.startsWith("http") ? kakaoImagePath : `${baseUrl}${kakaoImagePath}`)
+                : "";
             window.Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: `${data.groom.name} ♥ ${data.bride.name} 결혼합니다`,
-                    description: `${weddingYear}년 ${weddingMonth + 1}월 ${weddingDay}일 ${data.location}`,
+                    description: `${weddingYear}년 ${weddingMonth + 1}월 ${weddingDay}일 ${weddingWeekdayKor}, ${data.location}에서 두 사람의 시작을 함께해 주세요.`,
                     imageUrl,
                     link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
                 },
