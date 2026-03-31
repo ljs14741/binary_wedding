@@ -5,6 +5,8 @@ import { uploadFile, deleteInvitationUploads } from "@/lib/upload";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
+import { mkdir, rename } from "fs/promises";
+import { basename, join } from "path";
 
 // 랜덤 ID 생성 헬퍼
 function generateRandomId() {
@@ -19,6 +21,18 @@ async function generateUniqueUrlId(): Promise<string> {
         if (!existing) return url_id;
     }
     throw new Error("청첩장 ID 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+}
+
+/** 사전 업로드된 /uploads/temp/* 파일을 생성된 url_id/gallery 경로로 이동 */
+async function moveTempGalleryUrlToInvitation(url: string, url_id: string): Promise<string> {
+    if (!url.startsWith("/uploads/temp/")) return url;
+    const filename = basename(url);
+    const source = join(process.cwd(), "public", url.replace(/^\//, ""));
+    const targetDir = join(process.cwd(), "public", "uploads", url_id, "gallery");
+    const target = join(targetDir, filename);
+    await mkdir(targetDir, { recursive: true });
+    await rename(source, target);
+    return `/uploads/${url_id}/gallery/${filename}`;
 }
 
 // 필수 텍스트 필드 검증
@@ -195,7 +209,7 @@ export async function createInvitation(formData: FormData) {
         }
 
         const validGalleryUrls = galleryImageUrls.length > 0
-            ? galleryImageUrls
+            ? await Promise.all(galleryImageUrls.map((url) => moveTempGalleryUrlToInvitation(url, url_id)))
             : (await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`))))
                 .filter((url) => url !== "");
 
