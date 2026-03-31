@@ -158,19 +158,23 @@ export default function MakePage() {
     // 2. 갤러리 사진 상태 관리 (순서 변경, 추가, 삭제)
     // --------------------------------------------------------
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+    const [galleryUploadedUrls, setGalleryUploadedUrls] = useState<string[]>([]);
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+    const [isGalleryUploading, setIsGalleryUploading] = useState(false);
 
-    const galleryInputRef = useRef<HTMLInputElement>(null); // 폼 전송용
+    const galleryInputRef = useRef<HTMLInputElement>(null); // 선택용
     const addGalleryInputRef = useRef<HTMLInputElement>(null); // 추가 버튼용
 
-    // React 상태 -> Input FileList 동기화
-    useEffect(() => {
-        if (galleryInputRef.current) {
-            const dataTransfer = new DataTransfer();
-            galleryFiles.forEach(file => dataTransfer.items.add(file));
-            galleryInputRef.current.files = dataTransfer.files;
+    const uploadGalleryImage = async (file: File): Promise<string> => {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/uploads/image", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok || !data?.success || !data?.url) {
+            throw new Error(data?.message || "갤러리 업로드에 실패했습니다.");
         }
-    }, [galleryFiles]);
+        return data.url as string;
+    };
 
     // ① [갤러리] 파일 선택 핸들러 (최초/전체)
     const handleGalleryChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,13 +187,16 @@ export default function MakePage() {
         const selectedFiles = Array.from(files).slice(0, 20);
 
         try {
-            const processedFiles = await Promise.all(
-                selectedFiles.map(file => processImage(file))
-            );
-            updateGalleryState(processedFiles);
+            setIsGalleryUploading(true);
+            const processedFiles = await Promise.all(selectedFiles.map(file => processImage(file)));
+            const uploadedUrls = await Promise.all(processedFiles.map((file) => uploadGalleryImage(file)));
+            updateGalleryState(processedFiles, uploadedUrls);
         } catch (error) {
             console.error("갤러리 이미지 처리 오류:", error);
-            toast("이미지 처리 중 문제가 발생했습니다.");
+            const msg = error instanceof Error ? error.message : "이미지 처리 중 문제가 발생했습니다.";
+            toast(msg);
+        } finally {
+            setIsGalleryUploading(false);
         }
     };
 
@@ -212,28 +219,27 @@ export default function MakePage() {
         const toProcess = rawFilesArr.slice(0, canAdd);
 
         try {
-            const processedFiles = await Promise.all(
-                toProcess.map(file => processImage(file))
-            );
+            setIsGalleryUploading(true);
+            const processedFiles = await Promise.all(toProcess.map(file => processImage(file)));
+            const uploadedUrls = await Promise.all(processedFiles.map((file) => uploadGalleryImage(file)));
             const updatedFiles = [...galleryFiles, ...processedFiles];
-            updateGalleryState(updatedFiles);
-
-            if (galleryInputRef.current) {
-                const dataTransfer = new DataTransfer();
-                updatedFiles.forEach(file => dataTransfer.items.add(file));
-                galleryInputRef.current.files = dataTransfer.files;
-            }
+            const updatedUrls = [...galleryUploadedUrls, ...uploadedUrls];
+            updateGalleryState(updatedFiles, updatedUrls);
 
             e.target.value = "";
         } catch (error) {
             console.error("갤러리 추가 처리 오류:", error);
-            toast("이미지 처리 중 문제가 발생했습니다.");
+            const msg = error instanceof Error ? error.message : "이미지 처리 중 문제가 발생했습니다.";
+            toast(msg);
+        } finally {
+            setIsGalleryUploading(false);
         }
     };
 
     // ③ [갤러리] 상태 업데이트 공통 함수
-    const updateGalleryState = (files: File[]) => {
+    const updateGalleryState = (files: File[], uploadedUrls: string[]) => {
         setGalleryFiles(files);
+        setGalleryUploadedUrls(uploadedUrls);
         galleryPreviews.forEach(url => URL.revokeObjectURL(url));
         setGalleryPreviews(files.map(file => URL.createObjectURL(file)));
     };
@@ -246,13 +252,22 @@ export default function MakePage() {
         } else if (direction === 'right' && index < newFiles.length - 1) {
             [newFiles[index], newFiles[index + 1]] = [newFiles[index + 1], newFiles[index]];
         }
-        updateGalleryState(newFiles);
+        const newUrls = [...galleryUploadedUrls];
+        if (direction === 'left' && index > 0) {
+            [newUrls[index], newUrls[index - 1]] = [newUrls[index - 1], newUrls[index]];
+        } else if (direction === 'right' && index < newUrls.length - 1) {
+            [newUrls[index], newUrls[index + 1]] = [newUrls[index + 1], newUrls[index]];
+        }
+        updateGalleryState(newFiles, newUrls);
     };
     const removeGalleryFile = (index: number) => {
-        updateGalleryState(galleryFiles.filter((_, i) => i !== index));
+        updateGalleryState(
+            galleryFiles.filter((_, i) => i !== index),
+            galleryUploadedUrls.filter((_, i) => i !== index)
+        );
     };
     const clearAllGalleryFiles = () => {
-        updateGalleryState([]);
+        updateGalleryState([], []);
     };
 
 
@@ -340,7 +355,11 @@ export default function MakePage() {
             toast(`메인 슬라이드 사진은 3장이 필수입니다.\n(현재 ${mainFiles.length}장)`);
             return;
         }
-        if (galleryFiles.length < 1) {
+        if (isGalleryUploading) {
+            toast("갤러리 업로드가 진행 중입니다. 잠시만 기다려주세요.");
+            return;
+        }
+        if (galleryUploadedUrls.length < 1) {
             toast("웨딩 갤러리 사진은 최소 1장이 필수입니다.");
             return;
         }
@@ -713,10 +732,16 @@ export default function MakePage() {
                                                 </div>
                                             </div>
                                         )}
-                                        {/* [수정됨] opacity-0 추가 */}
-                                        <input name="galleryImages" ref={galleryInputRef} type="file" multiple accept="image/*" onChange={handleGalleryChange} className={`absolute inset-0 w-full h-full cursor-pointer opacity-0 ${galleryPreviews.length > 0 ? 'hidden' : 'block z-20'}`} />
+                                        {/* [수정됨] 서버 액션 용량 이슈 회피: 갤러리는 사전 업로드 후 URL만 전송 */}
+                                        <input ref={galleryInputRef} type="file" multiple accept="image/*" onChange={handleGalleryChange} className={`absolute inset-0 w-full h-full cursor-pointer opacity-0 ${galleryPreviews.length > 0 ? 'hidden' : 'block z-20'}`} />
                                     </div>
                                     <input ref={addGalleryInputRef} type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryAppend} />
+                                    {galleryUploadedUrls.map((url, idx) => (
+                                        <input key={`${url}-${idx}`} type="hidden" name="galleryImageUrls" value={url} />
+                                    ))}
+                                    {isGalleryUploading && (
+                                        <p className="text-[11px] text-blue-500 text-center">갤러리 사진 업로드 중입니다...</p>
+                                    )}
                                     <p className="text-[11px] text-slate-400 text-center">* 사진은 최대 20장까지 등록 가능하며, 화살표로 순서를 변경할 수 있습니다.</p>
                                 </div>
                             </div>
@@ -742,7 +767,7 @@ export default function MakePage() {
                             </div>
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || isGalleryUploading}
                                 className="w-full py-5 bg-rose-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-rose-900/20 hover:bg-rose-800 active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:bg-rose-700 flex justify-center items-center gap-3"
                             >
                                 {loading ? (

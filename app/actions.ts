@@ -122,12 +122,17 @@ export async function createInvitation(formData: FormData) {
 
     const mainFiles = formData.getAll("mainImages") as File[];
     const galleryFiles = formData.getAll("galleryImages") as File[];
+    const galleryImageUrls = formData
+        .getAll("galleryImageUrls")
+        .map((v) => String(v).trim())
+        .filter((v) => v.startsWith("/uploads/"));
 
     if (mainFiles.length < 3 || mainFiles[0].size === 0) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
     const middleFile = formData.get("middleImage") as File | null;
     if (!middleFile || middleFile.size === 0) throw new Error("초대장 대표 사진 1장이 필요합니다.");
     const ogFile = formData.get("ogImage") as File | null;
-    if (galleryFiles.length < 1 || galleryFiles[0].size === 0) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
+    const hasGalleryFiles = galleryFiles.length > 0 && galleryFiles[0].size > 0;
+    if (!hasGalleryFiles && galleryImageUrls.length < 1) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
 
     // 2. 비밀번호 암호화
     const rawPassword = formData.get("password") as string;
@@ -189,8 +194,10 @@ export async function createInvitation(formData: FormData) {
             ogPhotoUrl = await uploadFile(ogFile, `${url_id}/og`);
         }
 
-        const galleryUrls = await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`)));
-        const validGalleryUrls = galleryUrls.filter((url) => url !== "");
+        const validGalleryUrls = galleryImageUrls.length > 0
+            ? galleryImageUrls
+            : (await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`))))
+                .filter((url) => url !== "");
 
         await prisma.invitations.create({
             data: {
