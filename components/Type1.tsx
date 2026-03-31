@@ -97,7 +97,9 @@ export default function Type1({ data }: Type1Props) {
     const weddingYear = weddingDate.getFullYear();
     const weddingMonth = weddingDate.getMonth();
     const weddingDay = weddingDate.getDate();
-    const weddingDayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][weddingDate.getDay()];
+    const weddingWeekdayShortEn = weddingDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+    const weddingWeekdayLongEn = weddingDate.toLocaleDateString("en-US", { weekday: "long" });
+    const weddingTimeEn = weddingDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
     const firstDayOfMonth = new Date(weddingYear, weddingMonth, 1).getDay();
     const daysInMonth = new Date(weddingYear, weddingMonth + 1, 0).getDate();
 
@@ -298,7 +300,7 @@ export default function Type1({ data }: Type1Props) {
                         <motion.div className="font-serif" initial={{opacity: 0}} animate={{opacity: 1}}
                                     transition={{duration: 1.5, delay: 0.5}}>
                             <p className="text-xl tracking-widest uppercase">{weddingYear}. {weddingMonth + 1}. {weddingDay}.
-                                SUN</p>
+                                {weddingWeekdayShortEn}</p>
                             <p className="text-sm font-light opacity-80 mt-2">{data.location} {data.detail}</p>
                         </motion.div>
                     </div>
@@ -347,8 +349,9 @@ export default function Type1({ data }: Type1Props) {
                 <section className="py-24 bg-[#FCFAF8] text-center border-y border-[#F3EFEA]">
                     <FadeIn>
                         <h3 className="font-serif text-2xl text-gray-800 italic font-bold">{weddingYear}년 {weddingMonth + 1}월 {weddingDay}일</h3>
-                        <p className="font-serif text-rose-300 mt-2 font-bold tracking-widest text-sm uppercase">Sunday
-                            12:30 PM</p>
+                        <p className="font-serif text-rose-300 mt-2 font-bold tracking-widest text-sm uppercase">
+                            {weddingWeekdayLongEn} {weddingTimeEn}
+                        </p>
                     </FadeIn>
                     <FadeIn delay={0.2}>
                         <div className="max-w-[290px] mx-auto grid grid-cols-7 gap-y-5 text-sm my-12 px-2">
