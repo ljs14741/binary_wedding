@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
+import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 import { Noto_Serif_KR } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -169,8 +170,20 @@ export default function Type1({ data }: Type1Props) {
     const shareKakao = () => {
         if (window.Kakao) {
             if (!window.Kakao.isInitialized()) window.Kakao.init("ea07c2afa5b5a0a07737bab48ab8e3e8");
-            window.Kakao.Share.sendScrap({
-                requestUrl: window.location.href,
+            const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://wedding.binaryworld.kr";
+            const kakaoImagePath = data.ogImage || data.middleImage || data.mainImages[0] || "";
+            const imageUrl = kakaoImagePath
+                ? (kakaoImagePath.startsWith("http") ? kakaoImagePath : `${baseUrl}${kakaoImagePath}`)
+                : "";
+            window.Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: buildShareTitle(data.groom.name, data.bride.name),
+                    description: buildShareDescription(weddingDate, data.location),
+                    imageUrl,
+                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
+                },
+                buttons: [{ title: '청첩장 보기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }],
             });
         }
     };
