@@ -278,15 +278,18 @@ export default function MakePage() {
     // --------------------------------------------------------
     const [middlePreview, setMiddlePreview] = useState<string | null>(null);
     const [middleUploadedUrl, setMiddleUploadedUrl] = useState<string | null>(null);
+    const [isMiddleUploading, setIsMiddleUploading] = useState(false);
     const middleInputRef = useRef<HTMLInputElement>(null);
     const [ogPreview, setOgPreview] = useState<string | null>(null);
     const [ogUploadedUrl, setOgUploadedUrl] = useState<string | null>(null);
+    const [isOgUploading, setIsOgUploading] = useState(false);
     const ogInputRef = useRef<HTMLInputElement>(null);
 
     const handleMiddleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
         try {
+            setIsMiddleUploading(true);
             const processedFile = await processImage(files[0]);
             if (middlePreview) URL.revokeObjectURL(middlePreview);
             setMiddlePreview(URL.createObjectURL(processedFile));
@@ -295,6 +298,8 @@ export default function MakePage() {
         } catch (error) {
             console.error("이미지 처리 중 오류:", error);
             toast("이미지 처리 중 문제가 발생했습니다.");
+        } finally {
+            setIsMiddleUploading(false);
         }
     };
     const clearMiddleFile = () => {
@@ -311,6 +316,7 @@ export default function MakePage() {
         const files = e.target.files;
         if (!files || files.length === 0) return;
         try {
+            setIsOgUploading(true);
             const processed = await processImage(files[0]);
             if (ogPreview) URL.revokeObjectURL(ogPreview);
             setOgPreview(URL.createObjectURL(processed));
@@ -319,6 +325,8 @@ export default function MakePage() {
         } catch (err) {
             console.error("이미지 처리 오류:", err);
             toast("이미지 처리 중 문제가 발생했습니다.");
+        } finally {
+            setIsOgUploading(false);
         }
     };
     const clearOgFile = () => {
@@ -650,8 +658,9 @@ export default function MakePage() {
                                             </div>
                                         )}
                                         <input ref={middleInputRef} type="file" accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
-                                    {middleUploadedUrl && <input type="hidden" name="middleImageUrl" value={middleUploadedUrl} />}
                                     </div>
+                                    {middleUploadedUrl && <input type="hidden" name="middleImageUrl" value={middleUploadedUrl} />}
+                                    {isMiddleUploading && <p className="text-[11px] text-blue-500 text-center">대표 사진 업로드 중입니다...</p>}
                                 </div>
 
                                 {/* 카톡 공유용 이미지 (선택) */}
@@ -691,8 +700,9 @@ export default function MakePage() {
                                             </div>
                                         )}
                                         <input ref={ogInputRef} type="file" accept="image/*" onChange={handleOgChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
-                                    {ogUploadedUrl && <input type="hidden" name="ogImageUrl" value={ogUploadedUrl} />}
                                     </div>
+                                    {ogUploadedUrl && <input type="hidden" name="ogImageUrl" value={ogUploadedUrl} />}
+                                    {isOgUploading && <p className="text-[11px] text-blue-500 text-center">카톡 공유용 이미지 업로드 중입니다...</p>}
                                 </div>
 
                                 {/* 갤러리 사진 */}
