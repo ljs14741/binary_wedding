@@ -36,6 +36,11 @@ const nextConfig: NextConfigWithServerActions = {
     serverActions: {
         bodySizeLimit: "50mb",
     },
+    experimental: {
+        serverActions: {
+            bodySizeLimit: "50mb",
+        },
+    },
     images: {
         unoptimized: true,
         localPatterns: [{ pathname: "/uploads/**" }],
