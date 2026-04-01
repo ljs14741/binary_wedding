@@ -23,16 +23,21 @@ async function generateUniqueUrlId(): Promise<string> {
     throw new Error("청첩장 ID 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
 }
 
-/** 사전 업로드된 /uploads/temp/* 파일을 생성된 url_id/gallery 경로로 이동 */
-async function moveTempGalleryUrlToInvitation(url: string, url_id: string): Promise<string> {
+/** 사전 업로드된 /uploads/temp/* 파일을 url_id/폴더로 이동 */
+async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle" | "og" | "gallery"): Promise<string> {
     if (!url.startsWith("/uploads/temp/")) return url;
     const filename = basename(url);
     const source = join(process.cwd(), "public", url.replace(/^\//, ""));
-    const targetDir = join(process.cwd(), "public", "uploads", url_id, "gallery");
+    const targetDir = join(process.cwd(), "public", "uploads", url_id, folder);
     const target = join(targetDir, filename);
     await mkdir(targetDir, { recursive: true });
     await rename(source, target);
-    return `/uploads/${url_id}/gallery/${filename}`;
+    return `/uploads/${url_id}/${folder}/${filename}`;
+}
+
+/** 하위 호환 */
+async function moveTempGalleryUrlToInvitation(url: string, url_id: string): Promise<string> {
+    return moveTempUrl(url, url_id, "gallery");
 }
 
 // 필수 텍스트 필드 검증
@@ -134,18 +139,26 @@ export async function createInvitation(formData: FormData) {
         checkCreateDedupe(_clientId, groom_name, bride_name, wedding_date_str);
     }
 
+    const mainImageUrls = formData.getAll("mainImageUrls").map(v => String(v).trim()).filter(v => v.startsWith("/uploads/"));
     const mainFiles = formData.getAll("mainImages") as File[];
+    const hasMainUrls = mainImageUrls.length >= 3;
+    const hasMainFiles = mainFiles.length >= 3 && (mainFiles[0]?.size ?? 0) > 0;
+    if (!hasMainUrls && !hasMainFiles) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
+
+    const middleImageUrl = (formData.get("middleImageUrl") as string ?? "").trim();
+    const middleFile = formData.get("middleImage") as File | null;
+    const hasMiddleUrl = middleImageUrl.startsWith("/uploads/");
+    const hasMiddleFile = !!middleFile && middleFile.size > 0;
+    if (!hasMiddleUrl && !hasMiddleFile) throw new Error("초대장 대표 사진 1장이 필요합니다.");
+
+    const ogImageUrl = (formData.get("ogImageUrl") as string ?? "").trim();
+    const ogFile = formData.get("ogImage") as File | null;
     const galleryFiles = formData.getAll("galleryImages") as File[];
     const galleryImageUrls = formData
         .getAll("galleryImageUrls")
         .map((v) => String(v).trim())
         .filter((v) => v.startsWith("/uploads/"));
-
-    if (mainFiles.length < 3 || mainFiles[0].size === 0) throw new Error("메인 슬라이드 사진 3장이 필요합니다.");
-    const middleFile = formData.get("middleImage") as File | null;
-    if (!middleFile || middleFile.size === 0) throw new Error("초대장 대표 사진 1장이 필요합니다.");
-    const ogFile = formData.get("ogImage") as File | null;
-    const hasGalleryFiles = galleryFiles.length > 0 && galleryFiles[0].size > 0;
+    const hasGalleryFiles = galleryFiles.length > 0 && (galleryFiles[0]?.size ?? 0) > 0;
     if (!hasGalleryFiles && galleryImageUrls.length < 1) throw new Error("갤러리 사진 최소 1장이 필요합니다.");
 
     // 2. 비밀번호 암호화
@@ -198,13 +211,18 @@ export async function createInvitation(formData: FormData) {
 
     try {
         // url_id 기준 폴더 구조로 업로드: uploads/{url_id}/main | middle | gallery
-        const mainPhotoUrls = await Promise.all(mainFiles.map((f) => uploadFile(f, `${url_id}/main`)));
-        const validMainUrls = mainPhotoUrls.filter((url) => url !== "");
+        const validMainUrls = hasMainUrls
+            ? await Promise.all(mainImageUrls.map(url => moveTempUrl(url, url_id, "main")))
+            : (await Promise.all(mainFiles.map(f => uploadFile(f, `${url_id}/main`)))).filter(url => url !== "");
 
-        const middlePhotoUrl = await uploadFile(middleFile, `${url_id}/middle`);
+        const middlePhotoUrl = hasMiddleUrl
+            ? await moveTempUrl(middleImageUrl, url_id, "middle")
+            : await uploadFile(middleFile, `${url_id}/middle`);
 
         let ogPhotoUrl: string | null = null;
-        if (ogFile && ogFile.size > 0) {
+        if (ogImageUrl.startsWith("/uploads/")) {
+            ogPhotoUrl = await moveTempUrl(ogImageUrl, url_id, "og");
+        } else if (ogFile && ogFile.size > 0) {
             ogPhotoUrl = await uploadFile(ogFile, `${url_id}/og`);
         }
 
@@ -308,27 +326,36 @@ export async function updateInvitation(formData: FormData) {
     if (!existing) throw new Error("청첩장을 찾을 수 없습니다.");
 
     // 2. 메인 사진 업데이트
+    const mainImageUrls = formData.getAll("mainImageUrls").map(v => String(v).trim()).filter(v => v.startsWith("/uploads/"));
     const mainFiles = formData.getAll("mainImages") as File[];
     let mainPhotoUrl = existing.main_photo_url;
 
-    if (mainFiles.length > 0 && mainFiles[0].size > 0) {
+    if (mainImageUrls.length >= 3) {
+        const movedUrls = await Promise.all(mainImageUrls.map(url => moveTempUrl(url, url_id, "main")));
+        mainPhotoUrl = JSON.stringify(movedUrls);
+    } else if (mainFiles.length > 0 && (mainFiles[0]?.size ?? 0) > 0) {
         const newMainUrls = await Promise.all(mainFiles.map((f) => uploadFile(f, `${url_id}/main`)));
-        const validNewUrls = newMainUrls.filter((url) => url !== "");
-        mainPhotoUrl = JSON.stringify(validNewUrls);
+        mainPhotoUrl = JSON.stringify(newMainUrls.filter((url) => url !== ""));
     }
 
     // 3. 중간 사진 업데이트
+    const middleImageUrl = (formData.get("middleImageUrl") as string ?? "").trim();
     const middleFile = formData.get("middleImage") as File | null;
     let middlePhotoUrl = existing.middle_photo_url;
 
-    if (middleFile && middleFile.size > 0) {
+    if (middleImageUrl.startsWith("/uploads/")) {
+        middlePhotoUrl = await moveTempUrl(middleImageUrl, url_id, "middle");
+    } else if (middleFile && middleFile.size > 0) {
         middlePhotoUrl = await uploadFile(middleFile, `${url_id}/middle`);
     }
 
     // 3-1. 카톡 공유용 이미지 업데이트 (선택)
+    const ogImageUrl = (formData.get("ogImageUrl") as string ?? "").trim();
     const ogFile = formData.get("ogImage") as File | null;
     let ogPhotoUrl = existing.og_photo_url;
-    if (ogFile && ogFile.size > 0) {
+    if (ogImageUrl.startsWith("/uploads/")) {
+        ogPhotoUrl = await moveTempUrl(ogImageUrl, url_id, "og");
+    } else if (ogFile && ogFile.size > 0) {
         ogPhotoUrl = await uploadFile(ogFile, `${url_id}/og`);
     }
 

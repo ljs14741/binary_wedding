@@ -32,8 +32,10 @@ export default function MakePage() {
     const [showPostcode, setShowPostcode] = useState(false);
     const [mainFiles, setMainFiles] = useState<File[]>([]);
     const [mainPreviews, setMainPreviews] = useState<string[]>([]);
+    const [mainUploadedUrls, setMainUploadedUrls] = useState<string[]>([]);
+    const [isMainUploading, setIsMainUploading] = useState(false);
 
-    const mainInputRef = useRef<HTMLInputElement>(null); // 폼 전송용
+    const mainInputRef = useRef<HTMLInputElement>(null);
     const addMainInputRef = useRef<HTMLInputElement>(null); // 추가 버튼용
     const postcodeWrapRef = useRef<HTMLDivElement>(null);
 
@@ -73,84 +75,84 @@ export default function MakePage() {
         setClientId(getOrCreateClientId());
     }, []);
 
-    // React 상태 -> Input FileList 동기화
-    useEffect(() => {
-        if (mainInputRef.current) {
-            const dataTransfer = new DataTransfer();
-            mainFiles.forEach(file => dataTransfer.items.add(file));
-            mainInputRef.current.files = dataTransfer.files;
+    const uploadImageFile = async (file: File): Promise<string> => {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/uploads/image", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok || !data?.success || !data?.url) {
+            throw new Error(data?.message || "이미지 업로드에 실패했습니다.");
         }
-    }, [mainFiles]);
+        return data.url as string;
+    };
 
     // ① [메인] 파일 선택 핸들러
     const handleMainChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-
-        if (files.length > 3) {
-            toast("메인 슬라이드는 최대 3장입니다. 처음 3장만 적용됩니다.");
-        }
+        if (files.length > 3) toast("메인 슬라이드는 최대 3장입니다. 처음 3장만 적용됩니다.");
         const selectedFiles = Array.from(files).slice(0, 3);
-
         try {
-            const processedFiles = await Promise.all(
-                selectedFiles.map(file => processImage(file))
-            );
-
-            updateMainState(processedFiles);
+            setIsMainUploading(true);
+            const processedFiles = await Promise.all(selectedFiles.map(f => processImage(f)));
+            const uploadedUrls = await Promise.all(processedFiles.map(f => uploadImageFile(f)));
+            updateMainState(processedFiles, uploadedUrls);
         } catch (error) {
             console.error("이미지 처리 중 오류:", error);
             toast("이미지 처리 중 문제가 발생했습니다.");
+        } finally {
+            setIsMainUploading(false);
         }
     };
 
-    // ② [메인] 추가 핸들러 - 여러 장 한 번에 선택 가능
+    // ② [메인] 추가 핸들러
     const handleMainAppend = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-
         const toAdd = Math.min(files.length, 3 - mainFiles.length);
-        if (toAdd <= 0) {
-            toast("메인 슬라이드는 최대 3장입니다.");
-            e.target.value = "";
-            return;
-        }
-        if (files.length > toAdd) {
-            toast(`메인 슬라이드는 최대 3장입니다. 필요한 ${toAdd}장만 적용됩니다.`);
-        }
+        if (toAdd <= 0) { toast("메인 슬라이드는 최대 3장입니다."); e.target.value = ""; return; }
+        if (files.length > toAdd) toast(`메인 슬라이드는 최대 3장입니다. 필요한 ${toAdd}장만 적용됩니다.`);
         try {
+            setIsMainUploading(true);
             const selected = Array.from(files).slice(0, toAdd);
             const processed = await Promise.all(selected.map(f => processImage(f)));
-            updateMainState([...mainFiles, ...processed]);
+            const newUrls = await Promise.all(processed.map(f => uploadImageFile(f)));
+            updateMainState([...mainFiles, ...processed], [...mainUploadedUrls, ...newUrls]);
         } catch (err) {
             console.error("이미지 처리 오류:", err);
             toast("이미지 처리 중 문제가 발생했습니다.");
+        } finally {
+            setIsMainUploading(false);
+            e.target.value = "";
         }
-        e.target.value = "";
     };
 
     // ③ [메인] 상태 업데이트 공통 함수
-    const updateMainState = (files: File[]) => {
+    const updateMainState = (files: File[], uploadedUrls: string[]) => {
         setMainFiles(files);
-        mainPreviews.forEach(url => URL.revokeObjectURL(url)); // 기존 URL 해제
-        setMainPreviews(files.map(file => URL.createObjectURL(file))); // 새 URL 생성
+        setMainUploadedUrls(uploadedUrls);
+        mainPreviews.forEach(url => URL.revokeObjectURL(url));
+        setMainPreviews(files.map(file => URL.createObjectURL(file)));
     };
 
     // ④ [메인] 이동 및 삭제
     const moveMainFile = (index: number, direction: 'left' | 'right') => {
         const newFiles = [...mainFiles];
+        const newUrls = [...mainUploadedUrls];
         if (direction === 'left' && index > 0) {
             [newFiles[index], newFiles[index - 1]] = [newFiles[index - 1], newFiles[index]];
+            [newUrls[index], newUrls[index - 1]] = [newUrls[index - 1], newUrls[index]];
         } else if (direction === 'right' && index < newFiles.length - 1) {
             [newFiles[index], newFiles[index + 1]] = [newFiles[index + 1], newFiles[index]];
+            [newUrls[index], newUrls[index + 1]] = [newUrls[index + 1], newUrls[index]];
         }
-        updateMainState(newFiles);
+        updateMainState(newFiles, newUrls);
     };
     const removeMainFile = (index: number) => {
-        updateMainState(mainFiles.filter((_, i) => i !== index));
+        updateMainState(mainFiles.filter((_, i) => i !== index), mainUploadedUrls.filter((_, i) => i !== index));
     };
     const clearAllMainFiles = () => {
-        updateMainState([]);
+        updateMainState([], []);
     };
 
 
@@ -275,27 +277,21 @@ export default function MakePage() {
     // 3. 중간(초대장) 이미지
     // --------------------------------------------------------
     const [middlePreview, setMiddlePreview] = useState<string | null>(null);
+    const [middleUploadedUrl, setMiddleUploadedUrl] = useState<string | null>(null);
     const middleInputRef = useRef<HTMLInputElement>(null);
     const [ogPreview, setOgPreview] = useState<string | null>(null);
+    const [ogUploadedUrl, setOgUploadedUrl] = useState<string | null>(null);
     const ogInputRef = useRef<HTMLInputElement>(null);
 
     const handleMiddleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-
         try {
-            // [수정] 1순위: 리사이징 및 JPG 변환
             const processedFile = await processImage(files[0]);
-
             if (middlePreview) URL.revokeObjectURL(middlePreview);
             setMiddlePreview(URL.createObjectURL(processedFile));
-
-            // input에 변환된 파일 주입 (기존 폼 전송 로직 유지)
-            if (middleInputRef.current) {
-                const dt = new DataTransfer();
-                dt.items.add(processedFile);
-                middleInputRef.current.files = dt.files;
-            }
+            const url = await uploadImageFile(processedFile);
+            setMiddleUploadedUrl(url);
         } catch (error) {
             console.error("이미지 처리 중 오류:", error);
             toast("이미지 처리 중 문제가 발생했습니다.");
@@ -304,6 +300,7 @@ export default function MakePage() {
     const clearMiddleFile = () => {
         if (middlePreview) URL.revokeObjectURL(middlePreview);
         setMiddlePreview(null);
+        setMiddleUploadedUrl(null);
         if (middleInputRef.current) {
             middleInputRef.current.value = "";
             middleInputRef.current.files = new DataTransfer().files;
@@ -317,11 +314,8 @@ export default function MakePage() {
             const processed = await processImage(files[0]);
             if (ogPreview) URL.revokeObjectURL(ogPreview);
             setOgPreview(URL.createObjectURL(processed));
-            if (ogInputRef.current) {
-                const dt = new DataTransfer();
-                dt.items.add(processed);
-                ogInputRef.current.files = dt.files;
-            }
+            const url = await uploadImageFile(processed);
+            setOgUploadedUrl(url);
         } catch (err) {
             console.error("이미지 처리 오류:", err);
             toast("이미지 처리 중 문제가 발생했습니다.");
@@ -330,6 +324,7 @@ export default function MakePage() {
     const clearOgFile = () => {
         if (ogPreview) URL.revokeObjectURL(ogPreview);
         setOgPreview(null);
+        setOgUploadedUrl(null);
         if (ogInputRef.current) {
             ogInputRef.current.value = "";
             ogInputRef.current.files = new DataTransfer().files;
@@ -351,8 +346,16 @@ export default function MakePage() {
             document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: "smooth", block: "center" });
             return;
         }
-        if (mainFiles.length < 3) {
-            toast(`메인 슬라이드 사진은 3장이 필수입니다.\n(현재 ${mainFiles.length}장)`);
+        if (isMainUploading) {
+            toast("메인 사진 업로드가 진행 중입니다. 잠시만 기다려주세요.");
+            return;
+        }
+        if (mainUploadedUrls.length < 3) {
+            toast(`메인 슬라이드 사진은 3장이 필수입니다.\n(현재 ${mainUploadedUrls.length}장)`);
+            return;
+        }
+        if (!middleUploadedUrl) {
+            toast("초대장 대표 사진을 업로드해주세요.");
             return;
         }
         if (isGalleryUploading) {
@@ -600,7 +603,6 @@ export default function MakePage() {
                                         )}
                                         {/* [수정됨] opacity-0 추가로 못생긴 input 숨김 */}
                                         <input
-                                            name="mainImages"
                                             ref={mainInputRef}
                                             type="file"
                                             multiple
@@ -610,6 +612,10 @@ export default function MakePage() {
                                         />
                                     </div>
                                     <input ref={addMainInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleMainAppend} />
+                                    {mainUploadedUrls.map((url, idx) => (
+                                        <input key={`main-${idx}`} type="hidden" name="mainImageUrls" value={url} />
+                                    ))}
+                                    {isMainUploading && <p className="text-[11px] text-blue-500 text-center">메인 사진 업로드 중입니다...</p>}
                                 </div>
 
                                 {/* 중간(초대장) 사진 */}
@@ -643,7 +649,8 @@ export default function MakePage() {
                                                 </div>
                                             </div>
                                         )}
-                                        <input ref={middleInputRef} name="middleImage" type="file" required accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                                        <input ref={middleInputRef} type="file" accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                                    {middleUploadedUrl && <input type="hidden" name="middleImageUrl" value={middleUploadedUrl} />}
                                     </div>
                                 </div>
 
@@ -683,7 +690,8 @@ export default function MakePage() {
                                                 </div>
                                             </div>
                                         )}
-                                        <input ref={ogInputRef} name="ogImage" type="file" accept="image/*" onChange={handleOgChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                                        <input ref={ogInputRef} type="file" accept="image/*" onChange={handleOgChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                                    {ogUploadedUrl && <input type="hidden" name="ogImageUrl" value={ogUploadedUrl} />}
                                     </div>
                                 </div>
 

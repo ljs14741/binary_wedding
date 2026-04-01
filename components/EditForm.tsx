@@ -23,13 +23,17 @@ export default function EditForm({ initialData }: EditFormProps) {
     // --------------------------------------------------------
     const [mainFiles, setMainFiles] = useState<File[]>([]);
     const [mainPreviews, setMainPreviews] = useState<string[]>([]);
+    const [mainUploadedUrls, setMainUploadedUrls] = useState<string[]>([]);
+    const [isMainUploading, setIsMainUploading] = useState(false);
     const mainInputRef = useRef<HTMLInputElement>(null);
     const addMainInputRef = useRef<HTMLInputElement>(null);
 
     const [middlePreview, setMiddlePreview] = useState<string | null>(null);
+    const [middleUploadedUrl, setMiddleUploadedUrl] = useState<string | null>(null);
     const middleInputRef = useRef<HTMLInputElement>(null);
 
     const [ogPreview, setOgPreview] = useState<string | null>(null);
+    const [ogUploadedUrl, setOgUploadedUrl] = useState<string | null>(null);
     const ogInputRef = useRef<HTMLInputElement>(null);
 
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
@@ -39,16 +43,17 @@ export default function EditForm({ initialData }: EditFormProps) {
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const addGalleryInputRef = useRef<HTMLInputElement>(null);
 
-    const uploadGalleryImage = async (file: File): Promise<string> => {
+    const uploadImageFile = async (file: File): Promise<string> => {
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/uploads/image", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok || !data?.success || !data?.url) {
-            throw new Error(data?.message || "갤러리 업로드에 실패했습니다.");
+            throw new Error(data?.message || "이미지 업로드에 실패했습니다.");
         }
         return data.url as string;
     };
+    const uploadGalleryImage = uploadImageFile;
 
     // 기존 데이터 파싱
     const existingMainPhotos = initialData.main_photo_url ? JSON.parse(initialData.main_photo_url) : [];
@@ -60,14 +65,6 @@ export default function EditForm({ initialData }: EditFormProps) {
     const getAccount = (side: string) => initialData.accounts?.find((acc: any) => acc.side === side);
     const getInterview = (idx: number) => initialData.interviews?.[idx] || { question: "", answer: "" };
 
-    // ① 파일 동기화 (메인만 유지, 갤러리는 사전 업로드 방식으로 변경)
-    useEffect(() => {
-        if (mainInputRef.current) {
-            const dt = new DataTransfer();
-            mainFiles.forEach(f => dt.items.add(f));
-            mainInputRef.current.files = dt.files;
-        }
-    }, [mainFiles]);
 
     // --------------------------------------------------------
     // 2. 이미지 처리 핸들러 (리사이징 적용)
@@ -75,33 +72,42 @@ export default function EditForm({ initialData }: EditFormProps) {
     const handleMainChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-        if (files.length > 3) {
-            toast("메인 슬라이드는 최대 3장입니다. 처음 3장만 적용됩니다.");
+        if (files.length > 3) toast("메인 슬라이드는 최대 3장입니다. 처음 3장만 적용됩니다.");
+        try {
+            setIsMainUploading(true);
+            const processed = await Promise.all(Array.from(files).slice(0, 3).map(f => processImage(f)));
+            const uploadedUrls = await Promise.all(processed.map(f => uploadImageFile(f)));
+            updateMainState(processed, uploadedUrls);
+        } catch (err) {
+            toast(err instanceof Error ? err.message : "이미지 처리 중 문제가 발생했습니다.");
+        } finally {
+            setIsMainUploading(false);
         }
-        const processed = await Promise.all(Array.from(files).slice(0, 3).map(f => processImage(f)));
-        updateMainState(processed);
     };
 
     const handleMainAppend = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
         const toAdd = Math.min(files.length, 3 - mainFiles.length);
-        if (toAdd <= 0) {
-            toast("메인 슬라이드는 최대 3장입니다.");
+        if (toAdd <= 0) { toast("메인 슬라이드는 최대 3장입니다."); e.target.value = ""; return; }
+        if (files.length > toAdd) toast(`메인 슬라이드는 최대 3장입니다. 필요한 ${toAdd}장만 적용됩니다.`);
+        try {
+            setIsMainUploading(true);
+            const selected = Array.from(files).slice(0, toAdd);
+            const processed = await Promise.all(selected.map(f => processImage(f)));
+            const newUrls = await Promise.all(processed.map(f => uploadImageFile(f)));
+            updateMainState([...mainFiles, ...processed], [...mainUploadedUrls, ...newUrls]);
+        } catch (err) {
+            toast(err instanceof Error ? err.message : "이미지 처리 중 문제가 발생했습니다.");
+        } finally {
+            setIsMainUploading(false);
             e.target.value = "";
-            return;
         }
-        if (files.length > toAdd) {
-            toast(`메인 슬라이드는 최대 3장입니다. 필요한 ${toAdd}장만 적용됩니다.`);
-        }
-        const selected = Array.from(files).slice(0, toAdd);
-        const processed = await Promise.all(selected.map(f => processImage(f)));
-        updateMainState([...mainFiles, ...processed]);
-        e.target.value = "";
     };
 
-    const updateMainState = (files: File[]) => {
+    const updateMainState = (files: File[], uploadedUrls: string[]) => {
         setMainFiles(files);
+        setMainUploadedUrls(uploadedUrls);
         mainPreviews.forEach(u => URL.revokeObjectURL(u));
         setMainPreviews(files.map(f => URL.createObjectURL(f)));
     };
@@ -113,11 +119,8 @@ export default function EditForm({ initialData }: EditFormProps) {
             const processed = await processImage(file);
             if (middlePreview) URL.revokeObjectURL(middlePreview);
             setMiddlePreview(URL.createObjectURL(processed));
-            if (middleInputRef.current) {
-                const dt = new DataTransfer();
-                dt.items.add(processed);
-                middleInputRef.current.files = dt.files;
-            }
+            const url = await uploadImageFile(processed);
+            setMiddleUploadedUrl(url);
         } catch (err) {
             console.error("이미지 처리 오류:", err);
             toast("이미지 처리 중 문제가 발생했습니다.");
@@ -131,11 +134,8 @@ export default function EditForm({ initialData }: EditFormProps) {
             const processed = await processImage(file);
             if (ogPreview) URL.revokeObjectURL(ogPreview);
             setOgPreview(URL.createObjectURL(processed));
-            if (ogInputRef.current) {
-                const dt = new DataTransfer();
-                dt.items.add(processed);
-                ogInputRef.current.files = dt.files;
-            }
+            const url = await uploadImageFile(processed);
+            setOgUploadedUrl(url);
         } catch (err) {
             console.error("이미지 처리 오류:", err);
             toast("이미지 처리 중 문제가 발생했습니다.");
@@ -199,16 +199,26 @@ export default function EditForm({ initialData }: EditFormProps) {
 
     const moveMainFile = (idx: number, dir: 'left'|'right') => {
         const newFiles = [...mainFiles];
-        if (dir === 'left' && idx > 0) [newFiles[idx], newFiles[idx-1]] = [newFiles[idx-1], newFiles[idx]];
-        else if (dir === 'right' && idx < newFiles.length-1) [newFiles[idx], newFiles[idx+1]] = [newFiles[idx+1], newFiles[idx]];
-        updateMainState(newFiles);
+        const newUrls = [...mainUploadedUrls];
+        if (dir === 'left' && idx > 0) {
+            [newFiles[idx], newFiles[idx-1]] = [newFiles[idx-1], newFiles[idx]];
+            [newUrls[idx], newUrls[idx-1]] = [newUrls[idx-1], newUrls[idx]];
+        } else if (dir === 'right' && idx < newFiles.length-1) {
+            [newFiles[idx], newFiles[idx+1]] = [newFiles[idx+1], newFiles[idx]];
+            [newUrls[idx], newUrls[idx+1]] = [newUrls[idx+1], newUrls[idx]];
+        }
+        updateMainState(newFiles, newUrls);
     };
-    const removeMainFile = (idx: number) => updateMainState(mainFiles.filter((_, i) => i !== idx));
-    const clearAllMainFiles = () => updateMainState([]);
+    const removeMainFile = (idx: number) => updateMainState(
+        mainFiles.filter((_, i) => i !== idx),
+        mainUploadedUrls.filter((_, i) => i !== idx)
+    );
+    const clearAllMainFiles = () => updateMainState([], []);
 
     const clearMiddleFile = () => {
         if (middlePreview) URL.revokeObjectURL(middlePreview);
         setMiddlePreview(null);
+        setMiddleUploadedUrl(null);
         if (middleInputRef.current) {
             middleInputRef.current.value = "";
             middleInputRef.current.files = new DataTransfer().files;
@@ -218,6 +228,7 @@ export default function EditForm({ initialData }: EditFormProps) {
     const clearOgFile = () => {
         if (ogPreview) URL.revokeObjectURL(ogPreview);
         setOgPreview(null);
+        setOgUploadedUrl(null);
         if (ogInputRef.current) {
             ogInputRef.current.value = "";
             ogInputRef.current.files = new DataTransfer().files;
@@ -256,9 +267,14 @@ export default function EditForm({ initialData }: EditFormProps) {
             document.getElementsByName("location_address")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
-        if (mainFiles.length > 0 && mainFiles.length < 3) {
+        if (isMainUploading) {
             e.preventDefault();
-            toast(`메인 사진 교체 시 3장을 모두 새로 등록해야 합니다. (현재 ${mainFiles.length}장)`);
+            toast("메인 사진 업로드가 진행 중입니다. 잠시만 기다려주세요.");
+            return;
+        }
+        if (mainUploadedUrls.length > 0 && mainUploadedUrls.length < 3) {
+            e.preventDefault();
+            toast(`메인 사진 교체 시 3장을 모두 새로 등록해야 합니다. (현재 ${mainUploadedUrls.length}장)`);
             return;
         }
         if (isGalleryUploading) {
@@ -448,9 +464,13 @@ export default function EditForm({ initialData }: EditFormProps) {
                                     <p className="text-[11px] text-slate-400">권장: 9:16 비율 / 1장당 15MB 이하</p>
                                 </div>
                             )}
-                            <input name="mainImages" ref={mainInputRef} type="file" multiple accept="image/*" onChange={handleMainChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+                            <input ref={mainInputRef} type="file" multiple accept="image/*" onChange={handleMainChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
                             <input ref={addMainInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleMainAppend} />
                         </div>
+                        {mainUploadedUrls.map((url, idx) => (
+                            <input key={`main-${idx}`} type="hidden" name="mainImageUrls" value={url} />
+                        ))}
+                        {isMainUploading && <p className="text-[11px] text-blue-500 text-center">메인 사진 업로드 중입니다...</p>}
                     </div>
 
                     <div className="space-y-4">
@@ -480,7 +500,8 @@ export default function EditForm({ initialData }: EditFormProps) {
                                     </button>
                                 </>
                             ) : <ImageIcon size={24} className="text-slate-300" />}
-                            <input name="middleImage" ref={middleInputRef} type="file" accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                            <input ref={middleInputRef} type="file" accept="image/*" onChange={handleMiddleChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                        {middleUploadedUrl && <input type="hidden" name="middleImageUrl" value={middleUploadedUrl} />}
                         </div>
                     </div>
 
@@ -524,7 +545,8 @@ export default function EditForm({ initialData }: EditFormProps) {
                                     </div>
                                 </div>
                             )}
-                            <input name="ogImage" ref={ogInputRef} type="file" accept="image/*" onChange={handleOgChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                            <input ref={ogInputRef} type="file" accept="image/*" onChange={handleOgChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                        {ogUploadedUrl && <input type="hidden" name="ogImageUrl" value={ogUploadedUrl} />}
                         </div>
                     </div>
 
