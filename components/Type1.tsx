@@ -89,6 +89,7 @@ export default function Type1({ data }: Type1Props) {
 
     // 갤러리 상태
     const [currentGalleryIdx, setCurrentGalleryIdx] = useState(0);
+    const [galleryPrevIdx, setGalleryPrevIdx] = useState(0);
     const [isGalleryPaused, setIsGalleryPaused] = useState(false);
     const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
 
@@ -104,6 +105,21 @@ export default function Type1({ data }: Type1Props) {
     const weddingTimeEn = weddingDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
     const firstDayOfMonth = new Date(weddingYear, weddingMonth, 1).getDay();
     const daysInMonth = new Date(weddingYear, weddingMonth + 1, 0).getDate();
+
+    // 카카오톡 WebView 등 모바일에서 overscroll(당겨서 확대) 비활성화
+    useEffect(() => {
+        const prev = document.body.style.overscrollBehavior;
+        document.body.style.overscrollBehavior = "none";
+        return () => {
+            document.body.style.overscrollBehavior = prev;
+        };
+    }, []);
+
+    // 갤러리 크로스페이드용 이전 인덱스 추적
+    useEffect(() => {
+        const t = setTimeout(() => setGalleryPrevIdx(currentGalleryIdx), 500);
+        return () => clearTimeout(t);
+    }, [currentGalleryIdx]);
 
     // [수정] 메인 슬라이드: 마지막 장에서 멈춤
     useEffect(() => {
@@ -245,7 +261,7 @@ export default function Type1({ data }: Type1Props) {
     const brideAccounts = data.accounts.filter(acc => acc.side === 'bride' || acc.side.startsWith('bride_'));
 
     return (
-        <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`} style={{ overscrollBehavior: "none" }}>
+        <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`}>
             <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID}`} onLoad={initMap}/>
             <Script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" onLoad={() => window.Kakao?.init("ea07c2afa5b5a0a07737bab48ab8e3e8")} />
 
@@ -482,20 +498,18 @@ export default function Type1({ data }: Type1Props) {
                         <div className="px-4 space-y-4">
                             {/* 메인 뷰어 */}
                             <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={currentGalleryIdx}
-                                        initial={{opacity: 0}}
-                                        animate={{opacity: 1}}
-                                        exit={{opacity: 0}}
-                                        transition={{duration: 0.5}}
-                                        className="absolute inset-0"
-                                    >
-                                        <img src={data.gallery[currentGalleryIdx]}
-                                             alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
-                                             className="absolute inset-0 w-full h-full object-cover"/>
-                                    </motion.div>
-                                </AnimatePresence>
+                                <img
+                                    src={data.gallery[galleryPrevIdx]}
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                                <img
+                                    key={currentGalleryIdx}
+                                    src={data.gallery[currentGalleryIdx]}
+                                    alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
+                                    className="absolute inset-0 w-full h-full object-cover gallery-fade-in"
+                                />
                                 <button onClick={(e) => {
                                     e.stopPropagation();
                                     prevGallery();
