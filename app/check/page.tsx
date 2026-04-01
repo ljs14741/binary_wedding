@@ -1,7 +1,7 @@
 "use client";
 
 import { getMyInvitations, deleteInvitation } from "@/app/actions";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 import Link from "next/link";
 import { Search, Lock, User, Phone, ExternalLink, Edit, Trash2, Heart, Calendar, MapPin } from "lucide-react";
@@ -25,6 +25,15 @@ export default function CheckPage() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<Invitation[] | null>(null);
     const [error, setError] = useState("");
+    const [phone, setPhone] = useState("");
+
+    const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/[^0-9]/g, "");
+        let formatted = raw;
+        if (raw.length > 3 && raw.length <= 7) formatted = `${raw.slice(0, 3)}-${raw.slice(3)}`;
+        else if (raw.length > 7) formatted = `${raw.slice(0, 3)}-${raw.slice(3, 7)}-${raw.slice(7, 11)}`;
+        setPhone(formatted);
+    }, []);
 
     // 조회 핸들러
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,6 +115,9 @@ export default function CheckPage() {
                                         type="tel"
                                         placeholder="예: 010-1234-5678"
                                         required
+                                        value={phone}
+                                        onChange={handlePhoneChange}
+                                        maxLength={13}
                                         className="w-full pl-12 pr-6 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none text-slate-800 font-medium"
                                     />
                                 </div>
