@@ -475,57 +475,50 @@ export default function Type1({ data }: Type1Props) {
                 {/* 6. 웨딩 갤러리 (뷰어 + 썸네일 복구) */}
                 {data.gallery.length > 0 && (
                     <section className="py-24 bg-white">
-                        <FadeIn>
-                            <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩
-                                갤러리</h3>
-                            <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
-                        </FadeIn>
+                        <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩
+                            갤러리</h3>
+                        <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
 
                         <div className="px-4 space-y-4">
                             {/* 메인 뷰어 */}
-                            <FadeIn>
-                                <div
-                                    className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
-                                    <AnimatePresence mode="wait">
-                                        <motion.div
-                                            key={currentGalleryIdx}
-                                            initial={{opacity: 0}}
-                                            animate={{opacity: 1}}
-                                            exit={{opacity: 0}}
-                                            transition={{duration: 0.5}}
-                                            className="absolute inset-0"
-                                        >
-                                            <img src={data.gallery[currentGalleryIdx]}
-                                                 alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
-                                                 className="absolute inset-0 w-full h-full object-cover"/>
-                                        </motion.div>
-                                    </AnimatePresence>
-                                    <button onClick={(e) => {
-                                        e.stopPropagation();
-                                        prevGallery();
-                                    }}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/50 transition-colors">
-                                        <ChevronLeft size={20}/></button>
-                                    <button onClick={(e) => {
-                                        e.stopPropagation();
-                                        nextGallery();
-                                    }}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/50 transition-colors">
-                                        <ChevronRight size={20}/></button>
-                                </div>
-                            </FadeIn>
+                            <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={currentGalleryIdx}
+                                        initial={{opacity: 0}}
+                                        animate={{opacity: 1}}
+                                        exit={{opacity: 0}}
+                                        transition={{duration: 0.5}}
+                                        className="absolute inset-0"
+                                    >
+                                        <img src={data.gallery[currentGalleryIdx]}
+                                             alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
+                                             className="absolute inset-0 w-full h-full object-cover"/>
+                                    </motion.div>
+                                </AnimatePresence>
+                                <button onClick={(e) => {
+                                    e.stopPropagation();
+                                    prevGallery();
+                                }}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/50 transition-colors">
+                                    <ChevronLeft size={20}/></button>
+                                <button onClick={(e) => {
+                                    e.stopPropagation();
+                                    nextGallery();
+                                }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/50 transition-colors">
+                                    <ChevronRight size={20}/></button>
+                            </div>
 
                             {/* 썸네일 리스트 */}
-                            <FadeIn delay={0.2}>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {data.gallery.slice(0, isGalleryExpanded ? undefined : 4).map((img, idx) => (
-                                        <button key={idx} onClick={() => selectGallery(idx)}
-                                                className={`relative aspect-square rounded-xl overflow-hidden shadow-sm transition-all ${currentGalleryIdx === idx ? 'ring-2 ring-rose-300 opacity-100' : 'opacity-60 hover:opacity-100'}`}>
-                                            <img src={img} alt={`썸네일 ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover"/>
-                                        </button>
-                                    ))}
-                                </div>
-                            </FadeIn>
+                            <div className="grid grid-cols-4 gap-2">
+                                {data.gallery.slice(0, isGalleryExpanded ? undefined : 4).map((img, idx) => (
+                                    <button key={idx} onClick={() => selectGallery(idx)}
+                                            className={`relative aspect-square rounded-xl overflow-hidden shadow-sm transition-all ${currentGalleryIdx === idx ? 'ring-2 ring-rose-300 opacity-100' : 'opacity-60 hover:opacity-100'}`}>
+                                        <img src={img} alt={`썸네일 ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy"/>
+                                    </button>
+                                ))}
+                            </div>
 
                             {/* [복구] 더보기 버튼 (4장 초과 시 노출) */}
                             {data.gallery.length > 4 && (
