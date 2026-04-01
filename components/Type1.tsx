@@ -245,7 +245,7 @@ export default function Type1({ data }: Type1Props) {
     const brideAccounts = data.accounts.filter(acc => acc.side === 'bride' || acc.side.startsWith('bride_'));
 
     return (
-        <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`}>
+        <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`} style={{ overscrollBehavior: "none" }}>
             <Script strategy="afterInteractive" src={`https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID}`} onLoad={initMap}/>
             <Script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" onLoad={() => window.Kakao?.init("ea07c2afa5b5a0a07737bab48ab8e3e8")} />
 
