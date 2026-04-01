@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 import path from "path";
 import fs from "fs";
 
+type NextConfigWithServerActions = NextConfig & {
+    serverActions?: {
+        bodySizeLimit?: string;
+    };
+};
+
 // Turbopack 등에서 .env 로드 누락 시 fallback: .env 파일 직접 파싱
 function loadAdminSecret(): string {
     const fromEnv = process.env.ADMIN_SECRET;
@@ -25,12 +31,10 @@ function loadAdminSecret(): string {
     return "";
 }
 
-const nextConfig: NextConfig = {
+const nextConfig: NextConfigWithServerActions = {
     output: "standalone",
-    experimental: {
-        serverActions: {
-            bodySizeLimit: "50mb",
-        },
+    serverActions: {
+        bodySizeLimit: "50mb",
     },
     images: {
         unoptimized: true,
