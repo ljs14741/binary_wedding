@@ -27,9 +27,20 @@ function loadAdminSecret(): string {
 
 const nextConfig: NextConfig = {
     output: "standalone",
+    experimental: {
+        serverActions: {
+            bodySizeLimit: "50mb",
+        },
+    },
     images: {
         unoptimized: true,
         localPatterns: [{ pathname: "/uploads/**" }],
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "**",
+            },
+        ],
     },
     env: {
         ADMIN_SECRET: loadAdminSecret(),
