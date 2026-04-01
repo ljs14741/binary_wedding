@@ -89,7 +89,6 @@ export default function Type1({ data }: Type1Props) {
 
     // 갤러리 상태
     const [currentGalleryIdx, setCurrentGalleryIdx] = useState(0);
-    const [galleryPrevIdx, setGalleryPrevIdx] = useState(0);
     const [isGalleryPaused, setIsGalleryPaused] = useState(false);
     const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
 
@@ -105,21 +104,6 @@ export default function Type1({ data }: Type1Props) {
     const weddingTimeEn = weddingDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
     const firstDayOfMonth = new Date(weddingYear, weddingMonth, 1).getDay();
     const daysInMonth = new Date(weddingYear, weddingMonth + 1, 0).getDate();
-
-    // 카카오톡 WebView 등 모바일에서 overscroll(당겨서 확대) 비활성화
-    useEffect(() => {
-        const prev = document.body.style.overscrollBehavior;
-        document.body.style.overscrollBehavior = "none";
-        return () => {
-            document.body.style.overscrollBehavior = prev;
-        };
-    }, []);
-
-    // 갤러리 크로스페이드용 이전 인덱스 추적
-    useEffect(() => {
-        const t = setTimeout(() => setGalleryPrevIdx(currentGalleryIdx), 500);
-        return () => clearTimeout(t);
-    }, [currentGalleryIdx]);
 
     // [수정] 메인 슬라이드: 마지막 장에서 멈춤
     useEffect(() => {
@@ -499,16 +483,9 @@ export default function Type1({ data }: Type1Props) {
                             {/* 메인 뷰어 */}
                             <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
                                 <img
-                                    src={data.gallery[galleryPrevIdx]}
-                                    alt=""
-                                    aria-hidden="true"
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                />
-                                <img
-                                    key={currentGalleryIdx}
                                     src={data.gallery[currentGalleryIdx]}
                                     alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
-                                    className="absolute inset-0 w-full h-full object-cover gallery-fade-in"
+                                    className="absolute inset-0 w-full h-full object-cover"
                                 />
                                 <button onClick={(e) => {
                                     e.stopPropagation();

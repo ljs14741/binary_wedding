@@ -64,10 +64,6 @@ body {
   animation: customFadeIn 2s ease-out forwards;
 }
 
-.gallery-fade-in {
-  animation: customFadeIn 0.5s ease-out forwards;
-}
-
 /* 꽃잎 날리는 효과 */
 @keyframes petal-fall {
   0% {
