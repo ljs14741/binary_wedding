@@ -52,7 +52,7 @@ const nextConfig: NextConfigWithServerActions = {
         ],
     },
     env: {
-        ADMIN_SECRET: loadAdminSecret(),
+        ...(loadAdminSecret() ? { ADMIN_SECRET: loadAdminSecret() } : {}),
     },
 };
 
