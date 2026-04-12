@@ -170,12 +170,14 @@ export async function createInvitation(formData: FormData) {
 
     // 3. 텍스트 데이터 추출 및 검증 (groom_name, bride_name, wedding_date_str는 상단 dedupe에서 이미 추출)
     const groom_contact = formData.get("groom_contact") as string;
+    const groom_order = (formData.get("groom_order") as string) || null;
     const groom_father = formData.get("groom_father") as string;
     const groom_father_contact = formData.get("groom_father_contact") as string;
     const groom_mother = formData.get("groom_mother") as string;
     const groom_mother_contact = formData.get("groom_mother_contact") as string;
 
     const bride_contact = formData.get("bride_contact") as string;
+    const bride_order = (formData.get("bride_order") as string) || null;
     const bride_father = formData.get("bride_father") as string;
     const bride_father_contact = formData.get("bride_father_contact") as string;
     const bride_mother = formData.get("bride_mother") as string;
@@ -237,8 +239,8 @@ export async function createInvitation(formData: FormData) {
                 password: hashedPassword,
                 template_type: "type1",
 
-                groom_name, groom_contact, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
-                bride_name, bride_contact, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
+                groom_name, groom_contact, groom_order, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
+                bride_name, bride_contact, bride_order, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
 
                 wedding_date: new Date(wedding_date_str),
                 location_name, location_detail, location_address,
@@ -370,6 +372,7 @@ export async function updateInvitation(formData: FormData) {
     // 5. 텍스트 데이터
     const groom_name = formData.get("groom_name") as string;
     const groom_contact = formData.get("groom_contact") as string;
+    const groom_order = (formData.get("groom_order") as string) || null;
     const groom_father = formData.get("groom_father") as string;
     const groom_father_contact = formData.get("groom_father_contact") as string;
     const groom_mother = formData.get("groom_mother") as string;
@@ -377,6 +380,7 @@ export async function updateInvitation(formData: FormData) {
 
     const bride_name = formData.get("bride_name") as string;
     const bride_contact = formData.get("bride_contact") as string;
+    const bride_order = (formData.get("bride_order") as string) || null;
     const bride_father = formData.get("bride_father") as string;
     const bride_father_contact = formData.get("bride_father_contact") as string;
     const bride_mother = formData.get("bride_mother") as string;
@@ -416,8 +420,8 @@ export async function updateInvitation(formData: FormData) {
     await prisma.invitations.update({
         where: { url_id },
         data: {
-            groom_name, groom_contact, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
-            bride_name, bride_contact, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
+            groom_name, groom_contact, groom_order, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
+            bride_name, bride_contact, bride_order, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
 
             wedding_date: new Date(wedding_date_str),
             location_name, location_detail, location_address,

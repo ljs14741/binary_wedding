@@ -437,6 +437,7 @@ export default function MakePage() {
                                     <InputGroup label="신랑 성함" name="groom_name" placeholder="예: 홍길동" required icon={<User size={16}/>}/>
                                     <PhoneInput label="신랑 연락처" name="groom_contact" required icon={<MessageCircle size={16}/>}/>
                                 </div>
+                                <OrderSelectGroup label="신랑 호칭" name="groom_order" options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} icon={<Users size={16}/>}/>
                                 <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" />
                                 <div className="h-px bg-slate-100 my-4"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -463,6 +464,7 @@ export default function MakePage() {
                                     <InputGroup label="신부 성함" name="bride_name" placeholder="예: 김영희" required icon={<User size={16}/>}/>
                                     <PhoneInput label="신부 연락처" name="bride_contact" required icon={<MessageCircle size={16}/>}/>
                                 </div>
+                                <OrderSelectGroup label="신부 호칭" name="bride_order" options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} icon={<Users size={16}/>}/>
                                 <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" />
                                 <div className="h-px bg-slate-100 my-4"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -842,6 +844,38 @@ function InputGroup({label, name, placeholder, required = false, type = "text", 
                 placeholder={placeholder}
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 invalid:border-rose-200 invalid:bg-rose-50 focus:invalid:border-rose-500 focus:invalid:ring-rose-500"
             />
+        </div>
+    );
+}
+
+function OrderSelectGroup({ label, name, options, icon }: { label: string; name: string; options: string[]; icon?: React.ReactNode }) {
+    const [selected, setSelected] = useState(options[0] ?? "");
+    const [customValue, setCustomValue] = useState("");
+    const finalValue = selected === "직접입력" ? customValue : selected;
+    return (
+        <div className="space-y-2 group">
+            <label className="block text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                {icon && <span className="text-slate-400 group-focus-within:text-slate-800 transition-colors">{icon}</span>}
+                {label}
+            </label>
+            <input type="hidden" name={name} value={finalValue} />
+            <select
+                value={selected}
+                onChange={e => setSelected(e.target.value)}
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800"
+            >
+                {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                <option value="직접입력">직접입력</option>
+            </select>
+            {selected === "직접입력" && (
+                <input
+                    type="text"
+                    value={customValue}
+                    onChange={e => setCustomValue(e.target.value)}
+                    placeholder="직접 입력해주세요"
+                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400"
+                />
+            )}
         </div>
     );
 }

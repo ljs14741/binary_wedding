@@ -103,6 +103,7 @@ export default async function CardPage({ params }: PageProps) {
         groom: {
             name: rawData.groom_name,
             contact: rawData.groom_contact || "",
+            order: rawData.groom_order || "",
             father: rawData.groom_father || "",
             mother: rawData.groom_mother || "",
             father_contact: rawData.groom_father_contact || "",
@@ -111,6 +112,7 @@ export default async function CardPage({ params }: PageProps) {
         bride: {
             name: rawData.bride_name,
             contact: rawData.bride_contact || "",
+            order: rawData.bride_order || "",
             father: rawData.bride_father || "",
             mother: rawData.bride_mother || "",
             father_contact: rawData.bride_father_contact || "",

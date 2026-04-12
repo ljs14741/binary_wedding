@@ -49,8 +49,8 @@ interface GuestbookEntry {
 
 interface Type1Props {
     data: {
-        groom: { name: string; contact: string; father: string; mother: string; father_contact?: string; mother_contact?: string };
-        bride: { name: string; contact: string; father: string; mother: string; father_contact?: string; mother_contact?: string };
+        groom: { name: string; contact: string; order?: string; father: string; mother: string; father_contact?: string; mother_contact?: string };
+        bride: { name: string; contact: string; order?: string; father: string; mother: string; father_contact?: string; mother_contact?: string };
         date: Date;
         location: string;
         detail: string;
@@ -333,13 +333,11 @@ export default function Type1({ data }: Type1Props) {
                         <div className="space-y-6 text-gray-800 font-serif mb-12 text-lg">
                             <div><span className="text-gray-400 font-sans text-sm mr-3">신랑</span>
                                 <b>{data.groom.name}</b> <span
-                                    className="text-gray-300 mx-2">|</span> {data.groom.father} · {data.groom.mother}의
-                                장남
+                                    className="text-gray-300 mx-2">|</span> {data.groom.father} · {data.groom.mother}{data.groom.order ? `의 ${data.groom.order}` : ""}
                             </div>
                             <div><span className="text-gray-400 font-sans text-sm mr-3">신부</span>
                                 <b>{data.bride.name}</b> <span
-                                    className="text-gray-300 mx-2">|</span> {data.bride.father} · {data.bride.mother}의
-                                차녀
+                                    className="text-gray-300 mx-2">|</span> {data.bride.father} · {data.bride.mother}{data.bride.order ? `의 ${data.bride.order}` : ""}
                             </div>
                         </div>
                         <button onClick={() => setIsContactOpen(true)}

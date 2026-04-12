@@ -30,6 +30,7 @@ export default async function EditPage({ params }: PageProps) {
 
         groom_name: data.groom_name,
         groom_contact: data.groom_contact || "",
+        groom_order: data.groom_order || "",
         groom_father: data.groom_father || "",
         groom_father_contact: data.groom_father_contact || "",
         groom_mother: data.groom_mother || "",
@@ -37,6 +38,7 @@ export default async function EditPage({ params }: PageProps) {
 
         bride_name: data.bride_name,
         bride_contact: data.bride_contact || "",
+        bride_order: data.bride_order || "",
         bride_father: data.bride_father || "",
         bride_father_contact: data.bride_father_contact || "",
         bride_mother: data.bride_mother || "",

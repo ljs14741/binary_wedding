@@ -89,6 +89,7 @@ model invitations {
   // [수정] 혼주 연락처 필드 추가됨
   groom_name          String                @db.VarChar(20)
   groom_contact       String?               @db.VarChar(20)
+  groom_order         String?               @db.VarChar(10)
   groom_father        String?               @db.VarChar(20)
   groom_father_contact String?              @db.VarChar(20) // New
   groom_mother        String?               @db.VarChar(20)
@@ -96,6 +97,7 @@ model invitations {
 
   bride_name          String                @db.VarChar(20)
   bride_contact       String?               @db.VarChar(20)
+  bride_order         String?               @db.VarChar(10)
   bride_father        String?               @db.VarChar(20)
   bride_father_contact String?              @db.VarChar(20) // New
   bride_mother        String?               @db.VarChar(20)
