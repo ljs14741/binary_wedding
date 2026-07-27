@@ -40,7 +40,8 @@ export default function SupportNudge({
                 <span className="font-bold text-rose-500">사실 치킨 먹고 싶어요!! 🍗</span>
                 <br />
                 <br />
-                후원이 부담스러우시면, 이용후기 한 줄만 남겨주셔도 큰 힘이 됩니다.
+                후원이 부담스러우시면,{" "}
+                <span className="font-bold text-rose-500">이용후기</span> 한 줄만 남겨주셔도 큰 힘이 됩니다.
                 <br />
                 마음에 드신 점이나 아쉬운 점을 알려주시면 다음 분들께도, 무료로 계속 운영하는 데에도 도움이 됩니다.
                 <br />
@@ -57,7 +58,7 @@ export default function SupportNudge({
                 </button>
                 <Link
                     href="/reviews"
-                    className="w-full py-3.5 bg-white text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
+                    className="w-full py-3.5 bg-rose-50 text-rose-600 font-black rounded-xl text-xs flex items-center justify-center gap-2 border border-rose-200 hover:bg-rose-100 active:scale-95 transition-all"
                 >
                     <MessageCircle size={14} /> 이용후기
                 </Link>
