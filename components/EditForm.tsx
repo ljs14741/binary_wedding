@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { processImage } from "@/lib/image";
 import Script from "next/script";
+import SupportNudge from "@/components/SupportNudge";
 
 interface EditFormProps {
     initialData: any;
@@ -17,6 +18,9 @@ interface EditFormProps {
 export default function EditForm({ initialData }: EditFormProps) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [useInterview, setUseInterview] = useState(
+        () => (initialData.interviews?.length ?? 0) > 0
+    );
 
     // --------------------------------------------------------
     // 1. 사진 상태 관리 (메인, 중간, 갤러리)
@@ -304,6 +308,7 @@ export default function EditForm({ initialData }: EditFormProps) {
     }, []);
 
     return (
+        <>
         <form action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
             <input type="hidden" name="url_id" value={initialData.url_id} />
             <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="afterInteractive" />
@@ -405,20 +410,40 @@ export default function EditForm({ initialData }: EditFormProps) {
 
             {/* 🎤 인터뷰 섹션 */}
             <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
-                <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b pb-4">
-                    <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span><span className="flex-1">신랑신부 인터뷰</span>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-3 text-slate-800 border-b pb-4">
+                    <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span>
+                    <span className="flex-1 flex items-center gap-2 flex-wrap">
+                        신랑신부 인터뷰
+                        <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-1 rounded-full font-bold">선택</span>
+                    </span>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={useInterview}
+                        aria-label="신랑신부 인터뷰 사용"
+                        onClick={() => setUseInterview((v) => !v)}
+                        className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${useInterview ? "bg-purple-500" : "bg-slate-200"}`}
+                    >
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${useInterview ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
                 </h3>
-                <p className="text-xs text-slate-500 mb-6">질문과 답변 모두 수정할 수 있습니다.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[1, 2].map((num, idx) => (
-                        <div key={num} className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 0{num}</label>
-                            <input name={`interview_q${num}`} defaultValue={getInterview(idx).question} placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors"/>
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
-                            <textarea name={`interview_a${num}`} rows={3} defaultValue={getInterview(idx).answer} placeholder="답변을 입력하세요" className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200"/>
-                        </div>
-                    ))}
-                </div>
+                <p className="text-xs text-slate-500 mb-6">
+                    {useInterview
+                        ? "질문과 답변을 수정할 수 있습니다. 저장하면 청첩장에 반영됩니다."
+                        : "사용 안 함으로 두고 저장하면 청첩장에서 인터뷰가 삭제됩니다."}
+                </p>
+                {useInterview && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[1, 2].map((num, idx) => (
+                            <div key={num} className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 0{num}</label>
+                                <input name={`interview_q${num}`} defaultValue={getInterview(idx).question} placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors"/>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
+                                <textarea name={`interview_a${num}`} rows={3} defaultValue={getInterview(idx).answer} placeholder="답변을 입력하세요" className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200"/>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* 📷 사진 수정 섹션 */}
@@ -619,12 +644,17 @@ export default function EditForm({ initialData }: EditFormProps) {
                 </div>
             </section>
 
-            <div className="pt-6 pb-20">
+            <div className="pt-6 pb-8">
                 <button type="submit" disabled={loading || isGalleryUploading} className="w-full py-6 bg-blue-600 text-white rounded-3xl font-bold text-xl shadow-2xl hover:bg-blue-700 transition-all flex justify-center items-center gap-3 active:scale-[0.98] disabled:opacity-50">
                     {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : <><Save size={20} /> 수정 완료하기</>}
                 </button>
             </div>
         </form>
+
+        <div className="pb-20">
+            <SupportNudge />
+        </div>
+        </>
     );
 }
 

@@ -8,6 +8,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Script from "next/script";
 import { processImage } from "@/lib/image";
+import SupportNudge from "@/components/SupportNudge";
 
 const CLIENT_ID_KEY = "wedding_client_id";
 
@@ -25,6 +26,7 @@ export default function MakePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [clientId, setClientId] = useState("");
+    const [useInterview, setUseInterview] = useState(false);
 
     // --------------------------------------------------------
     // 1. 메인 사진 상태 관리 (순서 변경, 추가, 삭제)
@@ -531,24 +533,44 @@ export default function MakePage() {
 
                         {/* 인터뷰 */}
                         <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
-                            <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
-                                <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span><span className="flex-1">신랑신부 인터뷰</span>
+                            <h3 className="text-xl font-bold mb-4 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
+                                <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span>
+                                <span className="flex-1 flex items-center gap-2 flex-wrap">
+                                    신랑신부 인터뷰
+                                    <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-1 rounded-full font-bold">선택</span>
+                                </span>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={useInterview}
+                                    aria-label="신랑신부 인터뷰 사용"
+                                    onClick={() => setUseInterview((v) => !v)}
+                                    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${useInterview ? "bg-purple-500" : "bg-slate-200"}`}
+                                >
+                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${useInterview ? "translate-x-6" : "translate-x-1"}`} />
+                                </button>
                             </h3>
-                            <p className="text-xs text-slate-500 mb-6">질문과 답변 모두 수정할 수 있습니다.</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 01</label>
-                                    <input name="interview_q1" defaultValue="서로의 첫 만남은?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
-                                    <textarea name="interview_a1" rows={3} placeholder="벚꽃이 흩날리던 어느 봄날이었습니다. 수줍게 웃던 모습에 이끌려 오늘까지 오게 되었네요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
+                            <p className="text-xs text-slate-500 mb-6">
+                                {useInterview
+                                    ? "질문과 답변을 작성하면 청첩장에 ‘인터뷰 보기’가 표시됩니다."
+                                    : "사용 안 함으로 두면 청첩장에 인터뷰가 표시되지 않습니다."}
+                            </p>
+                            {useInterview && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 01</label>
+                                        <input name="interview_q1" defaultValue="서로의 첫 만남은?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
+                                        <textarea name="interview_a1" rows={3} placeholder="벚꽃이 흩날리던 어느 봄날이었습니다. 수줍게 웃던 모습에 이끌려 오늘까지 오게 되었네요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
+                                    </div>
+                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 02</label>
+                                        <input name="interview_q2" defaultValue="서로에게 바라는 점?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
+                                        <textarea name="interview_a2" rows={3} placeholder="지금처럼 서로를 아끼고 웃음 가득한 예쁜 가정을 함께 만들어가고 싶어요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
+                                    </div>
                                 </div>
-                                <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 02</label>
-                                    <input name="interview_q2" defaultValue="서로에게 바라는 점?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
-                                    <textarea name="interview_a2" rows={3} placeholder="지금처럼 서로를 아끼고 웃음 가득한 예쁜 가정을 함께 만들어가고 싶어요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
-                                </div>
-                            </div>
+                            )}
                         </section>
 
                         {/* 5. 사진 등록 (수정됨: opacity-0 적용) */}
@@ -809,6 +831,10 @@ export default function MakePage() {
                             </button>
                         </section>
                     </form>
+
+                    <div className="mt-8">
+                        <SupportNudge />
+                    </div>
                 </div>
             </div>
             <SiteFooter />

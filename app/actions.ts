@@ -202,8 +202,8 @@ export async function createInvitation(formData: FormData) {
     if (formData.get("account_bride_m_bank")) accounts.push({ side: "bride_m", name: bride_mother, bank: formData.get("account_bride_m_bank") as string, num: formData.get("account_bride_m_num") as string });
 
     const interviews = [
-        { q: formData.get("interview_q1") as string, a: formData.get("interview_a1") as string },
-        { q: formData.get("interview_q2") as string, a: formData.get("interview_a2") as string },
+        { q: (formData.get("interview_q1") as string)?.trim() || "", a: (formData.get("interview_a1") as string)?.trim() || "" },
+        { q: (formData.get("interview_q2") as string)?.trim() || "", a: (formData.get("interview_a2") as string)?.trim() || "" },
     ].filter(i => i.q && i.a);
 
     validateRequiredFields({ groom_name, bride_name, wedding_date_str, location_name, location_address });
@@ -411,10 +411,10 @@ export async function updateInvitation(formData: FormData) {
     if (formData.get("account_bride_f_bank")) accounts.push({ side: "bride_f", name: bride_father, bank: formData.get("account_bride_f_bank") as string, num: formData.get("account_bride_f_num") as string });
     if (formData.get("account_bride_m_bank")) accounts.push({ side: "bride_m", name: bride_mother, bank: formData.get("account_bride_m_bank") as string, num: formData.get("account_bride_m_num") as string });
 
-    // 8. 인터뷰 정보 수집
+    // 8. 인터뷰 정보 수집 (스위치 off 시 필드 미제출 → 빈 배열 → 기존 인터뷰 삭제)
     const interviews = [
-        { q: formData.get("interview_q1") as string, a: formData.get("interview_a1") as string },
-        { q: formData.get("interview_q2") as string, a: formData.get("interview_a2") as string },
+        { q: (formData.get("interview_q1") as string)?.trim() || "", a: (formData.get("interview_a1") as string)?.trim() || "" },
+        { q: (formData.get("interview_q2") as string)?.trim() || "", a: (formData.get("interview_a2") as string)?.trim() || "" },
     ].filter(i => i.q && i.a);
 
     await prisma.invitations.update({

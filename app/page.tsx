@@ -4,10 +4,11 @@
 import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, Coffee, Heart, CheckCircle2, Search, ChevronDown, MessageCircle } from 'lucide-react';
+import { X, CheckCircle2, Search, ChevronDown, MessageCircle } from 'lucide-react';
 // [중요] 컴포넌트 불러오기
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import SupportNudge from "@/components/SupportNudge";
 
 export default function Home() {
     const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
@@ -206,39 +207,24 @@ export default function Home() {
             {/* 8. 접속 시 안내 모달 (모바일: 화면에 맞게 중앙 하단 배치) */}
             {isWelcomeOpen && (
                 <div className="fixed left-4 right-4 bottom-4 sm:left-auto sm:right-8 sm:bottom-8 z-[200] max-w-[320px] sm:max-w-[320px] mx-auto sm:mx-0 animate-fade-in-up">
-                    <div className="bg-white rounded-[2rem] shadow-2xl border border-rose-50 p-8 relative overflow-hidden group">
+                    <div className="bg-white rounded-[2rem] shadow-2xl border border-rose-50 p-8 relative overflow-hidden group max-h-[85vh] overflow-y-auto">
                         <button
                             onClick={() => setIsWelcomeOpen(false)}
-                            className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition"
+                            className="absolute top-4 right-4 z-20 text-slate-300 hover:text-rose-500 transition"
                         >
                             <X size={20} />
                         </button>
-                        <div className="relative z-10">
-                            <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 mb-6 group-hover:scale-110 transition duration-500">
-                                <Heart size={24} fill="currentColor" />
-                            </div>
-                            <h5 className="font-serif text-xl font-bold text-slate-900 mb-3 tracking-tight">정말 무료인가요?</h5>
-                            <p className="text-sm text-slate-500 leading-[1.8] font-medium">
-                                네, 100% 무료입니다! 6년 차 개발자인 제가 <b>미래의 제 결혼식에 직접 쓰려고</b> 정성껏 만들었거든요. <br/><br/>
-                                예쁘게 사용해 주시고, 마음에 드신다면 커피 한 잔으로 제작자를 응원해 주세요. ☕ <span className="font-bold text-rose-500">사실 치킨 먹고 싶어요!! 🍗</span>
-                            </p>
-
-                            <button
-                                onClick={() => {
-                                    setIsWelcomeOpen(false);
-                                    window.dispatchEvent(new CustomEvent('openDonateModal'));
-                                }}
-                                className="w-full mt-6 py-3.5 bg-[#FEE500] text-[#191919] font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                            >
-                                <Coffee size={14} /> 후원하기
-                            </button>
-
-                            <div className="mt-6 flex gap-4 font-bold text-[10px] uppercase tracking-widest items-center">
-                                <Link href="/make" className="text-rose-600 hover:text-rose-400 transition underline underline-offset-4">만들기</Link>
-                                <button onClick={() => setIsWelcomeOpen(false)} className="text-slate-300 hover:text-slate-400">닫기</button>
-                            </div>
-                        </div>
-                        <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-rose-50/50 rounded-full blur-2xl"></div>
+                        <SupportNudge
+                            variant="plain"
+                            onDonateClick={() => setIsWelcomeOpen(false)}
+                            footer={
+                                <div className="mt-6 flex gap-4 font-bold text-[10px] uppercase tracking-widest items-center">
+                                    <Link href="/make" className="text-rose-600 hover:text-rose-400 transition underline underline-offset-4">만들기</Link>
+                                    <button type="button" onClick={() => setIsWelcomeOpen(false)} className="text-slate-300 hover:text-slate-400">닫기</button>
+                                </div>
+                            }
+                        />
+                        <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-rose-50/50 rounded-full blur-2xl pointer-events-none"></div>
                     </div>
                 </div>
             )}
