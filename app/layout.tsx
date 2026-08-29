@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Noto_Serif_KR, Playfair_Display, Pinyon_Script } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/ui/ToastProvider";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getBaseUrl } from "@/lib/site";
 
 // 1. 한국어 명조체 (진지하고 고급짐)
@@ -138,7 +137,6 @@ export default function RootLayout({
     return (
         <html lang="ko">
         <body className={`${notoserif.variable} ${playfair.variable} ${pinyon.variable} font-serif antialiased bg-[#F9F9F9]`}>
-        <GoogleAnalytics />
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

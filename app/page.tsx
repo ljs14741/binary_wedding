@@ -9,6 +9,7 @@ import { X, CheckCircle2, Search, ChevronDown, MessageCircle } from 'lucide-reac
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SupportNudge from "@/components/SupportNudge";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export default function Home() {
     const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-slate-900 font-sans selection:bg-rose-500 selection:text-white scroll-smooth">
+            <GoogleAnalytics />
 
             {/* 1. 헤더 컴포넌트 사용 */}
             <SiteHeader />
