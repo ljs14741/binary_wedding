@@ -8,12 +8,13 @@ import { Noto_Serif_KR } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Phone, Navigation, ChevronDown, ChevronUp, X,
-    MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus
+    MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus, Maximize2
 } from "lucide-react";
 import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from "@/app/actions";
 import { useToast } from "@/components/ui/ToastProvider";
 import { FlowerPetals } from "@/components/effects";
 import ReminderSection from "@/components/ReminderSection";
+import GalleryLightbox from "@/components/GalleryLightbox";
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
     weight: ["400", "700"],
@@ -90,6 +91,7 @@ export default function Type1({ data }: Type1Props) {
     const [currentGalleryIdx, setCurrentGalleryIdx] = useState(0);
     const [isGalleryPaused, setIsGalleryPaused] = useState(false);
     const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+    const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
@@ -141,6 +143,11 @@ export default function Type1({ data }: Type1Props) {
     const selectGallery = (idx: number) => {
         setIsGalleryPaused(true);
         setCurrentGalleryIdx(idx);
+    };
+    const openLightbox = (idx: number) => {
+        setIsGalleryPaused(true);
+        setCurrentGalleryIdx(idx);
+        setLightboxIdx(idx);
     };
 
     // 지도
@@ -479,11 +486,18 @@ export default function Type1({ data }: Type1Props) {
                         <div className="px-4 space-y-4">
                             {/* 메인 뷰어 */}
                             <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
-                                <img
-                                    src={data.gallery[currentGalleryIdx]}
-                                    alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                />
+                                <button type="button" onClick={() => openLightbox(currentGalleryIdx)}
+                                        aria-label="사진 크게 보기"
+                                        className="absolute inset-0 w-full h-full cursor-zoom-in">
+                                    <img
+                                        src={data.gallery[currentGalleryIdx]}
+                                        alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    />
+                                </button>
+                                <span className="absolute right-3 top-3 w-8 h-8 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center text-white pointer-events-none">
+                                    <Maximize2 size={14}/>
+                                </span>
                                 <button onClick={(e) => {
                                     e.stopPropagation();
                                     prevGallery();
@@ -708,6 +722,12 @@ export default function Type1({ data }: Type1Props) {
                             </div>
                         </div>
                     </div>}
+                <GalleryLightbox
+                    images={data.gallery}
+                    index={lightboxIdx}
+                    onClose={() => setLightboxIdx(null)}
+                    onChange={(idx) => { setLightboxIdx(idx); setCurrentGalleryIdx(idx); }}
+                />
                 {isInterviewOpen &&
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog"
                          aria-modal="true">

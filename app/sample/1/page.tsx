@@ -10,12 +10,13 @@ import {
     Phone, Copy, MapPin, Heart, Pause, Play,
     Navigation, ChevronDown, ChevronUp, X,
     MessageSquare, Plus, Mail,
-    Music, Share, ChevronLeft, ChevronRight
+    Music, Share, ChevronLeft, ChevronRight, Maximize2
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { FlowerPetals, KenBurnsImage } from "@/components/effects";
 import ReminderSection from "@/components/ReminderSection";
+import GalleryLightbox from "@/components/GalleryLightbox";
 
 const serif = Noto_Serif_KR({
     subsets: ["latin"],
@@ -111,6 +112,7 @@ export default function PremiumSample1() {
     const [currentGalleryIdx, setCurrentGalleryIdx] = useState(0);
     const [isGalleryPaused, setIsGalleryPaused] = useState(false);
     const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+    const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
@@ -156,6 +158,11 @@ export default function PremiumSample1() {
     const selectGallery = (idx: number) => {
         setIsGalleryPaused(true);
         setCurrentGalleryIdx(idx);
+    };
+    const openLightbox = (idx: number) => {
+        setIsGalleryPaused(true);
+        setCurrentGalleryIdx(idx);
+        setLightboxIdx(idx);
     };
 
     const shareKakao = () => {
@@ -484,23 +491,30 @@ export default function PremiumSample1() {
                             <FadeIn>
                                 <div
                                     className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-lg bg-gray-100 group">
-                                    <AnimatePresence mode="wait">
-                                        <motion.div
-                                            key={currentGalleryIdx}
-                                            initial={{opacity: 0}}
-                                            animate={{opacity: 1}}
-                                            exit={{opacity: 0}}
-                                            transition={{duration: 0.5}}
-                                            className="absolute inset-0"
-                                        >
-                                            <Image
-                                                src={DATA.galleryImages[currentGalleryIdx]}
-                                                alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </motion.div>
-                                    </AnimatePresence>
+                                    <button type="button" onClick={() => openLightbox(currentGalleryIdx)}
+                                            aria-label="사진 크게 보기"
+                                            className="absolute inset-0 w-full h-full cursor-zoom-in">
+                                        <AnimatePresence mode="wait">
+                                            <motion.div
+                                                key={currentGalleryIdx}
+                                                initial={{opacity: 0}}
+                                                animate={{opacity: 1}}
+                                                exit={{opacity: 0}}
+                                                transition={{duration: 0.5}}
+                                                className="absolute inset-0"
+                                            >
+                                                <Image
+                                                    src={DATA.galleryImages[currentGalleryIdx]}
+                                                    alt={`갤러리 사진 ${currentGalleryIdx + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </button>
+                                    <span className="absolute right-3 top-3 w-8 h-8 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center text-white pointer-events-none">
+                                        <Maximize2 size={14}/>
+                                    </span>
 
                                     <button
                                         onClick={(e) => {
@@ -659,7 +673,13 @@ export default function PremiumSample1() {
                         Binary Wedding Service
                     </footer>
 
-                    {/* 모달 창들 (연락처, 인터뷰, 작성) */}
+                    {/* 모달 창들 (갤러리 확대, 연락처, 인터뷰, 작성) */}
+                    <GalleryLightbox
+                        images={DATA.galleryImages}
+                        index={lightboxIdx}
+                        onClose={() => setLightboxIdx(null)}
+                        onChange={(idx) => { setLightboxIdx(idx); setCurrentGalleryIdx(idx); }}
+                    />
                     {isContactOpen && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in">
                             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsContactOpen(false)}/>
