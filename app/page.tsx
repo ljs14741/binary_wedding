@@ -106,15 +106,22 @@ export default function Home() {
                                 <p className="text-slate-500 text-center font-bold group-hover:text-rose-600 transition tracking-tight">유행을 타지 않는 정갈함의 미학</p>
                             </Link>
 
-                            <div className="group relative grayscale opacity-60">
-                                <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-lg border border-slate-50">
-                                    <Image src="/images/card2.jpg" alt="내추럴 가든" fill className="object-cover" />
-                                    <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
-                                        <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase">Coming Soon</span>
+                            <Link href="/sample/2" className="group block">
+                                <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-xl group-hover:shadow-sky-100 group-hover:shadow-2xl transition-all duration-500 border border-slate-50 bg-[#CFE3F0]">
+                                    <Image
+                                        src="/images/card-minihompy.svg"
+                                        alt="웨딩홈피"
+                                        fill
+                                        className="object-cover group-hover:scale-105 transition duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition" />
+                                    <div className="absolute bottom-10 left-10 text-white">
+                                        <span className="bg-sky-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block shadow-sm">New</span>
+                                        <h4 className="text-2xl font-serif font-bold tracking-tight">웨딩홈피</h4>
                                     </div>
                                 </div>
-                                <p className="text-slate-400 text-center font-bold">싱그러운 야외 예식의 감성</p>
-                            </div>
+                                <p className="text-slate-500 text-center font-bold group-hover:text-sky-600 transition tracking-tight">그 시절 미니홈피 감성 그대로</p>
+                            </Link>
 
                             <div className="group relative grayscale opacity-60">
                                 <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-lg border border-slate-50">

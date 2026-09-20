@@ -21,6 +21,13 @@ export const TEMPLATES: TemplateMeta[] = [
         thumbnail: "/images/main1.png",
         samplePath: "/sample/1",
     },
+    {
+        id: "minihompy",
+        name: "웨딩홈피",
+        description: "2000년대 미니홈피 감성 — 일촌평·도토리·BGM까지 그대로",
+        thumbnail: "/images/card-minihompy.svg",
+        samplePath: "/sample/2",
+    },
 ];
 
 export const DEFAULT_TEMPLATE_ID = TEMPLATES[0].id;

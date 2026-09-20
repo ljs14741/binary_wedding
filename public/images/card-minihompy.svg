@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <defs>
+    <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="1.6" fill="#ffffff"/>
+      <circle cx="13" cy="13" r="1.2" fill="#b7d3e6"/>
+    </pattern>
+    <linearGradient id="title" x1="0" x2="1">
+      <stop offset="0" stop-color="#8FBBDD"/>
+      <stop offset="1" stop-color="#BFDDF0"/>
+    </linearGradient>
+    <linearGradient id="photo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F9D6DF"/>
+      <stop offset="1" stop-color="#C9DFF3"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="600" height="800" fill="#CFE3F0"/>
+  <rect width="600" height="800" fill="url(#dots)"/>
+
+  <!-- 카운터 -->
+  <text x="470" y="88" font-family="Arial, sans-serif" font-size="15" letter-spacing="2" fill="#4a6b85" text-anchor="end">TODAY <tspan fill="#FF6B35" font-weight="700">12</tspan>  |  TOTAL <tspan font-weight="700">1,247</tspan></text>
+
+  <!-- 창 그림자 + 창 -->
+  <rect x="66" y="112" width="410" height="600" rx="24" fill="#9dbdd6"/>
+  <rect x="60" y="106" width="410" height="600" rx="24" fill="#ffffff" stroke="#7FA8C9" stroke-width="5"/>
+  <!-- 타이틀 바 -->
+  <path d="M60 130 a24 24 0 0 1 24 -24 h362 a24 24 0 0 1 24 24 v34 h-410 z" fill="url(#title)"/>
+  <line x1="60" y1="164" x2="470" y2="164" stroke="#7FA8C9" stroke-width="3"/>
+  <text x="84" y="148" font-family="'Comic Sans MS', 'Gaegu', cursive" font-size="24" fill="#1f3d55">진호 <tspan fill="#FF6B35">♥</tspan> 나은의 웨딩홈피</text>
+  <rect x="400" y="126" width="52" height="24" rx="6" fill="#ffffff" opacity="0.75"/>
+  <text x="426" y="143" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#1f3d55" text-anchor="middle">▶ BGM</text>
+
+  <!-- 미니룸 박스 -->
+  <rect x="84" y="186" width="362" height="300" rx="10" fill="#FFF6E9" stroke="#f1dfc3"/>
+  <g transform="translate(265 336) rotate(-3)">
+    <rect x="-95" y="-125" width="190" height="250" fill="#ffffff" stroke="#e6e6e6"/>
+    <rect x="-85" y="-115" width="170" height="200" fill="url(#photo)"/>
+    <circle cx="-28" cy="-45" r="22" fill="#f5c7b0"/>
+    <circle cx="30" cy="-40" r="22" fill="#f5c7b0"/>
+    <path d="M-60 90 q32 -70 64 -28 q32 -42 64 28 z" fill="#3b4a5a" opacity="0.85"/>
+    <path d="M-18 90 q22 -60 44 -20 q30 -40 60 20 z" fill="#ffffff"/>
+    <text x="0" y="112" font-family="'Comic Sans MS', 'Gaegu', cursive" font-size="16" fill="#555" text-anchor="middle">진호 ♥ 나은</text>
+  </g>
+  <text x="98" y="470" font-size="24">🤵</text>
+  <text x="404" y="470" font-size="24">👰</text>
+
+  <!-- 새소식 -->
+  <rect x="84" y="504" width="362" height="30" rx="6" fill="#EEF5FA" stroke="#c9dbe8"/>
+  <circle cx="100" cy="519" r="3" fill="#FF6B35"/>
+  <text x="110" y="524" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2f4b62">새소식</text>
+  <text x="98" y="560" font-family="Arial, sans-serif" font-size="14" fill="#444"><tspan fill="#FF6B35" font-weight="900">N</tspan>  진호님과 나은님이 결혼합니다!</text>
+  <text x="98" y="584" font-family="Arial, sans-serif" font-size="14" fill="#444"><tspan fill="#FF6B35" font-weight="900">N</tspan>  일촌 여러분, 일촌평 한 줄 부탁드려요</text>
+
+  <!-- 디데이 -->
+  <rect x="84" y="608" width="174" height="76" rx="8" fill="#ffffff" stroke="#c9dbe8"/>
+  <text x="98" y="630" font-family="Arial, sans-serif" font-size="11" letter-spacing="1.5" fill="#7a98b0">WEDDING DAY</text>
+  <text x="98" y="668" font-family="'Comic Sans MS', 'Gaegu', cursive" font-size="32" fill="#1f3d55">D-42</text>
+  <rect x="272" y="608" width="174" height="76" rx="8" fill="#ffffff" stroke="#c9dbe8"/>
+  <text x="286" y="630" font-family="Arial, sans-serif" font-size="11" letter-spacing="1.5" fill="#7a98b0">COUNTDOWN</text>
+  <text x="286" y="668" font-family="'Comic Sans MS', 'Gaegu', cursive" font-size="28" fill="#FF6B35">11:20:36</text>
+
+  <!-- 오른쪽 탭 -->
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="800" fill="#2f4b62" text-anchor="middle">
+    <rect x="468" y="134" width="52" height="64" rx="8" fill="#FFD9E0" stroke="#7FA8C9" stroke-width="3"/><text x="494" y="171">홈</text>
+    <rect x="466" y="204" width="52" height="64" rx="8" fill="#FFE9B8" stroke="#7FA8C9" stroke-width="3" opacity="0.85"/><text x="492" y="241">프로필</text>
+    <rect x="466" y="274" width="52" height="64" rx="8" fill="#D6F0E0" stroke="#7FA8C9" stroke-width="3" opacity="0.85"/><text x="492" y="311">사진첩</text>
+    <rect x="466" y="344" width="52" height="64" rx="8" fill="#D9E8FF" stroke="#7FA8C9" stroke-width="3" opacity="0.85"/><text x="492" y="376">다이</text><text x="492" y="392">어리</text>
+    <rect x="466" y="414" width="52" height="64" rx="8" fill="#EADCFF" stroke="#7FA8C9" stroke-width="3" opacity="0.85"/><text x="492" y="451">방명록</text>
+    <rect x="466" y="484" width="52" height="64" rx="8" fill="#FFE0C2" stroke="#7FA8C9" stroke-width="3" opacity="0.85"/><text x="492" y="521">선물</text>
+    <rect x="466" y="554" width="52" height="64" rx="8" fill="#E0F4FF" stroke="#7FA8C9" stroke-width="3" opacity="0.85"/><text x="492" y="591">지도</text>
+  </g>
+
+  <text x="300" y="750" font-family="Arial, sans-serif" font-size="12" letter-spacing="4" fill="#7a98b0" text-anchor="middle">BINARY WEDDING · WEDDING HOMEPAGE</text>
+</svg>

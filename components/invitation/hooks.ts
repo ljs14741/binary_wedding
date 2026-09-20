@@ -112,7 +112,7 @@ export function useMainSlide(count: number, intervalMs = 3000) {
     return idx;
 }
 
-/** 갤러리 뷰어: 자동 슬라이드(사용자 조작 시 정지), 썸네일 선택, 라이트박스 */
+/** 갤러리 뷰어: 자동 슬라이드(사용자 조작 시 정지, intervalMs 0이면 끔), 썸네일 선택, 라이트박스 */
 export function useGallery(count: number, intervalMs = 3000) {
     const [current, setCurrent] = useState(0);
     const [paused, setPaused] = useState(false);
@@ -120,7 +120,7 @@ export function useGallery(count: number, intervalMs = 3000) {
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
     useEffect(() => {
-        if (paused || count <= 1) return;
+        if (paused || count <= 1 || intervalMs <= 0) return;
         const timer = setInterval(() => setCurrent((prev) => (prev + 1) % count), intervalMs);
         return () => clearInterval(timer);
     }, [paused, count, intervalMs]);
