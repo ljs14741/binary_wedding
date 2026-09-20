@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import Script from "next/script";
 
 declare global {
@@ -16,7 +16,10 @@ type Props = {
     className?: string;
 };
 
-/** 네이버 지도 SDK 로드 + 마커 표시. 좌표가 없으면 빈 박스만 렌더 */
+/**
+ * 네이버 지도 SDK 로드 + 마커 표시. 좌표가 없으면 빈 박스만 렌더.
+ * Script onLoad는 최초 1회만 불리므로, 탭 전환 등으로 다시 마운트될 때는 useEffect에서 직접 초기화한다.
+ */
 export default function NaverMap({ lat, lng, className = "" }: Props) {
     const mapRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +41,12 @@ export default function NaverMap({ lat, lng, className = "" }: Props) {
             map,
         });
     };
+
+    // 스크립트가 이미 로드된 상태로 다시 마운트된 경우 (웨딩홈피 지도 탭 재방문 등)
+    useEffect(() => {
+        if (window.naver?.maps) initMap();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lat, lng]);
 
     return (
         <>
