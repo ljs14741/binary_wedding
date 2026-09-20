@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { uploadFile } from "@/lib/upload";
+import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
+        // 디스크 채우기 방지: 다른 액션과 같은 IP 기반 제한
+        const ip = await getClientIp();
+        const { limited, message: limitMsg } = await checkRateLimit("uploadImage", ip);
+        if (limited) {
+            return NextResponse.json({ success: false, message: limitMsg }, { status: 429 });
+        }
+
         const formData = await req.formData();
         const file = formData.get("file");
         if (!(file instanceof File) || file.size === 0) {

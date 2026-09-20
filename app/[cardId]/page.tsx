@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import Type1 from "@/components/Type1";
+import { createElement } from "react";
+import { getTemplateComponent } from "@/components/templates";
+import type { InvitationData } from "@/components/invitation/types";
 import { getBaseUrl } from "@/lib/site";
 import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 import type { Metadata } from "next";
@@ -99,7 +101,7 @@ export default async function CardPage({ params }: PageProps) {
     }
 
     // 3. 데이터 변환 (DB -> 컴포넌트 Props)
-    const formattedData = {
+    const formattedData: InvitationData = {
         groom: {
             name: rawData.groom_name,
             contact: rawData.groom_contact || "",
@@ -159,5 +161,6 @@ export default async function CardPage({ params }: PageProps) {
         url_id: cardId,
     };
 
-    return <Type1 data={formattedData} />;
+    // 저장된 template_type에 맞는 템플릿으로 렌더
+    return createElement(getTemplateComponent(rawData.template_type), { data: formattedData });
 }

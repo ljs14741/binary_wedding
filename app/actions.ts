@@ -7,6 +7,13 @@ import bcrypt from "bcryptjs";
 import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
 import { mkdir, rename } from "fs/promises";
 import { basename, join } from "path";
+import { isValidTemplateId, DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
+
+/** 폼의 template_type 값. 등록되지 않은 값이면 기본 템플릿으로 */
+function readTemplateType(formData: FormData): string {
+    const v = formData.get("template_type");
+    return isValidTemplateId(v) ? v : DEFAULT_TEMPLATE_ID;
+}
 
 // 랜덤 ID 생성 헬퍼
 function generateRandomId() {
@@ -132,6 +139,7 @@ export async function createInvitation(formData: FormData) {
     if (limited) throw new Error(limitMsg ?? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.");
 
     const _clientId = (formData.get("_clientId") as string) ?? "";
+    const template_type = readTemplateType(formData);
     const groom_name = (formData.get("groom_name") as string) ?? "";
     const bride_name = (formData.get("bride_name") as string) ?? "";
     const wedding_date_str = (formData.get("wedding_date") as string) ?? "";
@@ -237,7 +245,7 @@ export async function createInvitation(formData: FormData) {
             data: {
                 url_id,
                 password: hashedPassword,
-                template_type: "type1",
+                template_type,
 
                 groom_name, groom_contact, groom_order, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
                 bride_name, bride_contact, bride_order, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
@@ -370,6 +378,7 @@ export async function updateInvitation(formData: FormData) {
     const hasNewGallery = (galleryFiles.length > 0 && galleryFiles[0].size > 0) || galleryImageUrls.length > 0;
 
     // 5. 텍스트 데이터
+    const template_type = readTemplateType(formData);
     const groom_name = formData.get("groom_name") as string;
     const groom_contact = formData.get("groom_contact") as string;
     const groom_order = (formData.get("groom_order") as string) || null;
@@ -420,6 +429,7 @@ export async function updateInvitation(formData: FormData) {
     await prisma.invitations.update({
         where: { url_id },
         data: {
+            template_type,
             groom_name, groom_contact, groom_order, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
             bride_name, bride_contact, bride_order, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
 

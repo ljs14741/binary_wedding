@@ -103,7 +103,7 @@ wedding/
 │   ├── check/            # 내 청첩장 수정/삭제
 │   ├── edit/[id]/        # 청첩장 수정 폼
 │   ├── [cardId]/         # 청첩장 상세 (공개 페이지)
-│   ├── sample/1/         # 샘플 미리보기
+│   ├── sample/[id]/      # 샘플 미리보기 (템플릿 순서대로 /sample/1, /sample/2 ...)
 │   ├── reviews/          # 이용 후기
 │   ├── terms/            # 이용약관
 │   ├── privacy/          # 개인정보처리방침
@@ -117,6 +117,9 @@ wedding/
 │   ├── SiteFooter.tsx
 │   ├── EditForm.tsx      # 제작/수정 폼 공통
 │   ├── EditFormGuard.tsx # 수정 권한 확인
+│   ├── TemplatePicker.tsx# 디자인 선택 섹션
+│   ├── templates/        # 청첩장 템플릿 (meta.ts에 등록, Type1.tsx 등 스킨)
+│   ├── invitation/       # 템플릿 공통 조각 (방명록·연락처·지도·공유·라이트박스·훅)
 │   ├── effects/          # KenBurns, FlowerPetals 등
 │   └── ui/
 ├── lib/

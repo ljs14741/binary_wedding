@@ -10,6 +10,7 @@ import {
 import { processImage } from "@/lib/image";
 import Script from "next/script";
 import SupportNudge from "@/components/SupportNudge";
+import TemplatePicker from "@/components/TemplatePicker";
 
 interface EditFormProps {
     initialData: any;
@@ -312,6 +313,9 @@ export default function EditForm({ initialData }: EditFormProps) {
         <form action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
             <input type="hidden" name="url_id" value={initialData.url_id} />
             <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="afterInteractive" />
+
+            {/* 디자인 선택 */}
+            <TemplatePicker defaultValue={initialData.template_type}/>
 
             {/* 🤵‍♂️ 신랑 정보 */}
             <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">

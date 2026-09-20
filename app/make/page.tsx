@@ -9,6 +9,7 @@ import SiteFooter from "@/components/SiteFooter";
 import Script from "next/script";
 import { processImage } from "@/lib/image";
 import SupportNudge from "@/components/SupportNudge";
+import TemplatePicker from "@/components/TemplatePicker";
 
 const CLIENT_ID_KEY = "wedding_client_id";
 
@@ -428,6 +429,9 @@ export default function MakePage() {
                     </div>
 
                     <form className="space-y-10" onSubmit={handleSubmit}>
+
+                        {/* 디자인 선택 */}
+                        <TemplatePicker/>
 
                         {/* 신랑 정보 */}
                         <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">

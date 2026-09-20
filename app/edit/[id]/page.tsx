@@ -27,6 +27,7 @@ export default async function EditPage({ params }: PageProps) {
         url_id: data.url_id,
         // DB에 저장된 암호화된 비밀번호 (Guard에서 비교용으로 사용)
         hashedPassword: data.password,
+        template_type: data.template_type,
 
         groom_name: data.groom_name,
         groom_contact: data.groom_contact || "",

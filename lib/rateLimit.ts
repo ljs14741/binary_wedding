@@ -24,7 +24,7 @@ export async function getClientIp(): Promise<string> {
 
 /** Rate limit 체크 - 제한 초과 시 true 반환 */
 export async function checkRateLimit(
-    action: "createInvitation" | "getMyInvitations" | "createGuestbook" | "createReview",
+    action: "createInvitation" | "getMyInvitations" | "createGuestbook" | "createReview" | "uploadImage",
     ip: string
 ): Promise<{ limited: boolean; message?: string }> {
     const configs: Record<string, LimitConfig> = {
@@ -32,6 +32,7 @@ export async function checkRateLimit(
         getMyInvitations: { max: 10, windowMs: 60_000 },  // 10회/분 (브루트포스 방지)
         createGuestbook: { max: 20, windowMs: 60_000 },   // 20회/분
         createReview: { max: 10, windowMs: 60_000 },      // 10회/분
+        uploadImage: { max: 60, windowMs: 60_000 },       // 60장/분 (청첩장 1개 최대 25장이라 정상 사용은 안 걸림)
     };
     const { max, windowMs } = configs[action] ?? { max: 10, windowMs: 60_000 };
     const key = `${action}:${ip}`;
