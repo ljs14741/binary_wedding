@@ -309,7 +309,8 @@ function ReviewReply({ review, isAdmin, onSaved, toast }: {
             onSaved(review.id, value.trim() || null);
             setEditing(false);
         } catch {
-            toast("관리자 로그인이 필요합니다. /admin에서 다시 로그인해 주세요.");
+            // 서버 응답을 못 받은 경우 (배포 직후 화면이 옛 버전이거나 네트워크 문제)
+            toast("저장하지 못했어요. 새로고침한 뒤 다시 시도해 주세요.");
         } finally {
             setSaving(false);
         }
@@ -339,11 +340,16 @@ function ReviewReply({ review, isAdmin, onSaved, toast }: {
                 <div className="flex items-center justify-between gap-2 mb-1">
                     <p className="text-xs font-bold text-rose-500 flex items-center gap-1">💬 개발자 답변</p>
                     {isAdmin && (
-                        <div className="flex gap-2 text-[11px] font-bold">
-                            <button type="button" onClick={() => setEditing(true)} className="text-slate-400 hover:text-slate-700">수정</button>
+                        <div className="flex gap-1.5 text-xs font-bold">
+                            <button type="button" onClick={() => { setText(review.admin_reply ?? ""); setEditing(true); }}
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 hover:border-slate-400">
+                                <Pencil size={12}/> 수정
+                            </button>
                             <button type="button" disabled={saving}
                                     onClick={() => { if (confirm("답변을 삭제할까요?")) save(""); }}
-                                    className="text-slate-400 hover:text-rose-500">삭제</button>
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-rose-300 hover:text-rose-500">
+                                <Trash2 size={12}/> 삭제
+                            </button>
                         </div>
                     )}
                 </div>

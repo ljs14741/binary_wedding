@@ -141,13 +141,22 @@ const REVIEW_REPLY_MAX = 1000;
 
 /** 후기 개발자 답변 저장 (관리자만). 빈 내용이면 답변 삭제 */
 export async function saveReviewReply(id: number, content: string): Promise<{ success: boolean; message?: string }> {
-    await requireAdminSession();
+    // 운영에선 throw 메시지가 가려져서 원인을 결과로 돌려줌
+    if (!(await isAdminSession())) {
+        return { success: false, message: "관리자 로그인이 만료됐어요. /admin에서 다시 로그인해 주세요." };
+    }
     const reply = content.trim().slice(0, REVIEW_REPLY_MAX);
-    const exists = await prisma.reviews.findUnique({ where: { id }, select: { id: true } });
-    if (!exists) return { success: false, message: "후기를 찾을 수 없습니다." };
-    await prisma.reviews.update({
-        where: { id },
-        data: reply ? { admin_reply: reply, admin_replied_at: new Date() } : { admin_reply: null, admin_replied_at: null },
-    });
-    return { success: true };
+    try {
+        const exists = await prisma.reviews.findUnique({ where: { id }, select: { id: true } });
+        if (!exists) return { success: false, message: "후기를 찾을 수 없습니다. 새로고침해 주세요." };
+        await prisma.reviews.update({
+            where: { id },
+            data: reply ? { admin_reply: reply, admin_replied_at: new Date() } : { admin_reply: null, admin_replied_at: null },
+        });
+        return { success: true };
+    } catch (e) {
+        const code = e && typeof e === "object" && "code" in e ? String((e as { code: unknown }).code) : "";
+        console.error("[후기 답변 저장 실패]", id, e);
+        return { success: false, message: `답변 저장 중 오류가 났어요.${code ? ` (${code})` : ""}` };
+    }
 }
