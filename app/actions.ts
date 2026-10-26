@@ -9,6 +9,7 @@ import { mkdir, rename, rm } from "fs/promises";
 import { basename, join } from "path";
 import { isValidTemplateId, DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { BGM_NONE, bgmFormError } from "@/lib/bgm";
+import { normalizeParentMark } from "@/lib/parentMark";
 
 /** 폼의 template_type 값. 등록되지 않은 값이면 기본 템플릿으로 */
 function readTemplateType(formData: FormData): string {
@@ -101,6 +102,17 @@ async function readBgmUrl(formData: FormData, url_id: string): Promise<string | 
     if (mode === "none") return BGM_NONE;
     if (mode !== "custom") return null;
     return moveTempUrl(String(formData.get("bgm_url")).trim(), url_id, "bgm");
+}
+
+/** 부모님 고인 표시 4개 (선택, 표시 안 함이면 null) */
+function readParentMarks(formData: FormData) {
+    const read = (key: string) => normalizeParentMark(formData.get(key)) || null;
+    return {
+        groom_father_mark: read("groom_father_mark"),
+        groom_mother_mark: read("groom_mother_mark"),
+        bride_father_mark: read("bride_father_mark"),
+        bride_mother_mark: read("bride_mother_mark"),
+    };
 }
 
 /** 하위 호환 */
@@ -329,6 +341,7 @@ export async function createInvitation(formData: FormData) {
                 og_photo_url: ogPhotoUrl,
                 bgm_url,
                 ...profilePhotos,
+                ...readParentMarks(formData),
 
                 invitation_photos: {
                     create: validGalleryUrls.map((url, i) => ({ photo_url: url, sort_order: i }))
@@ -522,6 +535,7 @@ export async function updateInvitation(formData: FormData) {
             og_photo_url: ogPhotoUrl,
             bgm_url,
             ...profilePhotos,
+            ...readParentMarks(formData),
 
             ...(hasNewGallery && {
                 invitation_photos: {

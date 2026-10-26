@@ -11,6 +11,7 @@ import { processImage } from "@/lib/image";
 import Script from "next/script";
 import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
+import ParentMarkSelect from "@/components/ParentMarkSelect";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
@@ -357,12 +358,14 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <InputGroup label="아버지 성함" name="groom_father" defaultValue={initialData.groom_father} icon={<Users size={16}/>}/>
                         <PhoneInput label="아버지 연락처" name="groom_father_contact" defaultValue={initialData.groom_father_contact} icon={<MessageCircle size={16}/>}/>
                     </div>
+                    <ParentMarkSelect name="groom_father_mark" defaultValue={initialData.groom_father_mark}/>
                     <AccountGroup label="아버지 계좌" bankName="account_groom_f_bank" accountNum="account_groom_f_num" defaultBank={getAccount("groom_f")?.bank_name} defaultNum={getAccount("groom_f")?.account_number} />
                     <div className="h-px bg-slate-100 my-4"/>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputGroup label="어머니 성함" name="groom_mother" defaultValue={initialData.groom_mother} icon={<Users size={16}/>}/>
                         <PhoneInput label="어머니 연락처" name="groom_mother_contact" defaultValue={initialData.groom_mother_contact} icon={<MessageCircle size={16}/>}/>
                     </div>
+                    <ParentMarkSelect name="groom_mother_mark" defaultValue={initialData.groom_mother_mark}/>
                     <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" defaultBank={getAccount("groom_m")?.bank_name} defaultNum={getAccount("groom_m")?.account_number} />
                 </div>
             </section>
@@ -384,12 +387,14 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <InputGroup label="아버지 성함" name="bride_father" defaultValue={initialData.bride_father} icon={<Users size={16}/>}/>
                         <PhoneInput label="아버지 연락처" name="bride_father_contact" defaultValue={initialData.bride_father_contact} icon={<MessageCircle size={16}/>}/>
                     </div>
+                    <ParentMarkSelect name="bride_father_mark" defaultValue={initialData.bride_father_mark}/>
                     <AccountGroup label="아버지 계좌" bankName="account_bride_f_bank" accountNum="account_bride_f_num" defaultBank={getAccount("bride_f")?.bank_name} defaultNum={getAccount("bride_f")?.account_number} />
                     <div className="h-px bg-slate-100 my-4"/>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputGroup label="어머니 성함" name="bride_mother" defaultValue={initialData.bride_mother} icon={<Users size={16}/>}/>
                         <PhoneInput label="어머니 연락처" name="bride_mother_contact" defaultValue={initialData.bride_mother_contact} icon={<MessageCircle size={16}/>}/>
                     </div>
+                    <ParentMarkSelect name="bride_mother_mark" defaultValue={initialData.bride_mother_mark}/>
                     <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" defaultBank={getAccount("bride_m")?.bank_name} defaultNum={getAccount("bride_m")?.account_number} />
                 </div>
             </section>

@@ -112,6 +112,8 @@ export default async function CardPage({ params }: PageProps) {
             father_contact: rawData.groom_father_contact || "",
             mother_contact: rawData.groom_mother_contact || "",
             photo: rawData.groom_photo_url || "",
+            father_mark: rawData.groom_father_mark || "",
+            mother_mark: rawData.groom_mother_mark || "",
         },
         bride: {
             name: rawData.bride_name,
@@ -122,6 +124,8 @@ export default async function CardPage({ params }: PageProps) {
             father_contact: rawData.bride_father_contact || "",
             mother_contact: rawData.bride_mother_contact || "",
             photo: rawData.bride_photo_url || "",
+            father_mark: rawData.bride_father_mark || "",
+            mother_mark: rawData.bride_mother_mark || "",
         },
         date: rawData.wedding_date,
         location: rawData.location_name,

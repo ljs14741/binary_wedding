@@ -92,16 +92,20 @@ model invitations {
   groom_order         String?               @db.VarChar(10)
   groom_father        String?               @db.VarChar(20)
   groom_father_contact String?              @db.VarChar(20) // New
+  groom_father_mark   String?               @db.VarChar(10) // 고인 표시: null / "故" / "flower"
   groom_mother        String?               @db.VarChar(20)
   groom_mother_contact String?              @db.VarChar(20) // New
+  groom_mother_mark   String?               @db.VarChar(10) // 고인 표시: null / "故" / "flower"
 
   bride_name          String                @db.VarChar(20)
   bride_contact       String?               @db.VarChar(20)
   bride_order         String?               @db.VarChar(10)
   bride_father        String?               @db.VarChar(20)
   bride_father_contact String?              @db.VarChar(20) // New
+  bride_father_mark   String?               @db.VarChar(10) // 고인 표시: null / "故" / "flower"
   bride_mother        String?               @db.VarChar(20)
   bride_mother_contact String?              @db.VarChar(20) // New
+  bride_mother_mark   String?               @db.VarChar(10) // 고인 표시: null / "故" / "flower"
 
   wedding_date        DateTime              @db.DateTime(0)
   location_name       String                @db.VarChar(100)

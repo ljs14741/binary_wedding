@@ -16,6 +16,7 @@ import FadeIn from "@/components/invitation/FadeIn";
 import NaverMap from "@/components/invitation/NaverMap";
 import GalleryLightbox from "@/components/invitation/GalleryLightbox";
 import ContactModal from "@/components/invitation/ContactModal";
+import ParentName from "@/components/invitation/ParentName";
 import InterviewModal from "@/components/invitation/InterviewModal";
 import { GuestbookWriteModal, GuestbookEditModal, GuestbookDeleteModal } from "@/components/invitation/GuestbookModals";
 import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
@@ -143,10 +144,10 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                     <FadeIn delay={0.3}>
                         <div className="space-y-6 text-gray-800 font-serif mb-12 text-lg">
                             <div><span className="text-gray-400 font-sans text-sm mr-3">신랑</span>
-                                <b>{data.groom.name}</b> <span className="text-gray-300 mx-2">|</span> {data.groom.father} · {data.groom.mother}{data.groom.order ? `의 ${data.groom.order}` : ""}
+                                <b>{data.groom.name}</b> <span className="text-gray-300 mx-2">|</span> <ParentName name={data.groom.father} mark={data.groom.father_mark}/> · <ParentName name={data.groom.mother} mark={data.groom.mother_mark}/>{data.groom.order ? `의 ${data.groom.order}` : ""}
                             </div>
                             <div><span className="text-gray-400 font-sans text-sm mr-3">신부</span>
-                                <b>{data.bride.name}</b> <span className="text-gray-300 mx-2">|</span> {data.bride.father} · {data.bride.mother}{data.bride.order ? `의 ${data.bride.order}` : ""}
+                                <b>{data.bride.name}</b> <span className="text-gray-300 mx-2">|</span> <ParentName name={data.bride.father} mark={data.bride.father_mark}/> · <ParentName name={data.bride.mother} mark={data.bride.mother_mark}/>{data.bride.order ? `의 ${data.bride.order}` : ""}
                             </div>
                         </div>
                         <button onClick={() => setIsContactOpen(true)}

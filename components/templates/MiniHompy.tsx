@@ -14,6 +14,7 @@ import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useGallery } from "@/components/invitation/hooks";
 import Minimi from "./Minimi";
+import ParentName from "@/components/invitation/ParentName";
 
 const gothic = Nanum_Gothic({ subsets: ["latin"], weight: ["400", "700", "800"], variable: "--font-gothic" });
 const gaegu = Gaegu({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-gaegu" });
@@ -320,7 +321,7 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
                 <div className="flex-1 min-w-0 text-[11px] space-y-1">
                     <p><span className="text-[#7a98b0]">이름</span> <b>{p.name}</b></p>
                     {(p.father || p.mother) && (
-                        <p><span className="text-[#7a98b0]">부모님</span> {[p.father, p.mother].filter(Boolean).join(" · ")}{p.order ? ` 의 ${p.order}` : ""}</p>
+                        <p><span className="text-[#7a98b0]">부모님</span> {p.father && <ParentName name={p.father} mark={p.father_mark}/>}{p.father && p.mother && " · "}{p.mother && <ParentName name={p.mother} mark={p.mother_mark}/>}{p.order ? ` 의 ${p.order}` : ""}</p>
                     )}
                 </div>
             </div>

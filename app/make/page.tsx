@@ -10,10 +10,12 @@ import Script from "next/script";
 import { processImage } from "@/lib/image";
 import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
+import ParentMarkSelect from "@/components/ParentMarkSelect";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
+import { loadMakeDraft, saveMakeDraft, clearMakeDraft, type MakeDraft } from "@/lib/makeDraft";
 
 const CLIENT_ID_KEY = "wedding_client_id";
 
@@ -33,6 +35,50 @@ export default function MakePage() {
     const [templateType, setTemplateType] = useState(DEFAULT_TEMPLATE_ID);
     const [clientId, setClientId] = useState("");
     const [useInterview, setUseInterview] = useState(false);
+
+    // 임시저장: 이어쓰기 여부 정하기 전엔 저장 안 함 (빈 폼으로 덮어쓰기 방지)
+    const formRef = useRef<HTMLFormElement>(null);
+    const [formKey, setFormKey] = useState(0);
+    const [draft, setDraft] = useState<Record<string, string> | null>(null);
+    const [draftPrompt, setDraftPrompt] = useState<MakeDraft | null>(null);
+    const [draftReady, setDraftReady] = useState(false);
+    const dv = (key: string): string | undefined => draft?.[key];
+
+    useEffect(() => {
+        const saved = loadMakeDraft();
+        // localStorage는 마운트 후에만 읽을 수 있어서 effect에서 처리
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (saved) setDraftPrompt(saved);
+        else setDraftReady(true);
+    }, []);
+
+    useEffect(() => {
+        if (!draftReady) return;
+        const timer = setInterval(() => {
+            if (formRef.current) saveMakeDraft(formRef.current);
+        }, 2000);
+        return () => clearInterval(timer);
+    }, [draftReady]);
+
+    const restoreDraft = () => {
+        if (!draftPrompt) return;
+        const data = draftPrompt.data;
+        setDraft(data);
+        if (data.template_type) setTemplateType(data.template_type);
+        setUseInterview(Boolean(data.interview_q1));
+        setFormKey((k) => k + 1); // 기본값 다시 읽도록 폼 다시 그림
+        setDraftPrompt(null);
+        setDraftReady(true);
+    };
+
+    const discardDraft = () => {
+        clearMakeDraft();
+        setDraftPrompt(null);
+        setDraftReady(true);
+    };
+
+    /** 임시저장 값 → BgmPicker 기본값 (null 기본곡 / "none" / 업로드 경로) */
+    const draftBgm = draft?.bgm_mode === "none" ? "none" : draft?.bgm_mode === "custom" ? draft.bgm_url || null : null;
 
     // --------------------------------------------------------
     // 1. 메인 사진 상태 관리 (순서 변경, 추가, 삭제)
@@ -403,7 +449,10 @@ export default function MakePage() {
             // redirect() 성공 시 Next.js가 던지는 신호 — 토스트 노출 금지, 그대로 rethrow
             const digest = err && typeof err === "object" ? (err as { digest?: string }).digest : undefined;
             const msg = err instanceof Error ? err.message : String(err);
-            if (digest === "NEXT_REDIRECT" || msg === "NEXT_REDIRECT") throw err;
+            if (digest === "NEXT_REDIRECT" || msg === "NEXT_REDIRECT") {
+                clearMakeDraft();
+                throw err;
+            }
 
             setLoading(false);
             const safeMsg = (msg && msg.trim().length > 3 && !/^(fail|error|failed|NEXT_REDIRECT)$/i.test(msg.trim()))
@@ -442,18 +491,32 @@ export default function MakePage() {
                         <p className="text-slate-500 text-sm md:text-base font-medium">아래 항목을 입력해 주세요.</p>
                     </div>
 
-                    <form className="space-y-10" onSubmit={handleSubmit}>
+                    {/* 임시저장 이어쓰기 안내 */}
+                    {draftPrompt && (
+                        <div className="mb-8 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div className="flex-1 text-sm text-amber-900">
+                                <p className="font-bold">작성하던 내용이 있어요 ({new Date(draftPrompt.savedAt).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })} 저장)</p>
+                                <p className="text-xs text-amber-700 mt-1">이어서 작성하면 입력한 글자와 선택값을 불러와요. 사진은 다시 선택해 주세요.</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                                <button type="button" onClick={restoreDraft} className="px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600">이어서 작성</button>
+                                <button type="button" onClick={discardDraft} className="px-4 py-2 rounded-xl bg-white border border-amber-200 text-amber-700 text-sm font-bold hover:bg-amber-100">새로 작성</button>
+                            </div>
+                        </div>
+                    )}
+
+                    <form key={formKey} ref={formRef} className="space-y-10" onSubmit={handleSubmit}>
 
                         {/* 디자인 선택 */}
-                        <TemplatePicker onChange={setTemplateType}/>
+                        <TemplatePicker defaultValue={dv("template_type")} onChange={setTemplateType}/>
 
                         {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
                         <div className={templateType === "minihompy" ? "" : "hidden"}>
-                            <ProfilePhotoPicker/>
+                            <ProfilePhotoPicker defaultGroom={dv("groom_photo_url")} defaultBride={dv("bride_photo_url")}/>
                         </div>
 
                         {/* 배경음악 */}
-                        <BgmPicker/>
+                        <BgmPicker defaultValue={draftBgm}/>
 
                         {/* 신랑 정보 */}
                         <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
@@ -462,23 +525,25 @@ export default function MakePage() {
                             </h3>
                             <div className="space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="신랑 성함" name="groom_name" placeholder="예: 홍길동" required icon={<User size={16}/>}/>
-                                    <PhoneInput label="신랑 연락처" name="groom_contact" required icon={<MessageCircle size={16}/>}/>
+                                    <InputGroup label="신랑 성함" name="groom_name" defaultValue={dv("groom_name")} placeholder="예: 홍길동" required icon={<User size={16}/>}/>
+                                    <PhoneInput label="신랑 연락처" name="groom_contact" defaultValue={dv("groom_contact")} required icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <OrderSelectGroup label="신랑 호칭" name="groom_order" options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} icon={<Users size={16}/>}/>
-                                <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" />
+                                <OrderSelectGroup label="신랑 호칭" name="groom_order" defaultValue={dv("groom_order")} options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} icon={<Users size={16}/>}/>
+                                <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={dv("account_groom_bank")} defaultNum={dv("account_groom_num")} />
                                 <div className="h-px bg-slate-100 my-4"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="아버지 성함" name="groom_father" placeholder="예: 홍길동" icon={<Users size={16}/>}/>
-                                    <PhoneInput label="아버지 연락처" name="groom_father_contact" icon={<MessageCircle size={16}/>}/>
+                                    <InputGroup label="아버지 성함" name="groom_father" defaultValue={dv("groom_father")} placeholder="예: 홍길동" icon={<Users size={16}/>}/>
+                                    <PhoneInput label="아버지 연락처" name="groom_father_contact" defaultValue={dv("groom_father_contact")} icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <AccountGroup label="아버지 계좌" bankName="account_groom_f_bank" accountNum="account_groom_f_num" />
+                                <ParentMarkSelect name="groom_father_mark" defaultValue={dv("groom_father_mark")}/>
+                                <AccountGroup label="아버지 계좌" bankName="account_groom_f_bank" accountNum="account_groom_f_num" defaultBank={dv("account_groom_f_bank")} defaultNum={dv("account_groom_f_num")} />
                                 <div className="h-px bg-slate-100 my-4"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="어머니 성함" name="groom_mother" placeholder="예: 김영희" icon={<Users size={16}/>}/>
-                                    <PhoneInput label="어머니 연락처" name="groom_mother_contact" icon={<MessageCircle size={16}/>}/>
+                                    <InputGroup label="어머니 성함" name="groom_mother" defaultValue={dv("groom_mother")} placeholder="예: 김영희" icon={<Users size={16}/>}/>
+                                    <PhoneInput label="어머니 연락처" name="groom_mother_contact" defaultValue={dv("groom_mother_contact")} icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" />
+                                <ParentMarkSelect name="groom_mother_mark" defaultValue={dv("groom_mother_mark")}/>
+                                <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" defaultBank={dv("account_groom_m_bank")} defaultNum={dv("account_groom_m_num")} />
                             </div>
                         </section>
 
@@ -489,23 +554,25 @@ export default function MakePage() {
                             </h3>
                             <div className="space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="신부 성함" name="bride_name" placeholder="예: 김영희" required icon={<User size={16}/>}/>
-                                    <PhoneInput label="신부 연락처" name="bride_contact" required icon={<MessageCircle size={16}/>}/>
+                                    <InputGroup label="신부 성함" name="bride_name" defaultValue={dv("bride_name")} placeholder="예: 김영희" required icon={<User size={16}/>}/>
+                                    <PhoneInput label="신부 연락처" name="bride_contact" defaultValue={dv("bride_contact")} required icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <OrderSelectGroup label="신부 호칭" name="bride_order" options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} icon={<Users size={16}/>}/>
-                                <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" />
+                                <OrderSelectGroup label="신부 호칭" name="bride_order" defaultValue={dv("bride_order")} options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} icon={<Users size={16}/>}/>
+                                <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={dv("account_bride_bank")} defaultNum={dv("account_bride_num")} />
                                 <div className="h-px bg-slate-100 my-4"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="아버지 성함" name="bride_father" placeholder="예: 김철수" icon={<Users size={16}/>}/>
-                                    <PhoneInput label="아버지 연락처" name="bride_father_contact" icon={<MessageCircle size={16}/>}/>
+                                    <InputGroup label="아버지 성함" name="bride_father" defaultValue={dv("bride_father")} placeholder="예: 김철수" icon={<Users size={16}/>}/>
+                                    <PhoneInput label="아버지 연락처" name="bride_father_contact" defaultValue={dv("bride_father_contact")} icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <AccountGroup label="아버지 계좌" bankName="account_bride_f_bank" accountNum="account_bride_f_num" />
+                                <ParentMarkSelect name="bride_father_mark" defaultValue={dv("bride_father_mark")}/>
+                                <AccountGroup label="아버지 계좌" bankName="account_bride_f_bank" accountNum="account_bride_f_num" defaultBank={dv("account_bride_f_bank")} defaultNum={dv("account_bride_f_num")} />
                                 <div className="h-px bg-slate-100 my-4"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="어머니 성함" name="bride_mother" placeholder="예: 이영희" icon={<Users size={16}/>}/>
-                                    <PhoneInput label="어머니 연락처" name="bride_mother_contact" icon={<MessageCircle size={16}/>}/>
+                                    <InputGroup label="어머니 성함" name="bride_mother" defaultValue={dv("bride_mother")} placeholder="예: 이영희" icon={<Users size={16}/>}/>
+                                    <PhoneInput label="어머니 연락처" name="bride_mother_contact" defaultValue={dv("bride_mother_contact")} icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" />
+                                <ParentMarkSelect name="bride_mother_mark" defaultValue={dv("bride_mother_mark")}/>
+                                <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" defaultBank={dv("account_bride_m_bank")} defaultNum={dv("account_bride_m_num")} />
                             </div>
                         </section>
 
@@ -516,11 +583,11 @@ export default function MakePage() {
                             </h3>
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="예식 일시" name="wedding_date" type="datetime-local" required />
-                                    <InputGroup label="예식장 이름" name="location_name" placeholder="예: 더채플앳청담" required icon={<Heart size={16}/>}/>
+                                    <InputGroup label="예식 일시" name="wedding_date" defaultValue={dv("wedding_date")} type="datetime-local" required />
+                                    <InputGroup label="예식장 이름" name="location_name" defaultValue={dv("location_name")} placeholder="예: 더채플앳청담" required icon={<Heart size={16}/>}/>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="상세 홀 이름" name="location_detail" placeholder="예: 3층 컨벤션홀"
+                                    <InputGroup label="상세 홀 이름" name="location_detail" defaultValue={dv("location_detail")} placeholder="예: 3층 컨벤션홀"
                                                 icon={<MapPin size={16}/>}/>
                                     <div className="space-y-2 group">
                                         <label
@@ -531,6 +598,7 @@ export default function MakePage() {
                                         <input
                                             required
                                             name="location_address"
+                                            defaultValue={dv("location_address")}
                                             readOnly
                                             placeholder="클릭하여 주소를 검색하세요"
                                             onClick={openPostcode}
@@ -543,16 +611,16 @@ export default function MakePage() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="block text-sm font-bold text-slate-700 ml-1">초대 문구</label>
-                                    <textarea name="welcome_msg" rows={6}
+                                    <textarea name="welcome_msg" rows={6} defaultValue={dv("welcome_msg")}
                                               placeholder={"서로가 마주 보며 다진 약속을\n이제 여러분 앞에서 소중히 맺으려 합니다.\n저희의 새로운 시작을 위해\n따뜻한 축복을 보내주시면 감사하겠습니다."}
                                               className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm leading-relaxed text-slate-800 resize-none placeholder:text-slate-400"/>
                                 </div>
                                 <div className="pt-6 border-t border-slate-100 space-y-6">
                                     <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car
                                         size={18} className="text-slate-400"/> 오시는 길 안내</h4>
-                                    <TextAreaGroup label="지하철 안내" name="transport_subway" placeholder="예: 7호선 ○○역 1번 출구 도보 5분"/>
-                                    <TextAreaGroup label="버스 안내" name="transport_bus" placeholder="예: ○○정류장 하차"/>
-                                    <TextAreaGroup label="주차 안내" name="transport_parking" placeholder="예: 웨딩홀 내 주차 가능 (하객 무료)"/>
+                                    <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={dv("transport_subway")} placeholder="예: 7호선 ○○역 1번 출구 도보 5분"/>
+                                    <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={dv("transport_bus")} placeholder="예: ○○정류장 하차"/>
+                                    <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={dv("transport_parking")} placeholder="예: 웨딩홀 내 주차 가능 (하객 무료)"/>
                                 </div>
                             </div>
                         </section>
@@ -585,15 +653,15 @@ export default function MakePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 01</label>
-                                        <input name="interview_q1" defaultValue="서로의 첫 만남은?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
+                                        <input name="interview_q1" defaultValue={dv("interview_q1") ?? "서로의 첫 만남은?"} placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
-                                        <textarea name="interview_a1" rows={3} placeholder="벚꽃이 흩날리던 어느 봄날이었습니다. 수줍게 웃던 모습에 이끌려 오늘까지 오게 되었네요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
+                                        <textarea name="interview_a1" rows={3} defaultValue={dv("interview_a1")} placeholder="벚꽃이 흩날리던 어느 봄날이었습니다. 수줍게 웃던 모습에 이끌려 오늘까지 오게 되었네요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
                                     </div>
                                     <div className="bg-slate-50 p-6 rounded-[1.5rem] space-y-3 border border-slate-100">
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">질문 02</label>
-                                        <input name="interview_q2" defaultValue="서로에게 바라는 점?" placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
+                                        <input name="interview_q2" defaultValue={dv("interview_q2") ?? "서로에게 바라는 점?"} placeholder="질문을 입력하세요" className="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-200 transition-colors placeholder:text-slate-400"/>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">답변</label>
-                                        <textarea name="interview_a2" rows={3} placeholder="지금처럼 서로를 아끼고 웃음 가득한 예쁜 가정을 함께 만들어가고 싶어요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
+                                        <textarea name="interview_a2" rows={3} defaultValue={dv("interview_a2")} placeholder="지금처럼 서로를 아끼고 웃음 가득한 예쁜 가정을 함께 만들어가고 싶어요." className="w-full bg-white p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-200 placeholder:text-slate-400"/>
                                     </div>
                                 </div>
                             )}
@@ -879,9 +947,11 @@ interface InputGroupProps {
     required?: boolean;
     type?: string;
     icon?: React.ReactNode;
+    /** 임시저장 복원값 */
+    defaultValue?: string;
 }
 
-function InputGroup({label, name, placeholder, required = false, type = "text", icon}: InputGroupProps) {
+function InputGroup({label, name, placeholder, required = false, type = "text", icon, defaultValue}: InputGroupProps) {
     return (
         <div className="space-y-2 group">
             <label className="block text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
@@ -893,6 +963,7 @@ function InputGroup({label, name, placeholder, required = false, type = "text", 
                 required={required}
                 name={name}
                 type={type}
+                defaultValue={defaultValue}
                 placeholder={placeholder}
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 invalid:border-rose-200 invalid:bg-rose-50 focus:invalid:border-rose-500 focus:invalid:ring-rose-500"
             />
@@ -900,9 +971,10 @@ function InputGroup({label, name, placeholder, required = false, type = "text", 
     );
 }
 
-function OrderSelectGroup({ label, name, options, icon }: { label: string; name: string; options: string[]; icon?: React.ReactNode }) {
-    const [selected, setSelected] = useState(options[0] ?? "");
-    const [customValue, setCustomValue] = useState("");
+function OrderSelectGroup({ label, name, options, icon, defaultValue }: { label: string; name: string; options: string[]; icon?: React.ReactNode; defaultValue?: string }) {
+    const isCustom = !!defaultValue && !options.includes(defaultValue);
+    const [selected, setSelected] = useState(isCustom ? "직접입력" : (defaultValue || options[0] || ""));
+    const [customValue, setCustomValue] = useState(isCustom ? defaultValue : "");
     const finalValue = selected === "직접입력" ? customValue : selected;
     return (
         <div className="space-y-2 group">
@@ -932,8 +1004,8 @@ function OrderSelectGroup({ label, name, options, icon }: { label: string; name:
     );
 }
 
-function PhoneInput({label, name, required = false, icon}: InputGroupProps) {
-    const [value, setValue] = useState("");
+function PhoneInput({label, name, required = false, icon, defaultValue}: InputGroupProps) {
+    const [value, setValue] = useState(defaultValue ?? "");
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value.replace(/[^0-9]/g, '');
         let formattedValue = rawValue;
@@ -955,22 +1027,22 @@ function PhoneInput({label, name, required = false, icon}: InputGroupProps) {
     );
 }
 
-function TextAreaGroup({label, name, placeholder}: { label: string, name: string, placeholder?: string }) {
+function TextAreaGroup({label, name, placeholder, defaultValue}: { label: string, name: string, placeholder?: string, defaultValue?: string }) {
     return (
         <div className="space-y-2">
             <label className="block text-sm font-bold text-slate-700 ml-1">{label}</label>
-            <textarea name={name} rows={2} placeholder={placeholder} className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm resize-none text-slate-800 placeholder:text-slate-400" />
+            <textarea name={name} rows={2} defaultValue={defaultValue} placeholder={placeholder} className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm resize-none text-slate-800 placeholder:text-slate-400" />
         </div>
     );
 }
 
-function AccountGroup({ label, bankName, accountNum }: { label: string, bankName: string, accountNum: string }) {
+function AccountGroup({ label, bankName, accountNum, defaultBank, defaultNum }: { label: string, bankName: string, accountNum: string, defaultBank?: string, defaultNum?: string }) {
     return (
         <div className="bg-slate-50 p-5 rounded-[1.5rem] space-y-3 border border-slate-100">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2"><CreditCard size={14}/> {label}</label>
             <div className="grid grid-cols-3 gap-3">
-                <input name={bankName} placeholder="은행명" className="col-span-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none bg-white text-sm text-center font-medium text-slate-800 placeholder:text-slate-400" />
-                <input name={accountNum} placeholder="계좌번호 (-포함)" className="col-span-2 px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none bg-white text-sm font-medium text-slate-800 placeholder:text-slate-400" />
+                <input name={bankName} defaultValue={defaultBank} placeholder="은행명" className="col-span-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none bg-white text-sm text-center font-medium text-slate-800 placeholder:text-slate-400" />
+                <input name={accountNum} defaultValue={defaultNum} placeholder="계좌번호 (-포함)" className="col-span-2 px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none bg-white text-sm font-medium text-slate-800 placeholder:text-slate-400" />
             </div>
         </div>
     );
