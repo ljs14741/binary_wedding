@@ -11,11 +11,28 @@ import { processImage } from "@/lib/image";
 import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
 import ParentMarkSelect from "@/components/ParentMarkSelect";
+import FormReveal from "@/components/FormReveal";
+import FormSectionNav from "@/components/FormSectionNav";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { loadMakeDraft, saveMakeDraft, clearMakeDraft, type MakeDraft } from "@/lib/makeDraft";
+
+/** 상단 바로가기 칩 */
+const MAKE_SECTIONS = [
+    { id: "sec-design", label: "디자인" },
+    { id: "sec-people", label: "신랑·신부" },
+    { id: "sec-wedding", label: "예식" },
+    { id: "photo-section", label: "사진" },
+    { id: "sec-done", label: "완료" },
+];
+
+/** 부모님 정보 접기 영역에 들어가는 필드 (임시저장 복원 시 펼침 판단용) */
+const PARENT_KEYS = (side: "groom" | "bride") => [
+    `${side}_father`, `${side}_father_contact`, `${side}_father_mark`, `account_${side}_f_bank`, `account_${side}_f_num`,
+    `${side}_mother`, `${side}_mother_contact`, `${side}_mother_mark`, `account_${side}_m_bank`, `account_${side}_m_num`,
+];
 
 const CLIENT_ID_KEY = "wedding_client_id";
 
@@ -43,6 +60,8 @@ export default function MakePage() {
     const [draftPrompt, setDraftPrompt] = useState<MakeDraft | null>(null);
     const [draftReady, setDraftReady] = useState(false);
     const dv = (key: string): string | undefined => draft?.[key];
+    /** 임시저장에 값이 있으면 접힌 항목을 펼친 채로 복원 */
+    const hasDraft = (...keys: string[]) => keys.some((k) => !!draft?.[k]?.trim());
 
     useEffect(() => {
         const saved = loadMakeDraft();
@@ -515,9 +534,12 @@ export default function MakePage() {
                         </div>
                     )}
 
+                    <FormSectionNav sections={MAKE_SECTIONS}/>
+
                     <form key={formKey} ref={formRef} className="space-y-10" onSubmit={handleSubmit}>
 
                         {/* 디자인 선택 */}
+                        <div id="sec-design" className="form-anchor space-y-10">
                         <TemplatePicker defaultValue={dv("template_type")} onChange={setTemplateType}/>
 
                         {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
@@ -527,9 +549,10 @@ export default function MakePage() {
 
                         {/* 배경음악 */}
                         <BgmPicker defaultValue={draftBgm}/>
+                        </div>
 
                         {/* 신랑 정보 */}
-                        <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
+                        <section id="sec-people" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
                             <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
                                 <span className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shadow-sm">🤵‍♂️</span><span className="flex-1">신랑 측 정보</span>
                             </h3>
@@ -539,8 +562,10 @@ export default function MakePage() {
                                     <PhoneInput label="신랑 연락처" name="groom_contact" defaultValue={dv("groom_contact")} required icon={<MessageCircle size={16}/>}/>
                                 </div>
                                 <OrderSelectGroup label="신랑 호칭" name="groom_order" defaultValue={dv("groom_order")} options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} icon={<Users size={16}/>}/>
-                                <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={dv("account_groom_bank")} defaultNum={dv("account_groom_num")} />
-                                <div className="h-px bg-slate-100 my-4"/>
+                                <FormReveal label="신랑 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasDraft("account_groom_bank", "account_groom_num")}>
+                                    <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={dv("account_groom_bank")} defaultNum={dv("account_groom_num")} />
+                                </FormReveal>
+                                <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasDraft(...PARENT_KEYS("groom"))}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <InputGroup label="아버지 성함" name="groom_father" defaultValue={dv("groom_father")} placeholder="예: 홍길동" icon={<Users size={16}/>}/>
                                     <PhoneInput label="아버지 연락처" name="groom_father_contact" defaultValue={dv("groom_father_contact")} icon={<MessageCircle size={16}/>}/>
@@ -554,6 +579,7 @@ export default function MakePage() {
                                 </div>
                                 <ParentMarkSelect name="groom_mother_mark" defaultValue={dv("groom_mother_mark")}/>
                                 <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" defaultBank={dv("account_groom_m_bank")} defaultNum={dv("account_groom_m_num")} />
+                                </FormReveal>
                             </div>
                         </section>
 
@@ -568,8 +594,10 @@ export default function MakePage() {
                                     <PhoneInput label="신부 연락처" name="bride_contact" defaultValue={dv("bride_contact")} required icon={<MessageCircle size={16}/>}/>
                                 </div>
                                 <OrderSelectGroup label="신부 호칭" name="bride_order" defaultValue={dv("bride_order")} options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} icon={<Users size={16}/>}/>
-                                <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={dv("account_bride_bank")} defaultNum={dv("account_bride_num")} />
-                                <div className="h-px bg-slate-100 my-4"/>
+                                <FormReveal label="신부 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasDraft("account_bride_bank", "account_bride_num")}>
+                                    <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={dv("account_bride_bank")} defaultNum={dv("account_bride_num")} />
+                                </FormReveal>
+                                <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasDraft(...PARENT_KEYS("bride"))}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <InputGroup label="아버지 성함" name="bride_father" defaultValue={dv("bride_father")} placeholder="예: 김철수" icon={<Users size={16}/>}/>
                                     <PhoneInput label="아버지 연락처" name="bride_father_contact" defaultValue={dv("bride_father_contact")} icon={<MessageCircle size={16}/>}/>
@@ -583,11 +611,12 @@ export default function MakePage() {
                                 </div>
                                 <ParentMarkSelect name="bride_mother_mark" defaultValue={dv("bride_mother_mark")}/>
                                 <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" defaultBank={dv("account_bride_m_bank")} defaultNum={dv("account_bride_m_num")} />
+                                </FormReveal>
                             </div>
                         </section>
 
                         {/* 예식 및 교통 */}
-                        <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
+                        <section id="sec-wedding" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
                             <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
                                 <span className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shadow-sm">📅</span><span className="flex-1">예식 및 초대글</span>
                             </h3>
@@ -625,14 +654,17 @@ export default function MakePage() {
                                               placeholder={"서로가 마주 보며 다진 약속을\n이제 여러분 앞에서 소중히 맺으려 합니다.\n저희의 새로운 시작을 위해\n따뜻한 축복을 보내주시면 감사하겠습니다."}
                                               className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm leading-relaxed text-slate-800 resize-none placeholder:text-slate-400"/>
                                 </div>
-                                <div className="pt-6 border-t border-slate-100 space-y-6">
-                                    <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car
-                                        size={18} className="text-slate-400"/> 오시는 길 안내</h4>
-                                    <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={dv("transport_subway")} placeholder="예: 7호선 ○○역 1번 출구 도보 5분"/>
-                                    <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={dv("transport_bus")} placeholder="예: ○○정류장 하차"/>
-                                    <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={dv("transport_parking")} placeholder="예: 웨딩홀 내 주차 가능 (하객 무료)"/>
-                                    <TextAreaGroup label="안내사항 (선택)" name="notice" defaultValue={dv("notice")} rows={3}
-                                                   placeholder={"예: 식사는 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다."}/>
+                                <div className="pt-6 border-t border-slate-100 space-y-3">
+                                    <FormReveal label="교통 안내 추가" hint="지하철·버스·주차" defaultOpen={hasDraft("transport_subway", "transport_bus", "transport_parking")}>
+                                        <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car size={18} className="text-slate-400"/> 오시는 길 안내</h4>
+                                        <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={dv("transport_subway")} placeholder="예: 7호선 ○○역 1번 출구 도보 5분"/>
+                                        <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={dv("transport_bus")} placeholder="예: ○○정류장 하차"/>
+                                        <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={dv("transport_parking")} placeholder="예: 웨딩홀 내 주차 가능 (하객 무료)"/>
+                                    </FormReveal>
+                                    <FormReveal label="안내사항 추가" hint="식사 장소, 화환 사양 등" defaultOpen={hasDraft("notice")}>
+                                        <TextAreaGroup label="안내사항" name="notice" defaultValue={dv("notice")} rows={3}
+                                                       placeholder={"예: 식사는 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다."}/>
+                                    </FormReveal>
                                 </div>
                             </div>
                         </section>
@@ -680,11 +712,12 @@ export default function MakePage() {
                         </section>
 
                         {/* 5. 사진 등록 (수정됨: opacity-0 적용) */}
-                        <section id="photo-section" className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
+                        <section id="photo-section" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
                             <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
                                 <span className="w-10 h-10 rounded-2xl bg-green-50 text-green-500 flex items-center justify-center shadow-sm">📷</span>
                                 <span className="flex-1">사진 등록</span>
                             </h3>
+                            <p className="-mt-4 mb-8 text-xs text-slate-500 bg-slate-50 rounded-xl px-4 py-3">사진은 1장당 15MB까지 올릴 수 있고, 올릴 때 자동으로 용량을 줄여요.</p>
 
                             <div className="space-y-10">
                                 {/* 메인 사진 */}
@@ -702,9 +735,9 @@ export default function MakePage() {
                                             )}
                                         </div>
                                     </div>
-                                    <p className="text-xs text-slate-500">권장: 9:16 비율 / 1장당 15MB 이하</p>
+                                    <p className="text-xs text-slate-500">권장: 9:16 세로 비율</p>
 
-                                    <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden">
+                                    <div className={`group relative border-2 border-dashed border-slate-200 rounded-3xl ${mainPreviews.length > 0 ? "min-h-[280px]" : "min-h-[160px]"} flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden`}>
                                         {mainPreviews.length > 0 ? (
                                             <div className="absolute inset-0 z-10 bg-white flex items-center justify-center p-4 overflow-auto">
                                                 <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
@@ -735,7 +768,7 @@ export default function MakePage() {
                                                 <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-2"><Upload size={20}/></div>
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
                                                     <p>청첩장 최상단에 슬라이드로 보여질 사진입니다.</p>
-                                                    <p className="font-bold text-slate-500">권장: 9:16 비율 / <span className="text-rose-500">1장당 15MB 이하</span></p>
+                                                    <p className="font-bold text-slate-500">눌러서 3장 선택</p>
                                                 </div>
                                             </div>
                                         )}
@@ -766,8 +799,8 @@ export default function MakePage() {
                                             </button>
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-500">권장: 1:1 비율 (정방형) / 1장당 15MB 이하</p>
-                                    <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
+                                    <p className="text-xs text-slate-500">권장: 1:1 정사각형</p>
+                                    <div className={`group relative border-2 border-dashed border-slate-200 rounded-3xl ${middlePreview ? "min-h-[280px]" : "min-h-[160px]"} flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer overflow-hidden`}>
                                         {middlePreview ? (
                                             <div className="absolute inset-0 z-10 bg-white flex items-center justify-center p-4">
                                                 <div className="relative w-full max-w-[200px] h-full rounded-2xl overflow-hidden border border-slate-100 shadow-sm aspect-square">
@@ -782,8 +815,6 @@ export default function MakePage() {
                                                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><ImageIcon size={20}/></div>
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
                                                     <p>'초대합니다' 문구 아래에 들어갈 사진입니다.</p>
-                                                    <p className="font-bold text-slate-500">권장 사이즈: 1:1 비율 (정방형)</p>
-                                                    <p className="text-rose-400 font-bold">15MB 이하만 업로드 가능</p>
                                                 </div>
                                             </div>
                                         )}
@@ -794,6 +825,7 @@ export default function MakePage() {
                                 </div>
 
                                 {/* 카톡 공유용 이미지 (선택) */}
+                                <FormReveal label="카톡 공유 이미지" hint="안 하면 대표 사진">
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <div className="flex items-center gap-2">
@@ -808,9 +840,9 @@ export default function MakePage() {
                                         )}
                                     </div>
                                     <p className="text-xs text-slate-500 leading-relaxed">
-                                        카카오톡 공유하기 버튼으로 보낼 때 사용되는 이미지입니다. 따로 올리지 않으면 위의 1:1 대표사진이 사용됩니다. <span className="text-rose-500 font-bold">권장 사이즈: 1:1 비율 (정방형), 1장당 15MB 이하</span>
+                                        카카오톡으로 공유할 때 보이는 이미지예요. 따로 올리지 않으면 위의 대표 사진이 쓰여요.
                                     </p>
-                                    <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
+                                    <div className={`group relative border-2 border-dashed border-slate-200 rounded-3xl ${ogPreview ? "min-h-[280px]" : "min-h-[160px]"} flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer overflow-hidden`}>
                                         {ogPreview ? (
                                             <div className="absolute inset-0 z-10 bg-white flex items-center justify-center p-4">
                                                 <div className="relative w-full max-w-[200px] h-full rounded-2xl overflow-hidden border border-slate-100 shadow-sm aspect-square">
@@ -824,8 +856,7 @@ export default function MakePage() {
                                             <div className="flex flex-col items-center gap-3 py-6">
                                                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><ImageIcon size={20}/></div>
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
-                                                    <p className="font-bold text-slate-500">권장 사이즈: 1:1 비율 (정방형)</p>
-                                                    <p className="text-rose-400 font-bold">15MB 이하만 업로드 가능</p>
+                                                    <p className="font-bold text-slate-500">권장: 1:1 정사각형</p>
                                                 </div>
                                             </div>
                                         )}
@@ -834,6 +865,7 @@ export default function MakePage() {
                                     {ogUploadedUrl && <input type="hidden" name="ogImageUrl" value={ogUploadedUrl} />}
                                     {isOgUploading && <p className="text-[11px] text-blue-500 text-center">카톡 공유용 이미지 업로드 중입니다...</p>}
                                 </div>
+                                </FormReveal>
 
                                 {/* 갤러리 사진 */}
                                 <div className="space-y-4">
@@ -848,9 +880,9 @@ export default function MakePage() {
                                             )}
                                         </div>
                                     </div>
-                                    <p className="text-xs text-slate-500">권장: 1:1 비율 (정방형) / 1장당 15MB 이하</p>
+                                    <p className="text-xs text-slate-500">권장: 1:1 정사각형</p>
 
-                                    <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl min-h-[280px] flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden">
+                                    <div className={`group relative border-2 border-dashed border-slate-200 rounded-3xl ${galleryPreviews.length > 0 ? "min-h-[280px]" : "min-h-[160px]"} flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden`}>
                                         {galleryPreviews.length > 0 ? (
                                             <div className="absolute inset-0 z-10 bg-white p-4 overflow-y-auto">
                                                 <div className="grid grid-cols-3 gap-3">
@@ -881,7 +913,7 @@ export default function MakePage() {
                                                 <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-2"><Upload size={20}/></div>
                                                 <div className="text-xs text-slate-400 space-y-1 text-center">
                                                     <p>하객들이 보게 될 갤러리 탭에 들어갈 사진입니다.</p>
-                                                    <p className="font-bold text-slate-500">권장: 1:1 비율 (정방형) / <span className="text-rose-500">1장당 15MB 이하</span></p>
+                                                    <p className="font-bold text-slate-500">최대 20장 · 화살표로 순서 변경</p>
                                                 </div>
                                             </div>
                                         )}
@@ -895,13 +927,12 @@ export default function MakePage() {
                                     {isGalleryUploading && (
                                         <p className="text-[11px] text-blue-500 text-center">갤러리 사진 업로드 중입니다...</p>
                                     )}
-                                    <p className="text-[11px] text-slate-400 text-center">* 사진은 최대 20장까지 등록 가능하며, 화살표로 순서를 변경할 수 있습니다.</p>
                                 </div>
                             </div>
                         </section>
 
                         {/* 비밀번호 설정 + 만들기 완료 (한 카드로 통일) */}
-                        <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
+                        <section id="sec-done" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
                             <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
                                 <span className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">🔒</span>
                                 <span className="flex-1">비밀번호 설정 <span className="text-xs font-normal text-slate-400 ml-2">(필수)</span></span>
@@ -977,7 +1008,7 @@ function InputGroup({label, name, placeholder, required = false, type = "text", 
                 type={type}
                 defaultValue={defaultValue}
                 placeholder={placeholder}
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 invalid:border-rose-200 invalid:bg-rose-50 focus:invalid:border-rose-500 focus:invalid:ring-rose-500"
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 user-invalid:border-rose-200 user-invalid:bg-rose-50 focus:user-invalid:border-rose-500 focus:user-invalid:ring-rose-500"
             />
         </div>
     );
@@ -1034,7 +1065,7 @@ function PhoneInput({label, name, required = false, icon, defaultValue}: InputGr
                 {icon && <span className="text-slate-400 group-focus-within:text-slate-800 transition-colors">{icon}</span>}
                 {label} {required && <span className="text-rose-500 text-xs font-extrabold" title="필수 입력">*</span>}
             </label>
-            <input required={required} name={name} type="tel" value={value} onChange={handleChange} maxLength={13} placeholder="010-0000-0000" className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-300 invalid:border-rose-200 invalid:bg-rose-50 focus:invalid:border-rose-500 focus:invalid:ring-rose-500" />
+            <input required={required} name={name} type="tel" value={value} onChange={handleChange} maxLength={13} placeholder="010-0000-0000" className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-300 user-invalid:border-rose-200 user-invalid:bg-rose-50 focus:user-invalid:border-rose-500 focus:user-invalid:ring-rose-500" />
         </div>
     );
 }

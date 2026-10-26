@@ -11,17 +11,46 @@ import SiteFooter from "@/components/SiteFooter";
 import SupportNudge from "@/components/SupportNudge";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 
+/** 안내 팝업 닫은 시각 (닫으면 며칠간 안 띄움) */
+const WELCOME_DISMISSED_KEY = "wedding_welcome_dismissed_at";
+const WELCOME_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
+
 export default function Home() {
     const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-    // 접속 시 1초 후 안내 팝업 노출
+    // 안내 팝업: 첫 화면을 가리지 않게 5초 뒤나 스크롤 내린 뒤 노출, 닫으면 3일간 안 뜸
     useEffect(() => {
-        const timer = setTimeout(() => {
+        try {
+            const dismissedAt = Number(localStorage.getItem(WELCOME_DISMISSED_KEY) || 0);
+            if (Date.now() - dismissedAt < WELCOME_SNOOZE_MS) return;
+        } catch {
+            // localStorage 못 쓰면 그냥 노출
+        }
+        const open = () => {
             setIsWelcomeOpen(true);
-        }, 1000);
-        return () => clearTimeout(timer);
+            cleanup();
+        };
+        const onScroll = () => {
+            if (window.scrollY > window.innerHeight * 0.8) open();
+        };
+        const timer = setTimeout(open, 5000);
+        window.addEventListener("scroll", onScroll, { passive: true });
+        const cleanup = () => {
+            clearTimeout(timer);
+            window.removeEventListener("scroll", onScroll);
+        };
+        return cleanup;
     }, []);
+
+    const closeWelcome = () => {
+        setIsWelcomeOpen(false);
+        try {
+            localStorage.setItem(WELCOME_DISMISSED_KEY, String(Date.now()));
+        } catch {
+            // 무시
+        }
+    };
 
     // FAQ 토글 함수
     const toggleFaq = (index: number) => {
@@ -60,7 +89,7 @@ export default function Home() {
                             <span className="font-light italic text-rose-50 underline underline-offset-[12px] decoration-white/30">가장 아름다운 약속을 담아</span>
                         </h1>
                         <p className="text-base md:text-xl text-white/90 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-lg">
-                            지저분한 광고와 <b>불필요한 가입 절차</b>는 모두 걷어내고<br className="hidden md:block"/>
+                            지저분한 광고와 <b>불필요한 가입 절차</b>는 모두 걷어내고{" "}<br className="hidden md:block"/>
                             오직 두 사람의 소중한 진심만을 담았습니다.
                         </p>
 
@@ -88,7 +117,7 @@ export default function Home() {
                             <p className="text-slate-400 font-medium">취향에 맞는 감성적인 디자인을 선택하세요</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
                             <Link href="/sample/1" className="group block">
                                 <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-xl group-hover:shadow-rose-100 group-hover:shadow-2xl transition-all duration-500 border border-slate-50">
                                     <Image
@@ -114,7 +143,7 @@ export default function Home() {
                                         fill
                                         className="object-cover group-hover:scale-105 transition duration-700"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition" />
+                                    <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#1f3d55]/95 via-[#1f3d55]/70 to-transparent" />
                                     <div className="absolute bottom-10 left-10 text-white">
                                         <span className="bg-sky-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block shadow-sm">New</span>
                                         <h4 className="text-2xl font-serif font-bold tracking-tight">웨딩홈피</h4>
@@ -122,37 +151,33 @@ export default function Home() {
                                 </div>
                                 <p className="text-slate-500 text-center font-bold group-hover:text-sky-600 transition tracking-tight">그 시절 미니홈피 감성 그대로</p>
                             </Link>
-
-                            <div className="group relative grayscale opacity-60">
-                                <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden mb-6 shadow-lg border border-slate-50">
-                                    <Image src="/images/card3.jpg" alt="모던 미니멀" fill className="object-cover" />
-                                    <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
-                                        <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase">Coming Soon</span>
-                                    </div>
-                                </div>
-                                <p className="text-slate-400 text-center font-bold">세련되고 깔끔한 레이아웃</p>
-                            </div>
                         </div>
                     </div>
                 </section>
 
                 {/* 4. 특장점 섹션 */}
                 <section className="py-20 sm:py-32 px-4 sm:px-6 bg-rose-50/30 overflow-x-hidden">
-                    <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-                        <div className="space-y-6 p-10 bg-white rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
-                            <div className="text-5xl">✨</div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tighter">100% 완전 무료</h3>
-                            <p className="text-slate-500 text-sm leading-relaxed font-medium">결제나 기간 제한 없이 <br/>모든 기능을 자유롭게 사용하세요.</p>
+                    <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-12 md:text-center">
+                        <div className="flex md:block items-center gap-5 md:space-y-6 p-6 md:p-10 bg-white rounded-3xl md:rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
+                            <div className="text-4xl md:text-5xl shrink-0">✨</div>
+                            <div className="min-w-0 space-y-1.5 md:space-y-6">
+                                <h3 className="text-xl font-black text-slate-900 tracking-tighter">100% 완전 무료</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed font-medium">결제나 기간 제한 없이 <br className="hidden md:inline"/>모든 기능을 자유롭게 사용하세요.</p>
+                            </div>
                         </div>
-                        <div className="space-y-6 p-10 bg-white rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
-                            <div className="text-5xl">🚫</div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tighter">로그인 & 광고 없음</h3>
-                            <p className="text-slate-500 text-sm leading-relaxed font-medium">번거로운 가입 절차 없이 <br/>축복에만 집중할 수 있습니다.</p>
+                        <div className="flex md:block items-center gap-5 md:space-y-6 p-6 md:p-10 bg-white rounded-3xl md:rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
+                            <div className="text-4xl md:text-5xl shrink-0">🚫</div>
+                            <div className="min-w-0 space-y-1.5 md:space-y-6">
+                                <h3 className="text-xl font-black text-slate-900 tracking-tighter">로그인 & 광고 없음</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed font-medium">번거로운 가입 절차 없이 <br className="hidden md:inline"/>축복에만 집중할 수 있습니다.</p>
+                            </div>
                         </div>
-                        <div className="space-y-6 p-10 bg-white rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
-                            <div className="text-5xl">🔒</div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tighter">안전한 정보 보호</h3>
-                            <p className="text-slate-500 text-sm leading-relaxed font-medium">데이터는 암호화 관리되며 <br/>예식 후 직접 삭제가 가능합니다.</p>
+                        <div className="flex md:block items-center gap-5 md:space-y-6 p-6 md:p-10 bg-white rounded-3xl md:rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-300">
+                            <div className="text-4xl md:text-5xl shrink-0">🔒</div>
+                            <div className="min-w-0 space-y-1.5 md:space-y-6">
+                                <h3 className="text-xl font-black text-slate-900 tracking-tighter">안전한 정보 보호</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed font-medium">데이터는 암호화 관리되며 <br className="hidden md:inline"/>예식 후 직접 삭제가 가능합니다.</p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -218,18 +243,19 @@ export default function Home() {
                 <div className="fixed left-4 right-4 bottom-4 sm:left-auto sm:right-8 sm:bottom-8 z-[200] max-w-[320px] sm:max-w-[320px] mx-auto sm:mx-0 animate-fade-in-up">
                     <div className="bg-white rounded-[2rem] shadow-2xl border border-rose-50 p-8 relative overflow-hidden group max-h-[85vh] overflow-y-auto">
                         <button
-                            onClick={() => setIsWelcomeOpen(false)}
+                            onClick={closeWelcome}
+                            aria-label="닫기"
                             className="absolute top-4 right-4 z-20 text-slate-300 hover:text-rose-500 transition"
                         >
                             <X size={20} />
                         </button>
                         <SupportNudge
                             variant="plain"
-                            onDonateClick={() => setIsWelcomeOpen(false)}
+                            onDonateClick={closeWelcome}
                             footer={
                                 <div className="mt-6 flex gap-4 font-bold text-[10px] uppercase tracking-widest items-center">
                                     <Link href="/make" className="text-rose-600 hover:text-rose-400 transition underline underline-offset-4">만들기</Link>
-                                    <button type="button" onClick={() => setIsWelcomeOpen(false)} className="text-slate-300 hover:text-slate-400">닫기</button>
+                                    <button type="button" onClick={closeWelcome} className="text-slate-300 hover:text-slate-400">닫기</button>
                                 </div>
                             }
                         />

@@ -12,9 +12,19 @@ import Script from "next/script";
 import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
 import ParentMarkSelect from "@/components/ParentMarkSelect";
+import FormReveal from "@/components/FormReveal";
+import FormSectionNav from "@/components/FormSectionNav";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
+
+/** 상단 바로가기 칩 */
+const EDIT_SECTIONS = [
+    { id: "sec-design", label: "디자인" },
+    { id: "sec-people", label: "신랑·신부" },
+    { id: "sec-wedding", label: "예식" },
+    { id: "photo-section", label: "사진" },
+];
 
 interface EditFormProps {
     initialData: any;
@@ -75,6 +85,13 @@ export default function EditForm({ initialData }: EditFormProps) {
 
     // [데이터 매핑 헬퍼]
     const getAccount = (side: string) => initialData.accounts?.find((acc: any) => acc.side === side);
+    /** 저장된 값이 있으면 접힌 항목을 펼친 채로 시작 */
+    const hasValue = (...values: unknown[]) => values.some((v) => typeof v === "string" && v.trim() !== "");
+    const hasAccount = (side: string) => !!getAccount(side)?.account_number;
+    const hasParents = (side: "groom" | "bride") =>
+        hasValue(initialData[`${side}_father`], initialData[`${side}_father_contact`], initialData[`${side}_father_mark`],
+                 initialData[`${side}_mother`], initialData[`${side}_mother_contact`], initialData[`${side}_mother_mark`])
+        || hasAccount(`${side}_f`) || hasAccount(`${side}_m`);
     const getInterview = (idx: number) => initialData.interviews?.[idx] || { question: "", answer: "" };
 
 
@@ -326,11 +343,13 @@ export default function EditForm({ initialData }: EditFormProps) {
 
     return (
         <>
+        <FormSectionNav sections={EDIT_SECTIONS}/>
         <form action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
             <input type="hidden" name="url_id" value={initialData.url_id} />
             <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="afterInteractive" />
 
             {/* 디자인 선택 */}
+            <div id="sec-design" className="form-anchor space-y-10">
             <TemplatePicker defaultValue={initialData.template_type} onChange={setTemplateType}/>
 
             {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
@@ -340,9 +359,10 @@ export default function EditForm({ initialData }: EditFormProps) {
 
             {/* 배경음악 */}
             <BgmPicker defaultValue={initialData.bgm_url}/>
+            </div>
 
             {/* 🤵‍♂️ 신랑 정보 */}
-            <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
+            <section id="sec-people" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
                 <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b pb-4">
                     <span className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shadow-sm">🤵‍♂️</span><span className="flex-1">신랑 측 정보</span>
                 </h3>
@@ -352,8 +372,10 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <PhoneInput label="신랑 연락처" name="groom_contact" defaultValue={initialData.groom_contact} required icon={<MessageCircle size={16}/>}/>
                     </div>
                     <OrderSelectGroup label="신랑 호칭" name="groom_order" options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} defaultValue={initialData.groom_order} icon={<Users size={16}/>}/>
-                    <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={getAccount("groom")?.bank_name} defaultNum={getAccount("groom")?.account_number} />
-                    <div className="h-px bg-slate-100 my-4"/>
+                    <FormReveal label="신랑 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasAccount("groom")}>
+                        <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={getAccount("groom")?.bank_name} defaultNum={getAccount("groom")?.account_number} />
+                    </FormReveal>
+                    <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasParents("groom")}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputGroup label="아버지 성함" name="groom_father" defaultValue={initialData.groom_father} icon={<Users size={16}/>}/>
                         <PhoneInput label="아버지 연락처" name="groom_father_contact" defaultValue={initialData.groom_father_contact} icon={<MessageCircle size={16}/>}/>
@@ -367,6 +389,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                     </div>
                     <ParentMarkSelect name="groom_mother_mark" defaultValue={initialData.groom_mother_mark}/>
                     <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" defaultBank={getAccount("groom_m")?.bank_name} defaultNum={getAccount("groom_m")?.account_number} />
+                    </FormReveal>
                 </div>
             </section>
 
@@ -381,8 +404,10 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <PhoneInput label="신부 연락처" name="bride_contact" defaultValue={initialData.bride_contact} required icon={<MessageCircle size={16}/>}/>
                     </div>
                     <OrderSelectGroup label="신부 호칭" name="bride_order" options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} defaultValue={initialData.bride_order} icon={<Users size={16}/>}/>
-                    <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={getAccount("bride")?.bank_name} defaultNum={getAccount("bride")?.account_number} />
-                    <div className="h-px bg-slate-100 my-4"/>
+                    <FormReveal label="신부 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasAccount("bride")}>
+                        <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={getAccount("bride")?.bank_name} defaultNum={getAccount("bride")?.account_number} />
+                    </FormReveal>
+                    <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasParents("bride")}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputGroup label="아버지 성함" name="bride_father" defaultValue={initialData.bride_father} icon={<Users size={16}/>}/>
                         <PhoneInput label="아버지 연락처" name="bride_father_contact" defaultValue={initialData.bride_father_contact} icon={<MessageCircle size={16}/>}/>
@@ -396,11 +421,12 @@ export default function EditForm({ initialData }: EditFormProps) {
                     </div>
                     <ParentMarkSelect name="bride_mother_mark" defaultValue={initialData.bride_mother_mark}/>
                     <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" defaultBank={getAccount("bride_m")?.bank_name} defaultNum={getAccount("bride_m")?.account_number} />
+                    </FormReveal>
                 </div>
             </section>
 
             {/* 📅 예식 및 초대글 */}
-            <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
+            <section id="sec-wedding" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
                 <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b pb-4">
                     <span className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shadow-sm">📅</span><span className="flex-1">예식 및 초대글</span>
                 </h3>
@@ -431,13 +457,17 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <label className="block text-sm font-bold text-slate-700 ml-1">초대 문구</label>
                         <textarea name="welcome_msg" rows={6} defaultValue={initialData.welcome_msg} className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm leading-relaxed text-slate-800 outline-none focus:ring-1 focus:ring-slate-800 resize-none"/>
                     </div>
-                    <div className="pt-6 border-t border-slate-100 space-y-6">
-                        <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car size={18} className="text-slate-400"/> 오시는 길 안내</h4>
-                        <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={initialData.transport_subway}/>
-                        <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={initialData.transport_bus}/>
-                        <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={initialData.transport_parking}/>
-                        <TextAreaGroup label="안내사항 (선택)" name="notice" defaultValue={initialData.notice} rows={3}
-                                       placeholder={"예: 식사는 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다."}/>
+                    <div className="pt-6 border-t border-slate-100 space-y-3">
+                        <FormReveal label="교통 안내 추가" hint="지하철·버스·주차" defaultOpen={hasValue(initialData.transport_subway, initialData.transport_bus, initialData.transport_parking)}>
+                            <h4 className="font-bold text-base text-slate-800 flex items-center gap-2"><Car size={18} className="text-slate-400"/> 오시는 길 안내</h4>
+                            <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={initialData.transport_subway}/>
+                            <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={initialData.transport_bus}/>
+                            <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={initialData.transport_parking}/>
+                        </FormReveal>
+                        <FormReveal label="안내사항 추가" hint="식사 장소, 화환 사양 등" defaultOpen={hasValue(initialData.notice)}>
+                            <TextAreaGroup label="안내사항" name="notice" defaultValue={initialData.notice} rows={3}
+                                           placeholder={"예: 식사는 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다."}/>
+                        </FormReveal>
                     </div>
                 </div>
             </section>
@@ -481,10 +511,11 @@ export default function EditForm({ initialData }: EditFormProps) {
             </section>
 
             {/* 📷 사진 수정 섹션 */}
-            <section id="photo-section" className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
+            <section id="photo-section" className="form-anchor bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
                 <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800 border-b pb-4">
                     <span className="w-10 h-10 rounded-2xl bg-green-50 text-green-500 flex items-center justify-center shadow-sm">📷</span><span className="flex-1">사진 수정</span>
                 </h3>
+                <p className="-mt-4 mb-8 text-xs text-slate-500 bg-slate-50 rounded-xl px-4 py-3">사진을 바꿀 때만 새로 올리면 돼요. 1장당 15MB까지, 올릴 때 자동으로 용량을 줄여요.</p>
                 <div className="space-y-12">
                     <div className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -498,7 +529,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                 )}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-500">권장: 9:16 비율 / 1장당 15MB 이하 · 화살표로 순서 변경 가능</p>
+                        <p className="text-xs text-slate-500">권장: 9:16 세로 비율 · 화살표로 순서 변경</p>
                         {mainPreviews.length === 0 && existingMainPhotos.length > 0 && (
                             <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border">
                                 {existingMainPhotos.map((src: string, i: number) => (
@@ -530,7 +561,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                 <div className="text-center space-y-1">
                                     <Upload size={24} className="mx-auto text-slate-300 mb-2"/>
                                     <p className="text-xs text-slate-400 font-bold text-center">사진을 교체하려면 클릭 (3장 필수)</p>
-                                    <p className="text-[11px] text-slate-400">권장: 9:16 비율 / 1장당 15MB 이하</p>
+                                    <p className="text-[11px] text-slate-400">권장: 9:16 세로 비율</p>
                                 </div>
                             )}
                             <input ref={mainInputRef} type="file" multiple accept="image/*" onChange={handleMainChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
@@ -551,7 +582,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                 </button>
                             )}
                         </div>
-                        <p className="text-xs text-slate-500">권장: 1:1 비율 (정방형) / 1장당 15MB 이하</p>
+                        <p className="text-xs text-slate-500">권장: 1:1 정사각형</p>
                         {!middlePreview && existingMiddlePhoto && (
                             <div className="flex justify-center p-4 bg-slate-50 rounded-2xl border mb-4 shadow-inner">
                                 <img src={existingMiddlePhoto} className="w-40 h-40 rounded-xl object-cover shadow-md" alt="current middle" />
@@ -575,6 +606,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                         {isMiddleUploading && <p className="text-[11px] text-blue-500 text-center">대표 사진 업로드 중입니다...</p>}
                     </div>
 
+                    <FormReveal label="카톡 공유 이미지" hint="안 하면 대표 사진" defaultOpen={!!existingOgPhoto}>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <div className="flex items-center gap-2">
@@ -589,7 +621,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                             )}
                         </div>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                            카카오톡 공유하기 버튼으로 보낼 때 사용되는 이미지입니다. 따로 올리지 않으면 1:1 대표사진이 사용됩니다. <span className="text-rose-500 font-bold">권장 사이즈: 1:1 비율 (정방형), 1장당 15MB 이하</span>
+                            카카오톡으로 공유할 때 보이는 이미지예요. 따로 올리지 않으면 대표 사진이 쓰여요.
                         </p>
                         {!ogPreview && existingOgPhoto && (
                             <div className="flex justify-center p-4 bg-slate-50 rounded-2xl border mb-2 shadow-inner">
@@ -610,8 +642,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                 <div className="flex flex-col items-center gap-3 py-6">
                                     <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><ImageIcon size={20}/></div>
                                     <div className="text-xs text-slate-400 space-y-1 text-center">
-                                        <p className="font-bold text-slate-500">권장 사이즈: 1:1 비율 (정방형)</p>
-                                        <p className="text-rose-400 font-bold">15MB 이하만 업로드 가능</p>
+                                        <p className="font-bold text-slate-500">권장: 1:1 정사각형</p>
                                     </div>
                                 </div>
                             )}
@@ -620,6 +651,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                         {ogUploadedUrl && <input type="hidden" name="ogImageUrl" value={ogUploadedUrl} />}
                         {isOgUploading && <p className="text-[11px] text-blue-500 text-center">카톡 공유용 이미지 업로드 중입니다...</p>}
                     </div>
+                    </FormReveal>
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -633,7 +665,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                 )}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-500">권장: 1:1 비율 (정방형) / 1장당 15MB 이하 · 화살표로 순서 변경 가능</p>
+                        <p className="text-xs text-slate-500">권장: 1:1 정사각형 · 화살표로 순서 변경</p>
                         {galleryPreviews.length === 0 && existingGalleryPhotos.length > 0 && (
                             <div className="flex gap-2 overflow-x-auto p-4 bg-slate-50 rounded-2xl border shadow-inner">
                                 {existingGalleryPhotos.map((src: string, i: number) => (
@@ -662,7 +694,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                                 <div className="text-center space-y-1">
                                     <Upload size={24} className="mx-auto text-slate-300"/>
                                     <p className="text-xs text-slate-400 font-bold">갤러리 사진 교체 시 클릭</p>
-                                    <p className="text-[11px] text-slate-400">권장: 1:1 비율 / 1장당 15MB 이하</p>
+                                    <p className="text-[11px] text-slate-400">권장: 1:1 정사각형</p>
                                 </div>
                             )}
                             <input ref={galleryInputRef} type="file" multiple accept="image/*" onChange={handleGalleryChange} className={`absolute inset-0 w-full h-full cursor-pointer opacity-0 ${galleryPreviews.length > 0 ? 'hidden' : 'block z-20'}`} />
