@@ -60,9 +60,19 @@ export default function MakePage() {
         return () => clearInterval(timer);
     }, [draftReady]);
 
-    const restoreDraft = () => {
+    const restoreDraft = async () => {
         if (!draftPrompt) return;
-        const data = draftPrompt.data;
+        const data = { ...draftPrompt.data };
+        // 올려둔 프로필 사진·음악이 정리돼 없어졌으면 빼고 복원
+        for (const key of ["groom_photo_url", "bride_photo_url", "bgm_url"]) {
+            const url = data[key];
+            if (!url?.startsWith("/uploads/temp/")) continue;
+            const ok = await fetch(url, { method: "HEAD" }).then((r) => r.ok).catch(() => false);
+            if (!ok) {
+                data[key] = "";
+                if (key === "bgm_url") data.bgm_mode = "default";
+            }
+        }
         setDraft(data);
         if (data.template_type) setTemplateType(data.template_type);
         setUseInterview(Boolean(data.interview_q1));
