@@ -10,6 +10,7 @@ import {
     type AdminInvitationItem,
 } from "@/app/actions-admin";
 import { adminLogout } from "@/lib/admin-auth";
+import AdminDonations from "./AdminDonations";
 import {
     BarChart3,
     Calendar,
@@ -203,6 +204,9 @@ export default function AdminDashboard() {
                         )}
                     </div>
                 </section>
+
+                {/* 후원 내역 */}
+                <AdminDonations />
 
                 {/* 청첩장 목록 */}
                 <section>

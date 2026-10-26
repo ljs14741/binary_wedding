@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from "framer-motion";
 import { Coffee, Search, MessageCircle, X, Heart, Menu } from 'lucide-react';
+import DonorWall from "@/components/DonorWall";
 
 /** QR 코드와 동일한 후원 URL (카카오페이 등). 설정 시 모바일에서 '바로 후원하기' 버튼으로 사용 */
 const DONATE_LINK = process.env.NEXT_PUBLIC_DONATE_URL ?? "https://qr.kakaopay.com/Ej9JnRsvn";
@@ -138,7 +139,7 @@ export default function SiteHeader() {
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-sm w-full text-center relative shadow-2xl"
+                        className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-sm w-full max-h-[90vh] overflow-y-auto text-center relative shadow-2xl"
                     >
                         <button
                             onClick={() => setIsDonateOpen(false)}
@@ -181,6 +182,9 @@ export default function SiteHeader() {
                                     <span className="font-bold text-rose-500">사실 치킨 먹고 싶어요!! 🍗</span>
                                 </p>
                             </div>
+
+                            {/* 실제 후원자 목록 */}
+                            <DonorWall />
 
                             {/* 모바일: 카카오페이로 바로 이동 */}
                             {isMobile && DONATE_LINK && (

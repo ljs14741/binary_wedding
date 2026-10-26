@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Coffee, Heart, MessageCircle } from "lucide-react";
+import DonorWall from "@/components/DonorWall";
 
 interface SupportNudgeProps {
     /** card: 만들기/수정 하단용 / plain: 첫 모달 등 기존 껍데기 안 */
@@ -47,6 +48,9 @@ export default function SupportNudge({
                 <br />
                 부탁드립니다 🙏
             </p>
+
+            {/* 실제 후원자 목록 - 감사 인사 겸 후원 유도 */}
+            <DonorWall className="mt-6" />
 
             <div className="mt-6 flex flex-col gap-2.5">
                 <button

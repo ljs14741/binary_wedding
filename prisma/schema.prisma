@@ -130,3 +130,13 @@ model invitations {
   invitation_interviews invitation_interviews[]
   invitation_guestbook invitation_guestbook[]
 }
+// 후원 내역 (관리자가 직접 입력, 공개 시 이름 가림)
+model donations {
+  id         Int      @id @default(autoincrement())
+  donor_name String   @db.VarChar(20)
+  amount     Int
+  donated_at DateTime @db.Date
+  created_at DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([donated_at])
+}
