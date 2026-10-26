@@ -13,6 +13,7 @@ import { GuestbookWriteModal, GuestbookEditModal, GuestbookDeleteModal } from "@
 import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useGallery } from "@/components/invitation/hooks";
+import Minimi from "./Minimi";
 
 const gothic = Nanum_Gothic({ subsets: ["latin"], weight: ["400", "700", "800"], variable: "--font-gothic" });
 const gaegu = Gaegu({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-gaegu" });
@@ -234,8 +235,8 @@ function HomeTab({ data, wd, timeLeft, isPlaying, mainIdx, onGo }: { data: Templ
                     ) : (
                         <div className="h-40 flex items-center justify-center text-[#b9a68c]">사진 없음</div>
                     )}
-                    <span className="absolute left-2 bottom-2 text-[18px]">🤵</span>
-                    <span className="absolute right-2 bottom-2 text-[18px]">👰</span>
+                    <Minimi kind="groom" className="absolute left-2 bottom-1 h-10"/>
+                    <Minimi kind="bride" className="absolute right-2 bottom-1 h-10"/>
                     {data.mainImages.length > 1 && (
                         <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1">
                             {data.mainImages.map((_, i) => (
@@ -309,8 +310,8 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
     return (
         <Box title={`${role} ${p.name}`}>
             <div className="flex gap-3">
-                <div className="w-[64px] h-[64px] shrink-0 border border-[#ddd] bg-[#FFF6E9] rounded-sm flex items-center justify-center text-3xl">
-                    {role === "신랑" ? "🤵" : "👰"}
+                <div className="w-[80px] h-[80px] shrink-0 border border-[#ddd] bg-[#FFF6E9] rounded-sm flex items-end justify-center pt-1">
+                    <Minimi kind={role === "신랑" ? "groom" : "bride"} className="h-[72px]"/>
                 </div>
                 <div className="flex-1 min-w-0 text-[11px] space-y-1">
                     <p><span className="text-[#7a98b0]">이름</span> <b>{p.name}</b></p>
