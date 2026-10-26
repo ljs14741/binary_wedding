@@ -54,6 +54,7 @@ export default async function EditPage({ params }: PageProps) {
         transport_subway: data.transport_subway || "",
         transport_bus: data.transport_bus || "",
         transport_parking: data.transport_parking || "",
+        notice: data.notice || "",
 
         main_photo_url: data.main_photo_url || "[]",
         middle_photo_url: data.middle_photo_url || "",

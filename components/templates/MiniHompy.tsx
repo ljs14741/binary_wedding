@@ -7,6 +7,7 @@ import { Play, Pause, Copy, Phone, MessageSquare, Share, Maximize2 } from "lucid
 import { useToast } from "@/components/ui/ToastProvider";
 import ReminderSection from "@/components/ReminderSection";
 import type { TemplateProps, GuestbookEntry, Person } from "@/components/invitation/types";
+import { noticeLines } from "@/components/invitation/types";
 import NaverMap from "@/components/invitation/NaverMap";
 import GalleryLightbox from "@/components/invitation/GalleryLightbox";
 import { GuestbookWriteModal, GuestbookEditModal, GuestbookDeleteModal } from "@/components/invitation/GuestbookModals";
@@ -259,6 +260,11 @@ function HomeTab({ data, wd, timeLeft, isPlaying, mainIdx, onGo }: { data: Templ
                         <span><b>{data.groom.name}</b>님과 <b>{data.bride.name}</b>님이 결혼합니다!</span></li>
                     <li className="flex gap-2"><span className="text-[#FF6B35] font-black">N</span>
                         <span>{wd.year}년 {wd.month + 1}월 {wd.day}일 {wd.weekdayLongEn} {wd.timeEn} · {data.location}</span></li>
+                    {/* 안내사항 한 줄씩 (비면 안 보임) */}
+                    {noticeLines(data.notice).map((line, i) => (
+                        <li key={i} className="flex gap-2"><span className="text-[#FF6B35] font-black">N</span>
+                            <span className="break-words min-w-0">{line}</span></li>
+                    ))}
                     <li className="flex gap-2"><span className="text-[#FF6B35] font-black">N</span>
                         <span>일촌 여러분, <button onClick={() => onGo("guest")} className="underline text-[#2f6fa8]">일촌평</button> 한 줄 부탁드려요 🙏</span></li>
                 </ul>

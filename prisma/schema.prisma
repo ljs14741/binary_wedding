@@ -118,6 +118,8 @@ model invitations {
   transport_subway    String?               @db.Text
   transport_bus       String?               @db.Text
   transport_parking   String?               @db.Text
+  // 안내사항 (선택, 줄마다 한 항목)
+  notice              String?               @db.Text
 
   welcome_msg         String?               @db.Text
   main_photo_url      String?               @db.Text

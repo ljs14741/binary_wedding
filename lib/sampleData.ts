@@ -37,6 +37,7 @@ export function getSampleData(): InvitationData {
         location_lat: 37.5225,
         location_lng: 127.0392,
         message: "서로가 마주 보며 다진 약속을\n이제 여러분 앞에서 소중히 맺으려 합니다.",
+        notice: "식사는 예식 후 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다.",
         mainImages: ["/images/main1.png", "/images/main2.png", "/images/main3.png"],
         middleImage: "/images/middle1.png",
         ogImage: "/images/middle1.png",

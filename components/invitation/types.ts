@@ -40,6 +40,8 @@ export interface InvitationData {
     location_lat: number | null;
     location_lng: number | null;
     message: string;
+    /** 안내사항 (줄마다 한 항목, 비면 표시 안 함) */
+    notice?: string;
     mainImages: string[];
     middleImage: string;
     ogImage?: string;
@@ -51,6 +53,11 @@ export interface InvitationData {
     interviews: { q: string; a: string }[];
     guestbook: GuestbookEntry[];
     url_id: string;
+}
+
+/** 안내사항 → 줄 목록 (빈 줄 제외) */
+export function noticeLines(notice?: string): string[] {
+    return (notice ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
 }
 
 export interface TemplateProps {

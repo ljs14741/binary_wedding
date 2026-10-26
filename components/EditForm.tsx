@@ -436,6 +436,8 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={initialData.transport_subway}/>
                         <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={initialData.transport_bus}/>
                         <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={initialData.transport_parking}/>
+                        <TextAreaGroup label="안내사항 (선택)" name="notice" defaultValue={initialData.notice} rows={3}
+                                       placeholder={"예: 식사는 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다."}/>
                     </div>
                 </div>
             </section>
@@ -759,11 +761,11 @@ function PhoneInput({label, name, defaultValue = "", required = false, icon}: an
     );
 }
 
-function TextAreaGroup({ label, name, defaultValue }: any) {
+function TextAreaGroup({ label, name, defaultValue, rows = 2, placeholder }: any) {
     return (
         <div className="space-y-2">
             <label className="block text-sm font-bold text-slate-700 ml-1">{label}</label>
-            <textarea name={name} rows={2} defaultValue={defaultValue} className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm resize-none text-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition-all" />
+            <textarea name={name} rows={rows} defaultValue={defaultValue} placeholder={placeholder} className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm resize-none text-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition-all" />
         </div>
     );
 }

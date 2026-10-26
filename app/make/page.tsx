@@ -621,6 +621,8 @@ export default function MakePage() {
                                     <TextAreaGroup label="지하철 안내" name="transport_subway" defaultValue={dv("transport_subway")} placeholder="예: 7호선 ○○역 1번 출구 도보 5분"/>
                                     <TextAreaGroup label="버스 안내" name="transport_bus" defaultValue={dv("transport_bus")} placeholder="예: ○○정류장 하차"/>
                                     <TextAreaGroup label="주차 안내" name="transport_parking" defaultValue={dv("transport_parking")} placeholder="예: 웨딩홀 내 주차 가능 (하객 무료)"/>
+                                    <TextAreaGroup label="안내사항 (선택)" name="notice" defaultValue={dv("notice")} rows={3}
+                                                   placeholder={"예: 식사는 2층 연회장에서 진행됩니다.\n화환은 정중히 사양합니다."}/>
                                 </div>
                             </div>
                         </section>
@@ -1027,11 +1029,11 @@ function PhoneInput({label, name, required = false, icon, defaultValue}: InputGr
     );
 }
 
-function TextAreaGroup({label, name, placeholder, defaultValue}: { label: string, name: string, placeholder?: string, defaultValue?: string }) {
+function TextAreaGroup({label, name, placeholder, defaultValue, rows = 2}: { label: string, name: string, placeholder?: string, defaultValue?: string, rows?: number }) {
     return (
         <div className="space-y-2">
             <label className="block text-sm font-bold text-slate-700 ml-1">{label}</label>
-            <textarea name={name} rows={2} defaultValue={defaultValue} placeholder={placeholder} className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm resize-none text-slate-800 placeholder:text-slate-400" />
+            <textarea name={name} rows={rows} defaultValue={defaultValue} placeholder={placeholder} className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-all outline-none bg-slate-50 text-sm resize-none text-slate-800 placeholder:text-slate-400" />
         </div>
     );
 }

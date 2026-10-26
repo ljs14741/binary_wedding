@@ -269,6 +269,7 @@ export async function createInvitation(formData: FormData) {
     const location_address = formData.get("location_address") as string;
     const coords = await getCoords(location_address);
     const welcome_msg = formData.get("welcome_msg") as string;
+    const notice = ((formData.get("notice") as string) ?? "").trim() || null;
 
     const transport_subway = formData.get("transport_subway") as string;
     const transport_bus = formData.get("transport_bus") as string;
@@ -334,7 +335,7 @@ export async function createInvitation(formData: FormData) {
                 location_lng: coords?.lng ?? null,
 
                 transport_subway, transport_bus, transport_parking,
-                welcome_msg,
+                welcome_msg, notice,
 
                 main_photo_url: JSON.stringify(validMainUrls),
                 middle_photo_url: middlePhotoUrl,
@@ -494,6 +495,7 @@ export async function updateInvitation(formData: FormData) {
     const transport_parking = formData.get("transport_parking") as string;
 
     const welcome_msg = formData.get("welcome_msg") as string;
+    const notice = ((formData.get("notice") as string) ?? "").trim() || null;
 
     validateRequiredFields({ groom_name, bride_name, wedding_date_str, location_name, location_address });
 
@@ -528,7 +530,7 @@ export async function updateInvitation(formData: FormData) {
             location_lng: coords?.lng ?? existing.location_lng,
 
             transport_subway, transport_bus, transport_parking,
-            welcome_msg,
+            welcome_msg, notice,
 
             main_photo_url: mainPhotoUrl,
             middle_photo_url: middlePhotoUrl,

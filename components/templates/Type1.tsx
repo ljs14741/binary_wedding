@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { FlowerPetals, KenBurnsImage } from "@/components/effects";
 import ReminderSection from "@/components/ReminderSection";
 import type { TemplateProps, GuestbookEntry } from "@/components/invitation/types";
+import { noticeLines } from "@/components/invitation/types";
 import FadeIn from "@/components/invitation/FadeIn";
 import NaverMap from "@/components/invitation/NaverMap";
 import GalleryLightbox from "@/components/invitation/GalleryLightbox";
@@ -231,6 +232,21 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                                 </div>
                             ))}
                         </div>
+
+                        {/* 안내사항 (비면 안 보임) */}
+                        {noticeLines(data.notice).length > 0 && (
+                            <div className="mt-12 bg-[#FBFAF8] border border-gray-100 rounded-3xl px-6 py-8 text-left">
+                                <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-6 italic font-bold">Notice</p>
+                                <ul className="space-y-3">
+                                    {noticeLines(data.notice).map((line, i) => (
+                                        <li key={i} className="flex gap-3 text-sm text-gray-500 font-light leading-relaxed">
+                                            <span className="text-rose-300 shrink-0">·</span>
+                                            <span className="flex-1 min-w-0 break-words">{line}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </FadeIn>
 
                     <FadeIn delay={0.15}>

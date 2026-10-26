@@ -134,6 +134,7 @@ export default async function CardPage({ params }: PageProps) {
         location_lat: rawData.location_lat ? Number(rawData.location_lat) : null,
         location_lng: rawData.location_lng ? Number(rawData.location_lng) : null,
         message: rawData.welcome_msg || "",
+        notice: rawData.notice || "",
 
         // [중요] 배열로 넘겨줍니다.
         mainImages,
