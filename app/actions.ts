@@ -698,6 +698,8 @@ export async function getReviews(page: number = 1) {
     const skip = (page - 1) * REVIEWS_PER_PAGE;
     const [items, total, stats] = await Promise.all([
         prisma.reviews.findMany({
+            // 비밀번호 해시는 브라우저로 보내지 않음
+            select: { id: true, author_name: true, content: true, rating: true, created_at: true, admin_reply: true, admin_replied_at: true },
             orderBy: { created_at: "desc" },
             skip,
             take: REVIEWS_PER_PAGE,

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { requireAdminSession, isAdminSession } from "@/lib/admin-auth";
 import { Prisma } from "@prisma/client";
 
 const LIST_PAGE_SIZE = 20;
@@ -130,4 +130,24 @@ export async function getAdminInvitationList(
         total,
         totalPages: Math.ceil(total / LIST_PAGE_SIZE),
     };
+}
+
+/** 후기 화면에서 답변 칸을 보여줄지 (관리자 로그인 여부) */
+export async function isReviewAdmin(): Promise<boolean> {
+    return isAdminSession();
+}
+
+const REVIEW_REPLY_MAX = 1000;
+
+/** 후기 개발자 답변 저장 (관리자만). 빈 내용이면 답변 삭제 */
+export async function saveReviewReply(id: number, content: string): Promise<{ success: boolean; message?: string }> {
+    await requireAdminSession();
+    const reply = content.trim().slice(0, REVIEW_REPLY_MAX);
+    const exists = await prisma.reviews.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return { success: false, message: "후기를 찾을 수 없습니다." };
+    await prisma.reviews.update({
+        where: { id },
+        data: reply ? { admin_reply: reply, admin_replied_at: new Date() } : { admin_reply: null, admin_replied_at: null },
+    });
+    return { success: true };
 }

@@ -21,6 +21,7 @@ import {
     updateReview,
     deleteReview,
 } from "@/app/actions";
+import { isReviewAdmin, saveReviewReply } from "@/app/actions-admin";
 
 interface Review {
     id: number;
@@ -28,6 +29,8 @@ interface Review {
     content: string;
     rating: number | null;
     created_at: Date;
+    admin_reply: string | null;
+    admin_replied_at: Date | null;
 }
 
 export default function ReviewsPage() {
@@ -45,6 +48,20 @@ export default function ReviewsPage() {
     const [isWriteOpen, setIsWriteOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Review | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Review | null>(null);
+    // 관리자 로그인 상태면 후기마다 답변 칸 표시 (저장도 서버에서 다시 확인함)
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        isReviewAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
+    }, []);
+
+    /** 답변 저장 후 목록의 해당 후기만 갱신 */
+    const applyReply = (id: number, reply: string | null) => {
+        setData((prev) => prev && {
+            ...prev,
+            items: prev.items.map((r) => r.id === id ? { ...r, admin_reply: reply, admin_replied_at: reply ? new Date() : null } : r),
+        });
+    };
 
     const load = useCallback(async (page: number = 1, append = false) => {
         if (append) setLoadingMore(true);
@@ -177,6 +194,7 @@ export default function ReviewsPage() {
                                                         day: "numeric",
                                                     })}
                                                 </time>
+                                                <ReviewReply review={item} isAdmin={isAdmin} onSaved={applyReply} toast={toast}/>
                                             </div>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
@@ -266,6 +284,78 @@ export default function ReviewsPage() {
                 />
             )}
         </div>
+    );
+}
+
+/** 개발자 답변: 방문자에겐 답변만, 관리자에겐 작성·수정·삭제 칸 */
+function ReviewReply({ review, isAdmin, onSaved, toast }: {
+    review: Review;
+    isAdmin: boolean;
+    onSaved: (id: number, reply: string | null) => void;
+    toast: (m: string) => void;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [text, setText] = useState(review.admin_reply ?? "");
+    const [saving, setSaving] = useState(false);
+
+    const save = async (value: string) => {
+        setSaving(true);
+        try {
+            const res = await saveReviewReply(review.id, value);
+            if (!res.success) {
+                toast(res.message ?? "답변 저장에 실패했습니다.");
+                return;
+            }
+            onSaved(review.id, value.trim() || null);
+            setEditing(false);
+        } catch {
+            toast("관리자 로그인이 필요합니다. /admin에서 다시 로그인해 주세요.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (editing) {
+        return (
+            <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50/40 p-3 space-y-2">
+                <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={1000} autoFocus
+                          placeholder="후기에 답변을 남겨주세요"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:border-rose-300 resize-none"/>
+                <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => { setEditing(false); setText(review.admin_reply ?? ""); }} disabled={saving}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">취소</button>
+                    <button type="button" onClick={() => save(text)} disabled={saving || !text.trim()}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50">
+                        {saving ? "저장 중..." : "답변 저장"}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (review.admin_reply) {
+        return (
+            <div className="mt-4 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                    <p className="text-xs font-bold text-rose-500 flex items-center gap-1">💬 개발자 답변</p>
+                    {isAdmin && (
+                        <div className="flex gap-2 text-[11px] font-bold">
+                            <button type="button" onClick={() => setEditing(true)} className="text-slate-400 hover:text-slate-700">수정</button>
+                            <button type="button" disabled={saving}
+                                    onClick={() => { if (confirm("답변을 삭제할까요?")) save(""); }}
+                                    className="text-slate-400 hover:text-rose-500">삭제</button>
+                        </div>
+                    )}
+                </div>
+                <p className="text-[13px] text-slate-600 leading-[1.7] whitespace-pre-wrap">{review.admin_reply}</p>
+            </div>
+        );
+    }
+
+    if (!isAdmin) return null;
+    return (
+        <button type="button" onClick={() => setEditing(true)}
+                className="mt-3 text-xs font-bold text-slate-400 hover:text-rose-500">+ 답변 달기</button>
     );
 }
 
