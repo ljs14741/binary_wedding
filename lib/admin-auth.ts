@@ -84,7 +84,8 @@ export async function adminLogin(formData: FormData): Promise<{ success: boolean
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: SESSION_MAX_AGE_MS / 1000,
-        path: "/admin",
+        // 후기 답변 등 /admin 밖에서도 관리자 확인이 필요해서 사이트 전체로
+        path: "/",
     });
     return { success: true };
 }
@@ -92,7 +93,8 @@ export async function adminLogin(formData: FormData): Promise<{ success: boolean
 /** 로그아웃: 세션 쿠키 삭제 */
 export async function adminLogout(): Promise<void> {
     const cookieStore = await cookies();
-    cookieStore.delete({ name: ADMIN_COOKIE_NAME, path: "/admin" });
+    // 같은 이름 쿠키는 응답에 하나만 실려서 현재 경로(/)만 삭제. 예전 /admin 쿠키는 24시간 내 자동 만료
+    cookieStore.delete({ name: ADMIN_COOKIE_NAME, path: "/" });
 }
 
 /** 관리자 전용: 세션 없으면 에러 throw */
