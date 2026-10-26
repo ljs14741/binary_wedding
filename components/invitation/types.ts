@@ -15,6 +15,8 @@ export interface Person {
     mother: string;
     father_contact?: string;
     mother_contact?: string;
+    /** 웨딩홈피 프로필 사진 (없으면 미니미) */
+    photo?: string;
 }
 
 export interface Account {

@@ -310,8 +310,12 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
     return (
         <Box title={`${role} ${p.name}`}>
             <div className="flex gap-3">
-                <div className="w-[80px] h-[80px] shrink-0 border border-[#ddd] bg-[#FFF6E9] rounded-sm flex items-end justify-center pt-1">
-                    <Minimi kind={role === "신랑" ? "groom" : "bride"} className="h-[72px]"/>
+                <div className="w-[80px] h-[80px] shrink-0 border border-[#ddd] bg-[#FFF6E9] rounded-sm flex items-end justify-center overflow-hidden">
+                    {p.photo ? (
+                        <img src={p.photo} alt={`${role} ${p.name}`} className="w-full h-full object-cover"/>
+                    ) : (
+                        <Minimi kind={role === "신랑" ? "groom" : "bride"} className="h-[72px]"/>
+                    )}
                 </div>
                 <div className="flex-1 min-w-0 text-[11px] space-y-1">
                     <p><span className="text-[#7a98b0]">이름</span> <b>{p.name}</b></p>

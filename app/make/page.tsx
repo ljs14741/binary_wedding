@@ -12,6 +12,8 @@ import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
+import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
+import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 
 const CLIENT_ID_KEY = "wedding_client_id";
 
@@ -28,6 +30,7 @@ function getOrCreateClientId(): string {
 export default function MakePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [templateType, setTemplateType] = useState(DEFAULT_TEMPLATE_ID);
     const [clientId, setClientId] = useState("");
     const [useInterview, setUseInterview] = useState(false);
 
@@ -380,6 +383,10 @@ export default function MakePage() {
             toast(bgmError);
             return;
         }
+        if (formData.get("profile_uploading")) {
+            toast("프로필 사진 업로드가 진행 중입니다. 잠시만 기다려주세요.");
+            return;
+        }
         if (galleryUploadedUrls.length < 1) {
             toast("웨딩 갤러리 사진은 최소 1장이 필수입니다.");
             return;
@@ -438,7 +445,12 @@ export default function MakePage() {
                     <form className="space-y-10" onSubmit={handleSubmit}>
 
                         {/* 디자인 선택 */}
-                        <TemplatePicker/>
+                        <TemplatePicker onChange={setTemplateType}/>
+
+                        {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
+                        <div className={templateType === "minihompy" ? "" : "hidden"}>
+                            <ProfilePhotoPicker/>
+                        </div>
 
                         {/* 배경음악 */}
                         <BgmPicker/>

@@ -59,6 +59,8 @@ export default async function EditPage({ params }: PageProps) {
         middle_photo_url: data.middle_photo_url || "",
         og_photo_url: data.og_photo_url || "",
         bgm_url: data.bgm_url,
+        groom_photo_url: data.groom_photo_url,
+        bride_photo_url: data.bride_photo_url,
         gallery: data.invitation_photos.map(p => p.photo_url),
 
         accounts: data.invitation_accounts,

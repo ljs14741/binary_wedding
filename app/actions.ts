@@ -32,7 +32,7 @@ async function generateUniqueUrlId(): Promise<string> {
 }
 
 /** 사전 업로드된 /uploads/temp/* 파일을 url_id/폴더로 이동 */
-async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle" | "og" | "gallery" | "bgm"): Promise<string> {
+async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle" | "og" | "gallery" | "bgm" | "profile"): Promise<string> {
     if (!url.startsWith("/uploads/temp/")) return url;
     const filename = basename(url);
     const source = join(process.cwd(), "public", url.replace(/^\//, ""));
@@ -45,9 +45,42 @@ async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle
 
 const TEMP_BGM_REGEX = /^\/uploads\/temp\/[\w-]+\.(mp3|m4a)$/;
 
-/** 이 청첩장에 저장된 곡 경로인지 (다른 청첩장 파일 지정 방지) */
+/** 이 청첩장 폴더에 저장된 파일 경로인지 (다른 청첩장 파일 지정 방지) */
+function isOwnUploadUrl(url: string, url_id: string, folder: "bgm" | "profile"): boolean {
+    const exts = folder === "bgm" ? "mp3|m4a" : "jpg|png|gif|webp";
+    return new RegExp(`^/uploads/${url_id}/${folder}/[\\w-]+\\.(${exts})$`).test(url);
+}
+
 function isOwnBgmUrl(url: string, url_id: string): boolean {
-    return new RegExp(`^/uploads/${url_id}/bgm/[\\w-]+\\.(mp3|m4a)$`).test(url);
+    return isOwnUploadUrl(url, url_id, "bgm");
+}
+
+const TEMP_IMAGE_REGEX = /^\/uploads\/temp\/[\w-]+\.(jpg|png|gif|webp)$/;
+const PROFILE_SIDES = ["groom", "bride"] as const;
+
+/** 프로필 사진 폼 검사 - 사진 옮기기 전에 호출. 폼에 섹션이 없으면(다른 템플릿) 검사 안 함 */
+function validateProfilePhotos(formData: FormData, url_id: string) {
+    if (!formData.get("profile_photos")) return;
+    if (formData.get("profile_uploading")) throw new Error("프로필 사진 업로드가 진행 중입니다. 잠시만 기다려주세요.");
+    for (const side of PROFILE_SIDES) {
+        const url = String(formData.get(`${side}_photo_url`) ?? "").trim();
+        if (url && !TEMP_IMAGE_REGEX.test(url) && !isOwnUploadUrl(url, url_id, "profile")) {
+            throw new Error("프로필 사진이 올바르지 않습니다. 다시 올려 주세요.");
+        }
+    }
+}
+
+/**
+ * 폼의 프로필 사진 → DB 값 (validateProfilePhotos 통과 후 호출)
+ * 섹션이 없으면 빈 객체(기존 값 유지), 빈 값이면 null(미니미), temp면 profile 폴더로 이동
+ */
+async function readProfilePhotos(formData: FormData, url_id: string): Promise<{ groom_photo_url?: string | null; bride_photo_url?: string | null }> {
+    if (!formData.get("profile_photos")) return {};
+    const read = async (side: (typeof PROFILE_SIDES)[number]) => {
+        const url = String(formData.get(`${side}_photo_url`) ?? "").trim();
+        return url ? moveTempUrl(url, url_id, "profile") : null;
+    };
+    return { groom_photo_url: await read("groom"), bride_photo_url: await read("bride") };
 }
 
 /** 배경음악 폼 검사 - 사진 옮기기 전에 호출해야 실패해도 temp 파일이 남음 */
@@ -246,6 +279,7 @@ export async function createInvitation(formData: FormData) {
 
     const url_id = await generateUniqueUrlId();
     validateBgm(formData, url_id);
+    validateProfilePhotos(formData, url_id);
     let successId = "";
 
     try {
@@ -271,6 +305,7 @@ export async function createInvitation(formData: FormData) {
                 .filter((url) => url !== "");
 
         const bgm_url = await readBgmUrl(formData, url_id);
+        const profilePhotos = await readProfilePhotos(formData, url_id);
 
         await prisma.invitations.create({
             data: {
@@ -293,6 +328,7 @@ export async function createInvitation(formData: FormData) {
                 middle_photo_url: middlePhotoUrl,
                 og_photo_url: ogPhotoUrl,
                 bgm_url,
+                ...profilePhotos,
 
                 invitation_photos: {
                     create: validGalleryUrls.map((url, i) => ({ photo_url: url, sort_order: i }))
@@ -367,6 +403,7 @@ export async function updateInvitation(formData: FormData) {
     const existing = await prisma.invitations.findUnique({ where: { url_id } });
     if (!existing) throw new Error("청첩장을 찾을 수 없습니다.");
     validateBgm(formData, url_id);
+    validateProfilePhotos(formData, url_id);
 
     // 2. 메인 사진 업데이트
     const mainImageUrls = formData.getAll("mainImageUrls").map(v => String(v).trim()).filter(v => v.startsWith("/uploads/"));
@@ -404,6 +441,9 @@ export async function updateInvitation(formData: FormData) {
 
     // 3-2. 배경음악
     const bgm_url = await readBgmUrl(formData, url_id);
+
+    // 3-3. 웨딩홈피 프로필 사진 (선택)
+    const profilePhotos = await readProfilePhotos(formData, url_id);
 
     // 4. 갤러리 업데이트
     const galleryFiles = formData.getAll("galleryImages") as File[];
@@ -481,6 +521,7 @@ export async function updateInvitation(formData: FormData) {
             middle_photo_url: middlePhotoUrl,
             og_photo_url: ogPhotoUrl,
             bgm_url,
+            ...profilePhotos,
 
             ...(hasNewGallery && {
                 invitation_photos: {
@@ -513,9 +554,16 @@ export async function updateInvitation(formData: FormData) {
         }
     });
 
-    // 곡을 바꾸거나 끄면 예전 업로드 곡 파일 삭제 (디스크 절약)
+    // 곡·프로필 사진을 바꾸거나 빼면 예전 파일 삭제 (디스크 절약)
+    const removeFile = (url: string) => rm(join(process.cwd(), "public", url.slice(1)), { force: true }).catch(() => {});
     if (existing.bgm_url && existing.bgm_url !== bgm_url && isOwnBgmUrl(existing.bgm_url, url_id)) {
-        await rm(join(process.cwd(), "public", existing.bgm_url.slice(1)), { force: true }).catch(() => {});
+        await removeFile(existing.bgm_url);
+    }
+    for (const key of ["groom_photo_url", "bride_photo_url"] as const) {
+        const prev = existing[key];
+        if (key in profilePhotos && prev && prev !== profilePhotos[key] && isOwnUploadUrl(prev, url_id, "profile")) {
+            await removeFile(prev);
+        }
     }
 
     // [중요] 여기도 마찬가지로 try-catch가 없다면 바로 써도 되지만,

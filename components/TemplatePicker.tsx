@@ -9,10 +9,12 @@ import { TEMPLATES, DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 type Props = {
     /** 수정 화면에서 현재 저장된 템플릿 */
     defaultValue?: string;
+    /** 템플릿별 입력 항목(웨딩홈피 프로필 사진 등) 표시용 */
+    onChange?: (id: string) => void;
 };
 
 /** 만들기·수정 폼의 "디자인 선택" 섹션. 선택값은 hidden input(template_type)으로 폼에 실린다 */
-export default function TemplatePicker({ defaultValue }: Props) {
+export default function TemplatePicker({ defaultValue, onChange }: Props) {
     const [selected, setSelected] = useState(defaultValue ?? DEFAULT_TEMPLATE_ID);
 
     return (
@@ -27,7 +29,7 @@ export default function TemplatePicker({ defaultValue }: Props) {
                     const active = selected === t.id;
                     return (
                         <div key={t.id} className="space-y-2">
-                            <button type="button" onClick={() => setSelected(t.id)}
+                            <button type="button" onClick={() => { setSelected(t.id); onChange?.(t.id); }}
                                     aria-pressed={active}
                                     className={`relative w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 transition-all ${active ? "border-rose-400 shadow-lg shadow-rose-100 scale-[1.02]" : "border-slate-100 hover:border-slate-300"}`}>
                                 <Image src={t.thumbnail} alt={t.name} fill className="object-cover"/>

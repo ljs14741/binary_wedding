@@ -13,6 +13,7 @@ import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
+import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 
 interface EditFormProps {
     initialData: any;
@@ -21,6 +22,7 @@ interface EditFormProps {
 export default function EditForm({ initialData }: EditFormProps) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [templateType, setTemplateType] = useState<string>(initialData.template_type);
     const [useInterview, setUseInterview] = useState(
         () => (initialData.interviews?.length ?? 0) > 0
     );
@@ -303,6 +305,11 @@ export default function EditForm({ initialData }: EditFormProps) {
             toast(bgmError);
             return;
         }
+        if (formData.get("profile_uploading")) {
+            e.preventDefault();
+            toast("프로필 사진 업로드가 진행 중입니다. 잠시만 기다려주세요.");
+            return;
+        }
         setLoading(true);
     };
 
@@ -323,7 +330,12 @@ export default function EditForm({ initialData }: EditFormProps) {
             <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="afterInteractive" />
 
             {/* 디자인 선택 */}
-            <TemplatePicker defaultValue={initialData.template_type}/>
+            <TemplatePicker defaultValue={initialData.template_type} onChange={setTemplateType}/>
+
+            {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
+            <div className={templateType === "minihompy" ? "" : "hidden"}>
+                <ProfilePhotoPicker defaultGroom={initialData.groom_photo_url} defaultBride={initialData.bride_photo_url}/>
+            </div>
 
             {/* 배경음악 */}
             <BgmPicker defaultValue={initialData.bgm_url}/>
