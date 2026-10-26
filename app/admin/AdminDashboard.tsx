@@ -11,6 +11,7 @@ import {
 } from "@/app/actions-admin";
 import { adminLogout } from "@/lib/admin-auth";
 import AdminDonations from "./AdminDonations";
+import { getTemplateMeta } from "@/components/templates/meta";
 import {
     BarChart3,
     Calendar,
@@ -243,6 +244,7 @@ export default function AdminDashboard() {
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-200">
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">신랑/신부</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-slate-600">테마</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">예식일</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600 hidden sm:table-cell">장소</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">생성일</th>
@@ -263,6 +265,11 @@ export default function AdminDashboard() {
                                                             </span>
                                                             <span className="text-slate-400 text-xs">({item.url_id})</span>
                                                         </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <span className={`inline-block whitespace-nowrap text-[11px] font-bold px-2 py-0.5 rounded-full ${item.template_type === "minihompy" ? "bg-sky-50 text-sky-600" : "bg-rose-50 text-rose-500"}`}>
+                                                            {getTemplateMeta(item.template_type).name}
+                                                        </span>
                                                     </td>
                                                     <td className="py-3 px-4 text-slate-600">
                                                         {new Date(item.wedding_date).toLocaleDateString("ko-KR")}

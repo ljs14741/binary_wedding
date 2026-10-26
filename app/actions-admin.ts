@@ -75,6 +75,7 @@ export type AdminInvitationItem = {
     bride_name: string;
     wedding_date: Date;
     location_name: string;
+    template_type: string;
     created_at: Date | null;
     updated_at: Date | null;
 };
@@ -113,6 +114,7 @@ export async function getAdminInvitationList(
                 bride_name: true,
                 wedding_date: true,
                 location_name: true,
+                template_type: true,
                 created_at: true,
                 updated_at: true,
             },
