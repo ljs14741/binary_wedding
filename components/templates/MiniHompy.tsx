@@ -53,7 +53,7 @@ export default function MiniHompy({ data, isSample = false }: TemplateProps) {
 
     const wd = useWeddingDate(data.date);
     const timeLeft = useCountdown(wd.date);
-    const { audioRef, isPlaying, toggle: toggleMusic } = useBgm();
+    const { audioRef, isPlaying, toggle: toggleMusic } = useBgm(data.bgm);
     const gallery = useGallery(data.gallery.length, 0);
     const mainSlide = useGallery(data.mainImages.length, 4000); // 미니룸 폴라로이드 순환
     const accounts = splitAccounts(data.accounts);
@@ -85,7 +85,7 @@ export default function MiniHompy({ data, isSample = false }: TemplateProps) {
                  backgroundPosition: "0 0, 9px 9px",
              }}>
             <KakaoSdk/>
-            <audio ref={audioRef} loop src="/music/sample1.mp3"/>
+            {data.bgm && <audio ref={audioRef} loop preload="none" src={data.bgm}/>}
 
             <div className="w-full max-w-[430px] px-3 py-5 flex flex-col gap-2">
                 {/* 방문자 카운터 */}
@@ -104,10 +104,10 @@ export default function MiniHompy({ data, isSample = false }: TemplateProps) {
                             <p className="font-[family-name:var(--font-gaegu)] text-[19px] leading-none text-[#1f3d55]">
                                 {data.groom.name} <span className="text-[#FF6B35]">♥</span> {data.bride.name}의 웨딩홈피
                             </p>
-                            <button onClick={toggleMusic} aria-label="배경음악"
+                            {data.bgm && <button onClick={toggleMusic} aria-label="배경음악"
                                     className="flex items-center gap-1 bg-white/70 rounded-md px-2 py-1 text-[10px] font-bold text-[#1f3d55] active:scale-95">
                                 {isPlaying ? <Pause size={10}/> : <Play size={10}/>} BGM
-                            </button>
+                            </button>}
                         </div>
 
                         <div className="p-4 min-h-[560px]">
@@ -125,7 +125,7 @@ export default function MiniHompy({ data, isSample = false }: TemplateProps) {
 
                         {/* 하단 공유 */}
                         <div className="border-t-2 border-dashed border-[#cfe0ec] px-4 py-3 flex items-center justify-between bg-[#F7FBFD]">
-                            <span className="text-[10px] text-[#7a98b0]">♬ {isPlaying ? "BGM 재생중" : "BGM 꺼짐"} · 파도타기 환영</span>
+                            <span className="text-[10px] text-[#7a98b0]">{data.bgm ? `♬ ${isPlaying ? "BGM 재생중" : "BGM 꺼짐"} · ` : ""}파도타기 환영</span>
                             <button onClick={handleShare}
                                     className="flex items-center gap-1.5 bg-[#FEE500] text-[#191919] text-[11px] font-bold px-3 py-1.5 rounded-md border border-[#e5cf00] active:scale-95">
                                 <Share size={12}/> 카톡으로 퍼가기
@@ -245,8 +245,8 @@ function HomeTab({ data, wd, timeLeft, isPlaying, mainIdx, onGo }: { data: Templ
                     )}
                 </div>
                 <p className="mt-3 text-[11px] text-[#666]">
-                    <span className="font-extrabold text-[#2f4b62]">오늘의 기분</span> : 설렘 가득 💛&nbsp;&nbsp;
-                    <span className="font-extrabold text-[#2f4b62]">BGM</span> : {isPlaying ? "재생중 ♪" : "타이틀바에서 켜기"}
+                    <span className="font-extrabold text-[#2f4b62]">오늘의 기분</span> : 설렘 가득 💛
+                    {data.bgm && <>&nbsp;&nbsp;<span className="font-extrabold text-[#2f4b62]">BGM</span> : {isPlaying ? "재생중 ♪" : "타이틀바에서 켜기"}</>}
                 </p>
             </Box>
 

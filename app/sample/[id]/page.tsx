@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createElement } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { TEMPLATES, getTemplateByIndex } from "@/components/templates";
+import SampleBgmDemo from "@/components/SampleBgmDemo";
 import { getSampleData } from "@/lib/sampleData";
 
 interface PageProps {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 }
 
-/** 실제 청첩장 템플릿에 샘플 데이터를 꽂아 보여준다 */
+/** 실제 청첩장 템플릿에 샘플 데이터를 꽂아 보여준다 (배경음악 바꿔보기 포함) */
 export default async function SamplePage({ params }: PageProps) {
     const { id } = await params;
     const tpl = templateFromParam(id);
@@ -44,7 +44,7 @@ export default async function SamplePage({ params }: PageProps) {
         <div className="min-h-screen bg-[#FAF8F6] flex flex-col">
             <SiteHeader/>
             <div className="flex-1 pt-28 pb-20">
-                {createElement(tpl.component, { data: getSampleData(), isSample: true })}
+                <SampleBgmDemo templateId={tpl.id} sample={getSampleData()}/>
             </div>
             <SiteFooter/>
         </div>

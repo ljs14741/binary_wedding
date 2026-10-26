@@ -11,6 +11,8 @@ import { processImage } from "@/lib/image";
 import Script from "next/script";
 import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
+import BgmPicker from "@/components/BgmPicker";
+import { bgmFormError } from "@/lib/bgm";
 
 interface EditFormProps {
     initialData: any;
@@ -295,6 +297,12 @@ export default function EditForm({ initialData }: EditFormProps) {
             toast("갤러리 업로드가 진행 중입니다. 잠시만 기다려주세요.");
             return;
         }
+        const bgmError = bgmFormError(formData);
+        if (bgmError) {
+            e.preventDefault();
+            toast(bgmError);
+            return;
+        }
         setLoading(true);
     };
 
@@ -316,6 +324,9 @@ export default function EditForm({ initialData }: EditFormProps) {
 
             {/* 디자인 선택 */}
             <TemplatePicker defaultValue={initialData.template_type}/>
+
+            {/* 배경음악 */}
+            <BgmPicker defaultValue={initialData.bgm_url}/>
 
             {/* 🤵‍♂️ 신랑 정보 */}
             <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">

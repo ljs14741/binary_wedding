@@ -38,6 +38,8 @@ export interface InvitationData {
     mainImages: string[];
     middleImage: string;
     ogImage?: string;
+    /** 배경음악 경로 (빈 문자열이면 음악 없음) */
+    bgm: string;
     gallery: string[];
     transport: { subway: string; bus: string; parking: string };
     accounts: Account[];

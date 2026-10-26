@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { getTemplateComponent } from "@/components/templates";
 import type { InvitationData } from "@/components/invitation/types";
 import { getBaseUrl } from "@/lib/site";
+import { resolveBgmSrc } from "@/lib/bgm";
 import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 import type { Metadata } from "next";
 
@@ -132,6 +133,7 @@ export default async function CardPage({ params }: PageProps) {
         mainImages,
         middleImage: rawData.middle_photo_url || "",
         ogImage: rawData.og_photo_url || "",
+        bgm: resolveBgmSrc(rawData.bgm_url),
         gallery: rawData.invitation_photos.map(p => p.photo_url),
 
         transport: {

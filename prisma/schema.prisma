@@ -119,6 +119,8 @@ model invitations {
   main_photo_url      String?               @db.Text
   middle_photo_url    String?               @db.VarChar(255)
   og_photo_url        String?               @db.VarChar(255)
+  // null: 기본곡, "none": 끔, 그 외: 업로드한 곡 경로
+  bgm_url             String?               @db.VarChar(255)
 
   created_at          DateTime?             @default(now()) @db.Timestamp(0)
   updated_at          DateTime?             @updatedAt @default(now()) @db.Timestamp(0)

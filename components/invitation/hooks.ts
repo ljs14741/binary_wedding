@@ -49,10 +49,19 @@ export function useCountdown(target: Date) {
     return timeLeft;
 }
 
-/** 배경음악: 첫 터치/클릭 시 자동재생 시도, 토글 버튼용 상태 */
-export function useBgm() {
+/** 배경음악: 첫 터치/클릭 시 자동재생 시도, 토글 버튼용 상태. src가 바뀌면 재생 중이던 경우 새 곡으로 이어 재생 */
+export function useBgm(src?: string) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const prevSrc = useRef(src);
+
+    useEffect(() => {
+        if (prevSrc.current === src) return;
+        prevSrc.current = src;
+        // src 바뀌면 브라우저가 멈추므로 재생 중이었으면 새 곡으로 다시 재생
+        const audio = audioRef.current;
+        if (isPlaying && src && audio) audio.play().catch(() => setIsPlaying(false));
+    }, [src, isPlaying]);
 
     useEffect(() => {
         const attemptPlay = async () => {
@@ -90,7 +99,8 @@ export function useBgm() {
         }
     };
 
-    return { audioRef, isPlaying, toggle };
+    // 음악 없음으로 바뀐 경우 재생중 표시 안 함
+    return { audioRef, isPlaying: isPlaying && src !== "", toggle };
 }
 
 /** 메인 슬라이드: 3초 간격으로 넘어가다 마지막 장에서 멈춤 */

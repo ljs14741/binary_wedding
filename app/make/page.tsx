@@ -10,6 +10,8 @@ import Script from "next/script";
 import { processImage } from "@/lib/image";
 import SupportNudge from "@/components/SupportNudge";
 import TemplatePicker from "@/components/TemplatePicker";
+import BgmPicker from "@/components/BgmPicker";
+import { bgmFormError } from "@/lib/bgm";
 
 const CLIENT_ID_KEY = "wedding_client_id";
 
@@ -373,6 +375,11 @@ export default function MakePage() {
             toast("갤러리 업로드가 진행 중입니다. 잠시만 기다려주세요.");
             return;
         }
+        const bgmError = bgmFormError(formData);
+        if (bgmError) {
+            toast(bgmError);
+            return;
+        }
         if (galleryUploadedUrls.length < 1) {
             toast("웨딩 갤러리 사진은 최소 1장이 필수입니다.");
             return;
@@ -432,6 +439,9 @@ export default function MakePage() {
 
                         {/* 디자인 선택 */}
                         <TemplatePicker/>
+
+                        {/* 배경음악 */}
+                        <BgmPicker/>
 
                         {/* 신랑 정보 */}
                         <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">

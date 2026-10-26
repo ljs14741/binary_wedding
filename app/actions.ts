@@ -5,9 +5,10 @@ import { uploadFile, deleteInvitationUploads } from "@/lib/upload";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
-import { mkdir, rename } from "fs/promises";
+import { mkdir, rename, rm } from "fs/promises";
 import { basename, join } from "path";
 import { isValidTemplateId, DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
+import { BGM_NONE, bgmFormError } from "@/lib/bgm";
 
 /** 폼의 template_type 값. 등록되지 않은 값이면 기본 템플릿으로 */
 function readTemplateType(formData: FormData): string {
@@ -31,7 +32,7 @@ async function generateUniqueUrlId(): Promise<string> {
 }
 
 /** 사전 업로드된 /uploads/temp/* 파일을 url_id/폴더로 이동 */
-async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle" | "og" | "gallery"): Promise<string> {
+async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle" | "og" | "gallery" | "bgm"): Promise<string> {
     if (!url.startsWith("/uploads/temp/")) return url;
     const filename = basename(url);
     const source = join(process.cwd(), "public", url.replace(/^\//, ""));
@@ -40,6 +41,33 @@ async function moveTempUrl(url: string, url_id: string, folder: "main" | "middle
     await mkdir(targetDir, { recursive: true });
     await rename(source, target);
     return `/uploads/${url_id}/${folder}/${filename}`;
+}
+
+const TEMP_BGM_REGEX = /^\/uploads\/temp\/[\w-]+\.(mp3|m4a)$/;
+
+/** 이 청첩장에 저장된 곡 경로인지 (다른 청첩장 파일 지정 방지) */
+function isOwnBgmUrl(url: string, url_id: string): boolean {
+    return new RegExp(`^/uploads/${url_id}/bgm/[\\w-]+\\.(mp3|m4a)$`).test(url);
+}
+
+/** 배경음악 폼 검사 - 사진 옮기기 전에 호출해야 실패해도 temp 파일이 남음 */
+function validateBgm(formData: FormData, url_id: string) {
+    const error = bgmFormError(formData);
+    if (error) throw new Error(error);
+    if (formData.get("bgm_mode") !== "custom") return;
+    const url = String(formData.get("bgm_url")).trim();
+    if (!TEMP_BGM_REGEX.test(url) && !isOwnBgmUrl(url, url_id)) throw new Error("배경음악 파일이 올바르지 않습니다. 다시 올려 주세요.");
+}
+
+/**
+ * 폼의 배경음악 설정 → DB bgm_url 값 (validateBgm 통과 후 호출)
+ * default: null(기본곡) / none: "none" / custom: temp 업로드는 이동, 이 청첩장의 기존 곡은 유지
+ */
+async function readBgmUrl(formData: FormData, url_id: string): Promise<string | null> {
+    const mode = formData.get("bgm_mode");
+    if (mode === "none") return BGM_NONE;
+    if (mode !== "custom") return null;
+    return moveTempUrl(String(formData.get("bgm_url")).trim(), url_id, "bgm");
 }
 
 /** 하위 호환 */
@@ -217,6 +245,7 @@ export async function createInvitation(formData: FormData) {
     validateRequiredFields({ groom_name, bride_name, wedding_date_str, location_name, location_address });
 
     const url_id = await generateUniqueUrlId();
+    validateBgm(formData, url_id);
     let successId = "";
 
     try {
@@ -241,6 +270,8 @@ export async function createInvitation(formData: FormData) {
             : (await Promise.all(galleryFiles.map((f) => uploadFile(f, `${url_id}/gallery`))))
                 .filter((url) => url !== "");
 
+        const bgm_url = await readBgmUrl(formData, url_id);
+
         await prisma.invitations.create({
             data: {
                 url_id,
@@ -261,6 +292,7 @@ export async function createInvitation(formData: FormData) {
                 main_photo_url: JSON.stringify(validMainUrls),
                 middle_photo_url: middlePhotoUrl,
                 og_photo_url: ogPhotoUrl,
+                bgm_url,
 
                 invitation_photos: {
                     create: validGalleryUrls.map((url, i) => ({ photo_url: url, sort_order: i }))
@@ -334,6 +366,7 @@ export async function updateInvitation(formData: FormData) {
     // 1. 기존 데이터 확인
     const existing = await prisma.invitations.findUnique({ where: { url_id } });
     if (!existing) throw new Error("청첩장을 찾을 수 없습니다.");
+    validateBgm(formData, url_id);
 
     // 2. 메인 사진 업데이트
     const mainImageUrls = formData.getAll("mainImageUrls").map(v => String(v).trim()).filter(v => v.startsWith("/uploads/"));
@@ -368,6 +401,9 @@ export async function updateInvitation(formData: FormData) {
     } else if (ogFile && ogFile.size > 0) {
         ogPhotoUrl = await uploadFile(ogFile, `${url_id}/og`);
     }
+
+    // 3-2. 배경음악
+    const bgm_url = await readBgmUrl(formData, url_id);
 
     // 4. 갤러리 업데이트
     const galleryFiles = formData.getAll("galleryImages") as File[];
@@ -444,6 +480,7 @@ export async function updateInvitation(formData: FormData) {
             main_photo_url: mainPhotoUrl,
             middle_photo_url: middlePhotoUrl,
             og_photo_url: ogPhotoUrl,
+            bgm_url,
 
             ...(hasNewGallery && {
                 invitation_photos: {
@@ -475,6 +512,11 @@ export async function updateInvitation(formData: FormData) {
             }
         }
     });
+
+    // 곡을 바꾸거나 끄면 예전 업로드 곡 파일 삭제 (디스크 절약)
+    if (existing.bgm_url && existing.bgm_url !== bgm_url && isOwnBgmUrl(existing.bgm_url, url_id)) {
+        await rm(join(process.cwd(), "public", existing.bgm_url.slice(1)), { force: true }).catch(() => {});
+    }
 
     // [중요] 여기도 마찬가지로 try-catch가 없다면 바로 써도 되지만,
     // 안전하게 하단에 배치하는 습관이 좋습니다.

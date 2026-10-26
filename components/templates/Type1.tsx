@@ -43,7 +43,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
     const wd = useWeddingDate(data.date);
     const timeLeft = useCountdown(wd.date);
-    const { audioRef, isPlaying, toggle: toggleMusic } = useBgm();
+    const { audioRef, isPlaying, toggle: toggleMusic } = useBgm(data.bgm);
     const mainIdx = useMainSlide(data.mainImages.length);
     const gallery = useGallery(data.gallery.length);
     const accounts = splitAccounts(data.accounts);
@@ -69,16 +69,16 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
             <div className="w-full max-w-[430px] bg-white shadow-2xl relative flex flex-col overflow-hidden">
                 <FlowerPetals/>
-                <audio ref={audioRef} loop src="/music/sample1.mp3"/>
+                {data.bgm && <audio ref={audioRef} loop preload="none" src={data.bgm}/>}
 
                 {/* 음악 버튼: 샘플 페이지는 사이트 헤더 아래로 내림 */}
-                <div className={`fixed ${isSample ? "top-36" : "top-8"} right-[calc(50%-185px)] z-[90] max-[430px]:right-8`}>
+                {data.bgm && <div className={`fixed ${isSample ? "top-36" : "top-8"} right-[calc(50%-185px)] z-[90] max-[430px]:right-8`}>
                     <button onClick={toggleMusic} className="transition-transform active:scale-95">
                         <div className={`relative flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-md shadow-lg ${isPlaying ? "bg-white/40 ring-1 ring-rose-200" : "bg-black/10"}`}>
                             <Music size={18} className={isPlaying ? "text-rose-400 animate-pulse" : "text-white/80"}/>
                         </div>
                     </button>
-                </div>
+                </div>}
 
                 {/* 1. 메인 섹션 */}
                 <section className="relative h-[100vh] overflow-hidden">

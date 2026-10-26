@@ -1,6 +1,7 @@
 // lib/upload.ts
 import { writeFile, mkdir, rm } from "fs/promises";
 import { join } from "path";
+import { MAX_BGM_SIZE, MAX_BGM_SIZE_LABEL } from "@/lib/bgm";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB (클라이언트 processImage로 압축됨)
@@ -85,4 +86,38 @@ export async function deleteInvitationUploads(url_id: string): Promise<void> {
     } catch {
         // 폴더가 없거나 권한 문제 시 무시
     }
+}
+/** 오디오 시그니처로 확장자 판별 (mp3/m4a만 허용, 아니면 null) */
+function detectAudioExt(buffer: Buffer): "mp3" | "m4a" | null {
+    const arr = new Uint8Array(buffer);
+    if (arr.length < 12) return null;
+    // ID3 태그로 시작하는 mp3
+    if (arr[0] === 0x49 && arr[1] === 0x44 && arr[2] === 0x33) return "mp3";
+    // 태그 없는 mp3: 프레임 싱크 11비트
+    if (arr[0] === 0xff && (arr[1] & 0xe0) === 0xe0) return "mp3";
+    // m4a: 4~7바이트가 ftyp
+    if (arr[4] === 0x66 && arr[5] === 0x74 && arr[6] === 0x79 && arr[7] === 0x70) return "m4a";
+    return null;
+}
+
+/** 배경음악 업로드 - url_id 생성 전이므로 temp에 저장, 저장 시 {url_id}/bgm으로 이동 */
+export async function uploadAudioFile(file: File): Promise<string> {
+    if (file.size > MAX_BGM_SIZE) {
+        throw new Error(`음악 파일은 ${MAX_BGM_SIZE_LABEL} 이하여야 합니다. (현재: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    // m4a는 브라우저마다 MIME이 달라서 시그니처로만 검사
+    const ext = detectAudioExt(buffer);
+    if (!ext) {
+        throw new Error("지원하지 않는 음악 파일입니다. (허용: MP3, M4A)");
+    }
+
+    const uploadDir = join(process.cwd(), UPLOADS_BASE, "temp");
+    await mkdir(uploadDir, { recursive: true });
+
+    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+    await writeFile(join(uploadDir, filename), buffer);
+
+    return `/uploads/temp/${filename}`;
 }

@@ -1,4 +1,5 @@
 import type { InvitationData } from "@/components/invitation/types";
+import { DEFAULT_BGM_SRC } from "@/lib/bgm";
 
 /** 샘플 예식일: 올해(또는 내년) 12월 마지막 일요일 12:30 */
 function getLastSundayOfDecember() {
@@ -39,6 +40,7 @@ export function getSampleData(): InvitationData {
         mainImages: ["/images/main1.png", "/images/main2.png", "/images/main3.png"],
         middleImage: "/images/middle1.png",
         ogImage: "/images/middle1.png",
+        bgm: DEFAULT_BGM_SRC,
         gallery: ["/images/gallary1.png", "/images/gallary2.png", "/images/gallary3.png", "/images/gallary4.png"],
         transport: {
             subway: "7호선, 수인분당선 강남구청역 3-1번 출구에서 500m (도보 8분)",
