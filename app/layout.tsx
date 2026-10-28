@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Serif_KR, Playfair_Display, Pinyon_Script } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/ui/ToastProvider";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getBaseUrl } from "@/lib/site";
 
 // 1. 한국어 명조체 (진지하고 고급짐)
@@ -141,6 +142,8 @@ export default function RootLayout({
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* 전체 페이지 GA 수집 */}
+        <GoogleAnalytics />
         <ToastProvider>
             {children}
         </ToastProvider>

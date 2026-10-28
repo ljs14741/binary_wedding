@@ -9,7 +9,6 @@ import { X, CheckCircle2, Search, ChevronDown, MessageCircle } from 'lucide-reac
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SupportNudge from "@/components/SupportNudge";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 /** 안내 팝업 닫은 시각 (닫으면 며칠간 안 띄움) */
 const WELCOME_DISMISSED_KEY = "wedding_welcome_dismissed_at";
@@ -61,8 +60,6 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-slate-900 font-sans selection:bg-rose-500 selection:text-white scroll-smooth">
-            <GoogleAnalytics />
-
             {/* 1. 헤더 컴포넌트 사용 */}
             <SiteHeader />
 
