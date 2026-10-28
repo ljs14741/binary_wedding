@@ -67,9 +67,10 @@ export const metadata: Metadata = {
         description: "회원가입·광고 없이 100% 무료. 10분 만에 나만의 모바일 청첩장을 만드세요. 클래식 디자인, 지도·방명록 지원.",
         images: [
             {
-                url: `${baseUrl}/images/og-image.png`,
-                width: 1200,
-                height: 630,
+                // 커플이 가운데 오게 자른 공유용 사진 (원본은 커플이 왼쪽이라 가운데 잘림에 남자가 잘림)
+                url: `${baseUrl}/images/og-share.jpg`,
+                width: 880,
+                height: 709,
                 alt: "Binary Wedding 무료 모바일 청첩장",
             },
         ],

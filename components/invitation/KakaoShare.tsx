@@ -54,7 +54,10 @@ export function shareSiteKakao(place: string) {
         content: {
             title: SITE_SHARE.title,
             description: SITE_SHARE.description,
-            imageUrl: `${baseUrl}/images/og-image.png`,
+            // 커플이 가운데 오게 자른 사진. 크기 알려줘야 카톡이 비율대로 보여줌
+            imageUrl: `${baseUrl}/images/og-share.jpg`,
+            imageWidth: 880,
+            imageHeight: 709,
             link,
         },
         buttons: [{ title: SITE_SHARE.buttonTitle, link }],
