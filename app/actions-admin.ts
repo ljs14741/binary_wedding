@@ -6,6 +6,41 @@ import { Prisma } from "@prisma/client";
 
 const LIST_PAGE_SIZE = 20;
 
+// 날짜 구분은 항상 한국 시간 기준 (DB DATE()는 저장 시간대 때문에 9시간 밀림)
+const KST_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
+
+/** Date → 한국 날짜 "YYYY-MM-DD" */
+function kstKey(d: Date): string {
+    return KST_DAY.format(d);
+}
+
+/** "YYYY-MM-DD" 에 n일 더함 */
+function addDays(key: string, n: number): string {
+    const [y, m, d] = key.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+/** 그 주 월요일 "YYYY-MM-DD" */
+function mondayOf(key: string): string {
+    const [y, m, d] = key.split("-").map(Number);
+    const weekday = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7; // 월=0 … 일=6
+    return addDays(key, -weekday);
+}
+
+/** 한국 날짜 0시 시각 */
+function kstStart(key: string): Date {
+    return new Date(`${key}T00:00:00+09:00`);
+}
+
+/** from 이후 생성 시각 목록 */
+async function createdSince(from: Date): Promise<Date[]> {
+    const rows = await prisma.invitations.findMany({
+        where: { created_at: { gte: from } },
+        select: { created_at: true },
+    });
+    return rows.flatMap((r) => (r.created_at ? [r.created_at] : []));
+}
+
 /** 관리자 기본 통계 */
 export async function getAdminStats(): Promise<{
     total: number;
@@ -15,57 +50,56 @@ export async function getAdminStats(): Promise<{
 }> {
     await requireAdminSession();
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const today = kstKey(new Date());
+    const startOfToday = kstStart(today);
+    const startOfWeek = kstStart(mondayOf(today)); // 주별 추이와 같이 월요일 시작
+    const startOfMonth = kstStart(`${today.slice(0, 7)}-01`);
 
-    const [total, today, thisWeek, thisMonth] = await Promise.all([
+    const [total, todayCount, thisWeek, thisMonth] = await Promise.all([
         prisma.invitations.count(),
         prisma.invitations.count({ where: { created_at: { gte: startOfToday } } }),
         prisma.invitations.count({ where: { created_at: { gte: startOfWeek } } }),
         prisma.invitations.count({ where: { created_at: { gte: startOfMonth } } }),
     ]);
 
-    return { total, today, thisWeek, thisMonth };
+    return { total, today: todayCount, thisWeek, thisMonth };
 }
 
-/** 일별 생성 수 (최근 30일) */
+const TREND_DAYS = 30;
+const TREND_WEEKS = 12;
+
+/** 일별 생성 수 (오늘 포함 최근 30일, 없는 날은 0) */
 export async function getAdminTrendDaily(): Promise<{ date: string; count: number }[]> {
     await requireAdminSession();
 
-    const rows = await prisma.$queryRaw<{ d: Date; cnt: bigint }[]>`
-        SELECT DATE(created_at) AS d, COUNT(*) AS cnt
-        FROM invitations
-        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-        GROUP BY DATE(created_at)
-        ORDER BY d ASC
-    `;
+    const firstDay = addDays(kstKey(new Date()), -(TREND_DAYS - 1));
+    const counts = new Map<string, number>();
+    for (const at of await createdSince(kstStart(firstDay))) {
+        const key = kstKey(at);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
 
-    return rows.map((r) => ({
-        date: r.d instanceof Date ? r.d.toISOString().slice(0, 10) : String(r.d).slice(0, 10),
-        count: Number(r.cnt),
-    }));
+    return Array.from({ length: TREND_DAYS }, (_, i) => {
+        const date = addDays(firstDay, i);
+        return { date, count: counts.get(date) ?? 0 };
+    });
 }
 
-/** 주별 생성 수 (최근 12주) */
+/** 주별 생성 수 (이번 주 포함 최근 12주, 월요일 시작, 없는 주는 0) */
 export async function getAdminTrendWeekly(): Promise<{ weekStart: string; count: number }[]> {
     await requireAdminSession();
 
-    const rows = await prisma.$queryRaw<{ w: Date; cnt: bigint }[]>`
-        SELECT DATE_SUB(DATE(created_at), INTERVAL WEEKDAY(created_at) DAY) AS w, COUNT(*) AS cnt
-        FROM invitations
-        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 WEEK)
-        GROUP BY w
-        ORDER BY w ASC
-    `;
+    const firstWeek = addDays(mondayOf(kstKey(new Date())), -7 * (TREND_WEEKS - 1));
+    const counts = new Map<string, number>();
+    for (const at of await createdSince(kstStart(firstWeek))) {
+        const key = mondayOf(kstKey(at));
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
 
-    return rows.map((r) => ({
-        weekStart: r.w instanceof Date ? r.w.toISOString().slice(0, 10) : String(r.w).slice(0, 10),
-        count: Number(r.cnt),
-    }));
+    return Array.from({ length: TREND_WEEKS }, (_, i) => {
+        const weekStart = addDays(firstWeek, i * 7);
+        return { weekStart, count: counts.get(weekStart) ?? 0 };
+    });
 }
 
 export type AdminInvitationItem = {

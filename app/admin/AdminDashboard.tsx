@@ -89,9 +89,6 @@ export default function AdminDashboard() {
         window.location.reload();
     };
 
-    const maxDaily = trendDaily.length ? Math.max(...trendDaily.map((d) => d.count), 1) : 1;
-    const maxWeekly = trendWeekly.length ? Math.max(...trendWeekly.map((w) => w.count), 1) : 1;
-
     return (
         <div className="min-h-screen pb-20">
             {/* 헤더 */}
@@ -159,49 +156,27 @@ export default function AdminDashboard() {
                                 주별 (12주)
                             </button>
                         </div>
-                        {tab === "daily" && trendDaily.length > 0 && (
-                            <div className="flex items-end gap-1 h-32">
-                                {trendDaily.map((d) => (
-                                    <div
-                                        key={d.date}
-                                        className="flex-1 min-w-0 flex flex-col items-center gap-0.5"
-                                        title={`${d.date}: ${d.count}건`}
-                                    >
-                                        <div
-                                            className="w-full bg-slate-200 rounded-t min-h-[4px] transition-all hover:bg-rose-400"
-                                            style={{ height: `${Math.max(4, (d.count / maxDaily) * 100)}%` }}
-                                        />
-                                        <span className="text-[10px] text-slate-400 truncate w-full text-center">
-                                            {d.date.slice(5)}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {tab === "weekly" && trendWeekly.length > 0 && (
-                            <div className="flex items-end gap-2 h-32">
-                                {trendWeekly.map((w) => (
-                                    <div
-                                        key={w.weekStart}
-                                        className="flex-1 min-w-0 flex flex-col items-center gap-0.5"
-                                        title={`${w.weekStart}~: ${w.count}건`}
-                                    >
-                                        <div
-                                            className="w-full bg-slate-200 rounded-t min-h-[4px] transition-all hover:bg-rose-400"
-                                            style={{ height: `${Math.max(4, (w.count / maxWeekly) * 100)}%` }}
-                                        />
-                                        <span className="text-[10px] text-slate-400 truncate w-full text-center">
-                                            {w.weekStart.slice(5)}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {((tab === "daily" && trendDaily.length === 0) ||
-                            (tab === "weekly" && trendWeekly.length === 0)) && (
-                            <div className="h-32 flex items-center justify-center text-slate-400 text-sm">
-                                데이터가 없습니다
-                            </div>
+                        {tab === "daily" ? (
+                            <TrendBars
+                                bars={trendDaily.map((d, i) => ({
+                                    key: d.date,
+                                    count: d.count,
+                                    tip: `${d.date}: ${d.count}건`,
+                                    // 30칸이라 5일마다 + 오늘만 날짜 표시
+                                    label: i % 5 === 0 || i === trendDaily.length - 1 ? d.date.slice(5) : "",
+                                }))}
+                                totalLabel="최근 30일"
+                            />
+                        ) : (
+                            <TrendBars
+                                bars={trendWeekly.map((w) => ({
+                                    key: w.weekStart,
+                                    count: w.count,
+                                    tip: `${w.weekStart} 주: ${w.count}건`,
+                                    label: w.weekStart.slice(5),
+                                }))}
+                                totalLabel="최근 12주"
+                            />
                         )}
                     </div>
                 </section>
@@ -342,6 +317,48 @@ export default function AdminDashboard() {
                     </Link>
                 </p>
             </main>
+        </div>
+    );
+}
+
+/** 생성 추이 막대 그래프. 막대 높이는 기간 내 최댓값 기준 */
+function TrendBars({
+    bars,
+    totalLabel,
+}: {
+    bars: { key: string; count: number; tip: string; label: string }[];
+    totalLabel: string;
+}) {
+    if (bars.length === 0) {
+        return <div className="h-40 flex items-center justify-center text-slate-400 text-sm">불러오는 중...</div>;
+    }
+    const max = Math.max(...bars.map((b) => b.count), 1);
+    const total = bars.reduce((sum, b) => sum + b.count, 0);
+
+    return (
+        <div>
+            <p className="text-xs text-slate-500 mb-3">
+                {totalLabel} 합계 <b className="text-slate-900">{total}건</b>
+            </p>
+            <div className="flex items-stretch gap-[3px] h-40">
+                {bars.map((b) => (
+                    <div key={b.key} className="flex-1 min-w-0 flex flex-col" title={b.tip}>
+                        {/* 막대 영역: 남은 높이를 다 쓰고 아래부터 채움 */}
+                        <div className="flex-1 flex flex-col justify-end items-center">
+                            {b.count > 0 && (
+                                <span className="text-[10px] font-bold text-slate-600 leading-none mb-1">{b.count}</span>
+                            )}
+                            <div
+                                className={`w-full rounded-t transition-colors ${b.count > 0 ? "bg-rose-300 hover:bg-rose-500" : "bg-slate-100"}`}
+                                style={{ height: b.count > 0 ? `${(b.count / max) * 80}%` : "3px" }}
+                            />
+                        </div>
+                        <span className="h-4 mt-1 text-[10px] text-slate-400 text-center whitespace-nowrap overflow-visible">
+                            {b.label}
+                        </span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
