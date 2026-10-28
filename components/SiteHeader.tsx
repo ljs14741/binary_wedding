@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from "framer-motion";
-import { Coffee, Search, MessageCircle, X, Heart, Menu } from 'lucide-react';
+import { Coffee, Search, MessageCircle, X, Heart, Menu, Share2 } from 'lucide-react';
 import DonorWall from "@/components/DonorWall";
+import { SiteShareModal } from "@/components/SiteShare";
 
 /** QR 코드와 동일한 후원 URL (카카오페이 등). 설정 시 모바일에서 '바로 후원하기' 버튼으로 사용 */
 const DONATE_LINK = process.env.NEXT_PUBLIC_DONATE_URL ?? "https://qr.kakaopay.com/Ej9JnRsvn";
@@ -20,6 +21,7 @@ const DONATE_ACCOUNT = {
 
 export default function SiteHeader() {
     const [isDonateOpen, setIsDonateOpen] = useState(false);
+    const [isShareOpen, setIsShareOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -68,6 +70,9 @@ export default function SiteHeader() {
                     </a>
                     <button onClick={() => setIsDonateOpen(true)} className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
                         <Coffee size={16} /> 후원하기
+                    </button>
+                    <button onClick={() => setIsShareOpen(true)} className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
+                        <Share2 size={16} /> 공유하기
                     </button>
                     <div className="w-px h-3 bg-slate-300 hidden lg:block mx-1"></div>
                     <Link href="/#samples" className="hover:text-rose-600 transition-colors cursor-pointer flex items-center py-2 px-2 sm:px-0">
@@ -126,11 +131,15 @@ export default function SiteHeader() {
                             <Link href="/#faq" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600">자주 묻는 질문</Link>
                             <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" onClick={() => setIsMobileMenuOpen(false)} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600 flex items-center gap-2"><MessageCircle size={18} /> 문의하기</a>
                             <button onClick={() => { setIsMobileMenuOpen(false); setIsDonateOpen(true); }} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600 flex items-center gap-2 text-left w-full"><Coffee size={18} /> 후원하기</button>
+                            <button onClick={() => { setIsMobileMenuOpen(false); setIsShareOpen(true); }} className="py-4 text-slate-700 font-bold border-b border-slate-100 hover:text-rose-600 flex items-center gap-2 text-left w-full"><Share2 size={18} /> 친구에게 공유하기</button>
                         </nav>
                     </motion.div>
                 </>
             )}
             </AnimatePresence>
+
+            {/* 사이트 공유 모달 */}
+            <SiteShareModal open={isShareOpen} onClose={() => setIsShareOpen(false)} place="header" />
 
             {/* 2. 후원 모달 (헤더에 포함시킴) */}
             {isDonateOpen && (

@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link2, X } from "lucide-react";
 import { shareKakao } from "@/components/invitation/KakaoShare";
 import type { InvitationData } from "@/components/invitation/types";
-import SiteShareButtons, { copyToClipboard, trackShare } from "@/components/SiteShare";
+import { copyToClipboard, trackShare, useCanNativeShare, KakaoIcon, InstagramIcon } from "@/components/SiteShare";
+import { buildShareTitle } from "@/lib/shareMessage";
 import { useToast } from "@/components/ui/ToastProvider";
 
 /**
@@ -16,6 +17,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 export default function CreatedShareSheet({ data }: { data: InvitationData }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
+    const canNativeShare = useCanNativeShare();
 
     useEffect(() => {
         const url = new URL(window.location.href);
@@ -41,6 +43,21 @@ export default function CreatedShareSheet({ data }: { data: InvitationData }) {
     const onCopyMine = async () => {
         if (await copyToClipboard(cardUrl())) toast("내 청첩장 링크가 복사되었습니다.");
         trackShare("copy", "created", "invitation");
+    };
+
+    // 공유창 되면 공유창, 안 되면 링크 복사 후 DM 붙여넣기 안내
+    const onInstagramMine = async () => {
+        if (canNativeShare) {
+            try {
+                await navigator.share({ title: buildShareTitle(data.groom.name, data.bride.name), url: cardUrl() });
+                trackShare("native", "created", "invitation");
+            } catch {
+                // 사용자가 공유창을 닫은 경우 무시
+            }
+            return;
+        }
+        if (await copyToClipboard(cardUrl())) toast("내 청첩장 링크가 복사되었습니다. 인스타 DM에 붙여넣어 주세요!");
+        trackShare("instagram_copy", "created", "invitation");
     };
 
     return (
@@ -83,29 +100,15 @@ export default function CreatedShareSheet({ data }: { data: InvitationData }) {
                         {/* 내 청첩장 보내기 */}
                         <p className="text-[13px] font-bold text-slate-700 mb-2">먼저 내 청첩장을 보내보세요</p>
                         <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={onKakaoMine}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-bold text-sm bg-[#FEE500] text-[#191919] hover:brightness-95 active:scale-95 transition-all"
-                            >
-                                카톡으로 보내기
+                            <button type="button" onClick={onKakaoMine} className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-3.5 whitespace-nowrap rounded-xl font-bold text-sm active:scale-95 transition-all bg-[#FEE500] text-[#191919] hover:brightness-95">
+                                <KakaoIcon /> 카카오톡
                             </button>
-                            <button
-                                type="button"
-                                onClick={onCopyMine}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
-                            >
+                            <button type="button" onClick={onCopyMine} className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-3.5 whitespace-nowrap rounded-xl font-bold text-sm active:scale-95 transition-all bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
                                 <Link2 size={18} /> 링크 복사
                             </button>
-                        </div>
-
-                        {/* 사이트 알리기 */}
-                        <div className="mt-6 pt-6 border-t border-dashed border-slate-200">
-                            <p className="text-[13px] font-bold text-slate-700">결혼 준비 중인 친구가 있나요?</p>
-                            <p className="text-[12px] text-slate-500 mt-0.5 mb-3">
-                                여기서 무료로 만들 수 있다고 알려주시면 큰 힘이 돼요 💌
-                            </p>
-                            <SiteShareButtons place="created" />
+                            <button type="button" onClick={onInstagramMine} className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-3.5 whitespace-nowrap rounded-xl font-bold text-sm active:scale-95 transition-all bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white hover:brightness-105">
+                                <InstagramIcon /> 인스타
+                            </button>
                         </div>
 
                         <button

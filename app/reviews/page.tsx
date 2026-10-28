@@ -16,7 +16,7 @@ import {
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useToast } from "@/components/ui/ToastProvider";
-import SiteShareButtons from "@/components/SiteShare";
+import { SiteShareModal } from "@/components/SiteShare";
 import {
     getReviews,
     createReview,
@@ -149,40 +149,7 @@ export default function ReviewsPage() {
                         </button>
                     </div>
 
-                    {/* 사이트 공유 모달 */}
-                    <AnimatePresence>
-                        {isShareOpen && (
-                            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
-                                <motion.div
-                                    className="absolute inset-0 bg-black/40"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    onClick={() => setIsShareOpen(false)}
-                                />
-                                <motion.div
-                                    role="dialog"
-                                    aria-label="친구에게 알려주기"
-                                    className="relative w-full sm:max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] px-6 pt-8 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center shadow-2xl"
-                                    initial={{ y: 40, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    exit={{ y: 40, opacity: 0 }}
-                                >
-                                    <button
-                                        onClick={() => setIsShareOpen(false)}
-                                        aria-label="닫기"
-                                        className="absolute top-5 right-5 text-slate-300 hover:text-slate-500 transition"
-                                    >
-                                        <X size={22} />
-                                    </button>
-                                    <div className="text-3xl mb-3">💌</div>
-                                    <h3 className="text-lg font-bold text-slate-900">결혼 준비 중인 친구에게</h3>
-                                    <p className="text-sm text-slate-500 mt-1.5 mb-6">무료로 만들 수 있다고 알려주세요</p>
-                                    <SiteShareButtons place="reviews" />
-                                </motion.div>
-                            </div>
-                        )}
-                    </AnimatePresence>
+                    <SiteShareModal open={isShareOpen} onClose={() => setIsShareOpen(false)} place="reviews" />
 
                     {/* 리스트 */}
                     {loading ? (
