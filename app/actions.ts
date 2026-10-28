@@ -373,7 +373,8 @@ export async function createInvitation(formData: FormData) {
 
     // [중요] try-catch 문 밖에서 redirect 실행
     if (successId) {
-        redirect(`/${successId}`);
+        // 완성 공유 시트 띄우기용 표시
+        redirect(`/${successId}?created=1`);
     }
 }
 

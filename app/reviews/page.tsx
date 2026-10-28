@@ -11,10 +11,12 @@ import {
     X,
     ChevronDown,
     MessageSquare,
+    Share2,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useToast } from "@/components/ui/ToastProvider";
+import SiteShareButtons from "@/components/SiteShare";
 import {
     getReviews,
     createReview,
@@ -48,6 +50,7 @@ export default function ReviewsPage() {
     const [isWriteOpen, setIsWriteOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Review | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Review | null>(null);
+    const [isShareOpen, setIsShareOpen] = useState(false);
     // 관리자 로그인 상태면 후기마다 답변 칸 표시 (저장도 서버에서 다시 확인함)
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -130,13 +133,56 @@ export default function ReviewsPage() {
                         )}
                     </div>
 
-                    {/* 작성 버튼 */}
-                    <button
-                        onClick={() => setIsWriteOpen(true)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-xl font-semibold text-sm hover:bg-slate-800 transition-all shadow-sm hover:shadow-md mb-12"
-                    >
-                        <Plus size={18} /> 후기 작성하기
-                    </button>
+                    {/* 작성 · 친구에게 알리기 버튼 */}
+                    <div className="flex flex-col sm:flex-row gap-2 mb-12">
+                        <button
+                            onClick={() => setIsWriteOpen(true)}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-xl font-semibold text-sm hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
+                        >
+                            <Plus size={18} /> 후기 작성하기
+                        </button>
+                        <button
+                            onClick={() => setIsShareOpen(true)}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-all"
+                        >
+                            <Share2 size={18} /> 친구에게 알려주기
+                        </button>
+                    </div>
+
+                    {/* 사이트 공유 모달 */}
+                    <AnimatePresence>
+                        {isShareOpen && (
+                            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+                                <motion.div
+                                    className="absolute inset-0 bg-black/40"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => setIsShareOpen(false)}
+                                />
+                                <motion.div
+                                    role="dialog"
+                                    aria-label="친구에게 알려주기"
+                                    className="relative w-full sm:max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] px-6 pt-8 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center shadow-2xl"
+                                    initial={{ y: 40, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: 40, opacity: 0 }}
+                                >
+                                    <button
+                                        onClick={() => setIsShareOpen(false)}
+                                        aria-label="닫기"
+                                        className="absolute top-5 right-5 text-slate-300 hover:text-slate-500 transition"
+                                    >
+                                        <X size={22} />
+                                    </button>
+                                    <div className="text-3xl mb-3">💌</div>
+                                    <h3 className="text-lg font-bold text-slate-900">결혼 준비 중인 친구에게</h3>
+                                    <p className="text-sm text-slate-500 mt-1.5 mb-6">무료로 만들 수 있다고 알려주세요</p>
+                                    <SiteShareButtons place="reviews" />
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
 
                     {/* 리스트 */}
                     {loading ? (

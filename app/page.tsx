@@ -9,6 +9,7 @@ import { X, CheckCircle2, Search, ChevronDown, MessageCircle } from 'lucide-reac
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SupportNudge from "@/components/SupportNudge";
+import SiteShareButtons from "@/components/SiteShare";
 
 /** 안내 팝업 닫은 시각 (닫으면 며칠간 안 띄움) */
 const WELCOME_DISMISSED_KEY = "wedding_welcome_dismissed_at";
@@ -205,6 +206,20 @@ export default function Home() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </section>
+
+                {/* 사이트 공유 섹션 */}
+                <section id="share" className="py-16 sm:py-24 px-4 sm:px-6 bg-rose-50/40 overflow-x-hidden">
+                    <div className="max-w-md mx-auto text-center">
+                        <div className="text-4xl mb-4">💌</div>
+                        <h2 className="text-2xl sm:text-3xl font-serif text-slate-900 tracking-tight leading-snug">
+                            주변에 결혼 앞둔 친구 있나요?
+                        </h2>
+                        <p className="text-[15px] text-slate-600 leading-relaxed mt-3 mb-8">
+                            청첩장, 돈 들이지 않고 만들 수 있다고 알려주세요.
+                        </p>
+                        <SiteShareButtons place="main" />
                     </div>
                 </section>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
+import { buildShareDescription, buildShareTitle, SITE_SHARE } from "@/lib/shareMessage";
 import type { InvitationData } from "./types";
 
 const KAKAO_JS_KEY = "ea07c2afa5b5a0a07737bab48ab8e3e8";
@@ -38,4 +38,26 @@ export function shareKakao(data: InvitationData) {
         },
         buttons: [{ title: "청첩장 보기", link }],
     });
+}
+
+/** 사이트 홍보용 카카오톡 공유. place 는 GA 유입 구분용 */
+export function shareSiteKakao(place: string) {
+    if (!window.Kakao) return false;
+    if (!window.Kakao.isInitialized()) window.Kakao.init(KAKAO_JS_KEY);
+
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/?utm_source=kakao&utm_medium=share&utm_campaign=site_${place}`;
+    const link = { mobileWebUrl: url, webUrl: url };
+
+    window.Kakao.Share.sendDefault({
+        objectType: "feed",
+        content: {
+            title: SITE_SHARE.title,
+            description: SITE_SHARE.description,
+            imageUrl: `${baseUrl}/images/og-image.png`,
+            link,
+        },
+        buttons: [{ title: SITE_SHARE.buttonTitle, link }],
+    });
+    return true;
 }

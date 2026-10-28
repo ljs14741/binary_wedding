@@ -7,10 +7,12 @@ import { getBaseUrl } from "@/lib/site";
 import { resolveBgmSrc } from "@/lib/bgm";
 import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 import type { Metadata } from "next";
+import CreatedShareSheet from "@/components/CreatedShareSheet";
 
 // [중요] Next.js 15+ 에서는 params가 Promise 타입입니다.
 interface PageProps {
     params: Promise<{ cardId: string }>;
+    searchParams?: Promise<{ created?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -73,7 +75,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 }
 
-export default async function CardPage({ params }: PageProps) {
+export default async function CardPage({ params, searchParams }: PageProps) {
     // [수정] params를 await 하여 cardId를 추출해야 합니다.
     const { cardId } = await params;
 
@@ -171,5 +173,15 @@ export default async function CardPage({ params }: PageProps) {
     };
 
     // 저장된 template_type에 맞는 템플릿으로 렌더
-    return createElement(getTemplateComponent(rawData.template_type), { data: formattedData });
+    const template = createElement(getTemplateComponent(rawData.template_type), { data: formattedData });
+
+    // 만들기 직후에만 공유 시트 붙임 (하객 화면엔 안 실림)
+    const { created } = (await searchParams) ?? {};
+    if (created !== "1") return template;
+    return (
+        <>
+            {template}
+            <CreatedShareSheet data={formattedData} />
+        </>
+    );
 }

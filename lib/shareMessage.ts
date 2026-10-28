@@ -20,3 +20,11 @@ export function buildShareDescription(weddingDate: Date | string | null | undefi
     if (dateText && locationName) return `${dateText} · ${locationName}`;
     return dateText || locationName || "모바일 청첩장";
 }
+
+// 사이트 홍보 공유 문구 (친구한테 추천하는 말투)
+export const SITE_SHARE = {
+    title: "모바일 청첩장, 돈 주고 만들지 마세요 💌",
+    description: "회원가입·광고·결제 없이 10분이면 완성. 지도·방명록·계좌 안내까지 전부 무료예요.",
+    buttonTitle: "무료로 만들어보기",
+    copyText: "결혼 준비 중이면 여기 써봐! 모바일 청첩장 회원가입 없이 무료로 10분이면 만들어져 💌",
+};
