@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link2, X } from "lucide-react";
 import { shareKakao } from "@/components/invitation/KakaoShare";
 import type { InvitationData } from "@/components/invitation/types";
-import { copyToClipboard, trackShare, useCanNativeShare, KakaoIcon, InstagramIcon } from "@/components/SiteShare";
+import { copyToClipboard, trackShare, useCanNativeShare, useIsMobile, KakaoIcon, InstagramIcon } from "@/components/SiteShare";
 import { buildShareTitle } from "@/lib/shareMessage";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 export default function CreatedShareSheet({ data }: { data: InvitationData }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
+    const isMobile = useIsMobile();
     const canNativeShare = useCanNativeShare();
 
     useEffect(() => {
@@ -106,9 +107,11 @@ export default function CreatedShareSheet({ data }: { data: InvitationData }) {
                             <button type="button" onClick={onCopyMine} className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-3.5 whitespace-nowrap rounded-xl font-bold text-sm active:scale-95 transition-all bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
                                 <Link2 size={18} /> 링크 복사
                             </button>
-                            <button type="button" onClick={onInstagramMine} className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-3.5 whitespace-nowrap rounded-xl font-bold text-sm active:scale-95 transition-all bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white hover:brightness-105">
-                                <InstagramIcon /> 인스타
-                            </button>
+                            {isMobile && (
+                                <button type="button" onClick={onInstagramMine} className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-3.5 whitespace-nowrap rounded-xl font-bold text-sm active:scale-95 transition-all bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white hover:brightness-105">
+                                    <InstagramIcon /> 인스타
+                                </button>
+                            )}
                         </div>
 
                         <button

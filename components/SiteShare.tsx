@@ -26,13 +26,15 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 
 const noopSubscribe = () => () => {};
 
-/** 기기 공유창은 휴대폰에서만 씀 (PC 크롬 공유창은 어색함). 서버 렌더는 false */
+/** 휴대폰 화면 여부. 인스타 버튼은 휴대폰에서만 보임 (PC 인스타는 링크 받을 방법이 없음). 서버 렌더는 false */
+export function useIsMobile() {
+    return useSyncExternalStore(noopSubscribe, () => window.innerWidth < 768, () => false);
+}
+
+/** 기기 공유창 사용 가능 여부 (카톡·인스타 인앱 브라우저는 대부분 안 됨) */
 export function useCanNativeShare() {
-    return useSyncExternalStore(
-        noopSubscribe,
-        () => typeof navigator.share === "function" && window.innerWidth < 768,
-        () => false,
-    );
+    const isMobile = useIsMobile();
+    return isMobile && typeof navigator !== "undefined" && typeof navigator.share === "function";
 }
 
 export function KakaoIcon({ size = 18 }: { size?: number }) {
@@ -60,9 +62,10 @@ interface SiteShareButtonsProps {
     className?: string;
 }
 
-/** 사이트 공유 버튼 묶음: 카톡 · 링크 복사 · 인스타 */
+/** 사이트 공유 버튼 묶음: 카톡 · 링크 복사 · (휴대폰) 인스타 */
 export default function SiteShareButtons({ place, className = "" }: SiteShareButtonsProps) {
     const { toast } = useToast();
+    const isMobile = useIsMobile();
     const canNativeShare = useCanNativeShare();
 
     const siteUrl = () => window.location.origin;
@@ -108,9 +111,11 @@ export default function SiteShareButtons({ place, className = "" }: SiteShareBut
             <button type="button" onClick={onCopy} className={`${btn} bg-white text-slate-700 border border-slate-200 hover:bg-slate-50`}>
                 <Link2 size={18} /> 링크 복사
             </button>
-            <button type="button" onClick={onInstagram} className={`${btn} bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white hover:brightness-105`}>
-                <InstagramIcon /> 인스타
-            </button>
+            {isMobile && (
+                <button type="button" onClick={onInstagram} className={`${btn} bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white hover:brightness-105`}>
+                    <InstagramIcon /> 인스타
+                </button>
+            )}
         </div>
     );
 }
