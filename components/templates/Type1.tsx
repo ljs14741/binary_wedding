@@ -202,14 +202,14 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                     <FadeIn delay={0.2}>
                         <div className="max-w-[290px] mx-auto grid grid-cols-7 gap-y-5 text-sm my-12 px-2">
                             {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-                                <div key={d} className={`font-bold text-[11px] ${d === '일' ? 'text-rose-400' : 'text-gray-300'}`}>{d}</div>
+                                <div key={d} className={`font-bold text-[11px] ${d === '일' ? 'text-rose-400' : 'text-gray-500'}`}>{d}</div>
                             ))}
                             {Array.from({length: wd.firstDayOfMonth}, (_, i) => (<div key={`empty-${i}`}/>))}
                             {Array.from({length: wd.daysInMonth}, (_, i) => {
                                 const day = i + 1;
                                 const isWeddingDay = day === wd.day;
                                 return (
-                                    <div key={day} className={`py-1.5 flex items-center justify-center ${isWeddingDay ? 'bg-rose-400 text-white rounded-full font-bold scale-110' : 'text-gray-600 font-light'}`}>{day}</div>
+                                    <div key={day} className={`py-1.5 flex items-center justify-center ${isWeddingDay ? 'bg-rose-400 text-white rounded-full font-bold scale-110' : 'text-gray-700'}`}>{day}</div>
                                 );
                             })}
                         </div>
