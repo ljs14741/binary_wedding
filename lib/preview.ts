@@ -2,6 +2,7 @@ import type { InvitationData } from "@/components/invitation/types";
 import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { normalizeParentMark } from "@/lib/parentMark";
 import { getSampleData } from "@/lib/sampleData";
+import { parseHeroText, serializeHeroText } from "@/lib/heroText";
 
 /**
  * 만들기·수정 실시간 미리보기 공용 (폼 → 청첩장 데이터, 입력 칸 → 청첩장 위치)
@@ -22,7 +23,9 @@ export interface PreviewTarget {
 /** 입력 칸 name → 미리보기 위치 */
 export function previewTargetOf(name: string): PreviewTarget | null {
     if (!name) return null;
-    if (name === "groom_name" || name === "bride_name" || name === "template_type" || name === "hero_text_color" || name.startsWith("bgm_")) return { section: "main" };
+    // 이름은 연락처·부모님과 같은 신랑·신부 소개로 (신랑 정보 쓰는 동안 위아래로 덜 오가게)
+    if (name === "groom_name" || name === "bride_name") return { section: "people" };
+    if (name === "template_type" || name.startsWith("hero_text") || name.startsWith("bgm_")) return { section: "main" };
     if (name.startsWith("account_")) return { section: "gift", detail: name.startsWith("account_bride") ? "bride" : "groom" };
     if (/^(groom|bride)(_father|_mother)?_contact$/.test(name)) return { section: "contact" };
     if (/^(groom|bride)_(order|father|mother|photo)/.test(name)) return { section: "people" };
@@ -190,7 +193,7 @@ export function buildPreviewPayload(
         location_lng: coords?.lng ?? null,
         message: get("welcome_msg"),
         notice: get("notice"),
-        heroTextColor: get("hero_text_color") === "dark" ? "dark" : "white",
+        heroText: parseHeroText(serializeHeroText(get("hero_text_top"), get("hero_text_bottom"))),
         mainImages: images.main.length > 0 ? images.main : sample.mainImages,
         middleImage: images.middle || sample.middleImage,
         // 미리보기에선 음악 끔 (작성 중 클릭에 음악이 켜지면 놀람)

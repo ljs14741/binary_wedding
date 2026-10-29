@@ -1,3 +1,5 @@
+import type { HeroText } from "@/lib/heroText";
+
 /** 청첩장 템플릿이 공통으로 받는 데이터 타입 (DB → 컴포넌트 변환 결과) */
 
 export interface GuestbookEntry {
@@ -45,8 +47,8 @@ export interface InvitationData {
     mainImages: string[];
     middleImage: string;
     ogImage?: string;
-    /** 클래식 메인 사진 위 글자색 (기본 흰색) */
-    heroTextColor?: "white" | "dark";
+    /** 클래식 메인 사진 위 글자색 (위: 이름 / 아래: 날짜·장소, 기본 흰색) */
+    heroText?: HeroText;
     /** 배경음악 경로 (빈 문자열이면 음악 없음) */
     bgm: string;
     gallery: string[];

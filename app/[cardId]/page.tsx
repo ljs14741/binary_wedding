@@ -8,6 +8,7 @@ import { resolveBgmSrc } from "@/lib/bgm";
 import { buildShareDescription, buildShareTitle } from "@/lib/shareMessage";
 import type { Metadata } from "next";
 import CreatedShareSheet from "@/components/CreatedShareSheet";
+import { parseHeroText } from "@/lib/heroText";
 
 // [중요] Next.js 15+ 에서는 params가 Promise 타입입니다.
 interface PageProps {
@@ -142,7 +143,7 @@ export default async function CardPage({ params, searchParams }: PageProps) {
         mainImages,
         middleImage: rawData.middle_photo_url || "",
         ogImage: rawData.og_photo_url || "",
-        heroTextColor: rawData.hero_text_color === "dark" ? "dark" : "white",
+        heroText: parseHeroText(rawData.hero_text_color),
         bgm: resolveBgmSrc(rawData.bgm_url),
         gallery: rawData.invitation_photos.map(p => p.photo_url),
 

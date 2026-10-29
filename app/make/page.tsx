@@ -20,6 +20,7 @@ import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { loadMakeDraft, saveMakeDraft, clearMakeDraft, type MakeDraft } from "@/lib/makeDraft";
 import LivePreview from "@/components/LivePreview";
 import HeroTextColorPicker from "@/components/HeroTextColorPicker";
+import { parseHeroText, serializeHeroText } from "@/lib/heroText";
 
 /** 상단 바로가기 칩 */
 const MAKE_SECTIONS = [
@@ -760,7 +761,8 @@ export default function MakePage() {
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-500">권장: 9:16 세로 비율</p>
-                                    <HeroTextColorPicker defaultValue={dv("hero_text_color")} visible={templateType === "type1"}/>
+                                    <HeroTextColorPicker defaultValue={parseHeroText(serializeHeroText(dv("hero_text_top"), dv("hero_text_bottom")))}
+                                                         visible={templateType === "type1"} suggestFrom={mainPreviews[0]}/>
 
                                     <div className={`group relative border-2 border-dashed border-slate-200 rounded-3xl ${mainPreviews.length > 0 ? "min-h-[280px]" : "min-h-[160px]"} flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden`}>
                                         {mainPreviews.length > 0 ? (

@@ -7,6 +7,11 @@ const PreviewModeContext = createContext(false);
 
 export const PreviewModeProvider = PreviewModeContext.Provider;
 
+/** 만들기·수정 미리보기 안인지 */
+export function useIsPreview() {
+    return useContext(PreviewModeContext);
+}
+
 type BlockedAction = "call" | "sms" | "share" | "guestbook" | "alarm" | "reminderSms";
 
 const SAMPLE_TEXT: Record<BlockedAction, string> = {

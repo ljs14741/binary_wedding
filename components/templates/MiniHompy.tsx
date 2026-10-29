@@ -15,7 +15,7 @@ import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useGallery } from "@/components/invitation/hooks";
 import Minimi from "./Minimi";
-import { useBlockedText } from "@/components/invitation/PreviewMode";
+import { useBlockedText, useIsPreview } from "@/components/invitation/PreviewMode";
 import { MINIHOMPY_TAB_OF, MINIHOMPY_SECTIONS_OF_TAB, type PreviewSection } from "@/lib/preview";
 import { ParentsLine } from "@/components/invitation/ParentName";
 
@@ -317,6 +317,7 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
         { label: "어머니", name: p.mother, phone: p.mother_contact || "" },
     ].filter((c) => c.name);
     const blocked = useBlockedText();
+    const isPreview = useIsPreview();
 
     const open = (scheme: "tel" | "sms", phone: string) => {
         if (isSample) {
@@ -346,7 +347,10 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
             <div data-preview-section="contact" className="mt-3 border-t border-dashed border-[#c9dbe8] pt-2 space-y-1.5">
                 {contacts.map((c) => c.phone && (
                     <div key={c.label} className="flex items-center justify-between text-[11px]">
-                        <span><span className="text-[#7a98b0] mr-1.5">{c.label}</span>{c.name}</span>
+                        <span><span className="text-[#7a98b0] mr-1.5">{c.label}</span>{c.name}
+                            {/* 미리보기: 적은 번호 확인용 (하객 화면엔 안 보임) */}
+                            {isPreview && <span className="ml-1.5 text-[10px] text-[#9ab]">{c.phone}</span>}
+                        </span>
                         <div className="flex gap-1">
                             <button onClick={() => open("tel", c.phone)} className="w-7 h-7 rounded border border-[#c9dbe8] flex items-center justify-center text-[#2f6fa8] bg-[#F7FBFD]" aria-label="전화"><Phone size={12}/></button>
                             <button onClick={() => open("sms", c.phone)} className="w-7 h-7 rounded border border-[#c9dbe8] flex items-center justify-center text-[#2f6fa8] bg-[#F7FBFD]" aria-label="문자"><MessageSquare size={12}/></button>

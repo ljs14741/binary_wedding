@@ -7,9 +7,11 @@ import type { PreviewMessage, PreviewPayload, PreviewSection } from "@/lib/previ
 
 /** 강조 표시 유지 시간 */
 const FLASH_MS = 1600;
+/** 칸을 빠르게 옮겨 다닐 때 마지막 칸에서만 움직이도록 기다림 */
+const FOCUS_SETTLE_MS = 220;
 
 /**
- * 만들기·수정 화면 오른쪽(모바일은 전체화면) iframe 안에서 도는 실시간 미리보기.
+ * 만들기·수정 화면 왼쪽(모바일은 전체화면) iframe 안에서 도는 실시간 미리보기.
  * 부모 창이 폼 값을 postMessage로 보내면 실제 템플릿에 그대로 꽂아 그림
  */
 export default function PreviewPage() {
@@ -52,7 +54,11 @@ export default function PreviewPage() {
     const goTo = useCallback((section: PreviewSection) => {
         const el = document.querySelector<HTMLElement>(`[data-preview-section~="${section}"]`);
         if (!el) return false;
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // scrollIntoView는 바깥 만들기 화면까지 같이 스크롤해서 쓰면 안 됨 → 미리보기 안에서만 스크롤
+        // 이미 화면 위쪽에 보이면 움직이지 않고 강조만 (왔다갔다 줄이기)
+        const rect = el.getBoundingClientRect();
+        const visible = rect.top >= -8 && rect.top < window.innerHeight * 0.55;
+        if (!visible) window.scrollTo({ top: window.scrollY + rect.top, behavior: "smooth" });
         el.classList.remove("preview-flash");
         void el.offsetWidth; // 같은 곳 연속 강조 시 애니메이션 다시 시작
         el.classList.add("preview-flash");
@@ -65,10 +71,10 @@ export default function PreviewPage() {
     useEffect(() => {
         if (!focus) return;
         pendingRef.current = focus.section;
-        const raf = requestAnimationFrame(() => requestAnimationFrame(() => {
+        const timer = window.setTimeout(() => {
             if (pendingRef.current && goTo(pendingRef.current)) pendingRef.current = null;
-        }));
-        return () => cancelAnimationFrame(raf);
+        }, FOCUS_SETTLE_MS);
+        return () => window.clearTimeout(timer);
     }, [focus, goTo]);
 
     // 내용이 바뀌어 기다리던 섹션이 생겼으면 그때 이동 (타이핑마다 다시 스크롤하진 않음)

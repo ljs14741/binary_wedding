@@ -19,6 +19,7 @@ import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 import LivePreview from "@/components/LivePreview";
 import HeroTextColorPicker from "@/components/HeroTextColorPicker";
+import { parseHeroText } from "@/lib/heroText";
 
 /** 상단 바로가기 칩 */
 const EDIT_SECTIONS = [
@@ -554,7 +555,8 @@ export default function EditForm({ initialData }: EditFormProps) {
                             </div>
                         </div>
                         <p className="text-xs text-slate-500">권장: 9:16 세로 비율 · 화살표로 순서 변경</p>
-                        <HeroTextColorPicker defaultValue={initialData.hero_text_color} visible={templateType === "type1"}/>
+                        <HeroTextColorPicker defaultValue={parseHeroText(initialData.hero_text_color)}
+                                             visible={templateType === "type1"} suggestFrom={mainPreviews[0]}/>
                         {mainPreviews.length === 0 && existingMainPhotos.length > 0 && (
                             <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border">
                                 {existingMainPhotos.map((src: string, i: number) => (

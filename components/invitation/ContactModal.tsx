@@ -3,7 +3,7 @@
 import React from "react";
 import { X, Phone, MessageSquare } from "lucide-react";
 import type { Person } from "./types";
-import { useBlockedText } from "./PreviewMode";
+import { useBlockedText, useIsPreview } from "./PreviewMode";
 
 type Props = {
     groom: Person;
@@ -15,6 +15,7 @@ type Props = {
 
 /** 신랑·신부·혼주 연락처 팝업. 샘플 모드에서는 전화/문자 대신 안내 토스트 */
 export default function ContactModal({ groom, bride, isSample, toast, onClose }: Props) {
+    const isPreview = useIsPreview();
     const sides = [
         { title: "신랑측 GROOM", label: "신랑", p: groom },
         { title: "신부측 BRIDE", label: "신부", p: bride },
@@ -25,7 +26,13 @@ export default function ContactModal({ groom, bride, isSample, toast, onClose }:
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}/>
             <div className="bg-white w-full max-w-[380px] rounded-[3rem] p-10 relative z-10 shadow-2xl animate-fade-in-up overflow-y-auto max-h-[85vh]">
                 <button onClick={onClose} className="absolute top-8 right-8 text-gray-300 hover:text-gray-500 transition"><X/></button>
-                <h4 className="font-serif text-2xl mb-12 text-center text-gray-800 font-bold italic underline underline-offset-8 decoration-rose-50">연락하기</h4>
+                <h4 className={`font-serif text-2xl text-center text-gray-800 font-bold italic underline underline-offset-8 decoration-rose-50 ${isPreview ? "mb-4" : "mb-12"}`}>연락하기</h4>
+                {/* 미리보기: 하객 화면엔 번호가 안 보여서, 적은 번호가 어디로 가는지 알려줌 */}
+                {isPreview && (
+                    <p className="mb-10 text-center text-[12px] leading-relaxed text-gray-400 bg-[#FBF7F4] rounded-2xl px-4 py-3">
+                        하객이 누르면 아래 번호로 전화·문자가 연결돼요.<br/>번호는 하객 화면에 글자로 보이지 않아요.
+                    </p>
+                )}
                 <div className="space-y-12">
                     {sides.map(({ title, label, p }) => (
                         <div key={title} className="space-y-8">
@@ -45,13 +52,17 @@ function ContactRow({ label, name, phone, isSample, toast }: {
     label: string; name: string; phone: string; isSample?: boolean; toast: (m: string) => Promise<void>;
 }) {
     const blocked = useBlockedText();
+    const isPreview = useIsPreview();
     if (!phone) return null;
     const callCls = "w-10 h-10 bg-[#FDFBF9] border border-rose-50 rounded-full flex items-center justify-center text-rose-300 hover:bg-rose-50 transition";
     const smsCls = "w-10 h-10 bg-[#FDFBF9] border border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 transition";
 
     return (
         <div className="flex justify-between items-center group">
-            <span className="text-base font-bold text-gray-700">{label} {name}</span>
+            <span className="text-base font-bold text-gray-700">
+                {label} {name}
+                {isPreview && <span className="block text-[12px] font-medium text-gray-400 font-sans tracking-wide mt-0.5">{phone}</span>}
+            </span>
             <div className="flex gap-4">
                 {isSample ? (
                     <>

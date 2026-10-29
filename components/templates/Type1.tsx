@@ -87,8 +87,9 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hasInterviews]);
 
-    // 메인 사진 위 글자: 밝은 사진에서도 읽히게 글자색 반대쪽으로 살짝 그늘
-    const darkHero = data.heroTextColor === "dark";
+    // 메인 사진 위 글자 (위: 이름 / 아래: 날짜·장소). 밝은 사진에서도 읽히게 글자색 반대쪽으로 살짝 그늘
+    const darkTop = data.heroText?.top === "dark";
+    const darkBottom = data.heroText?.bottom === "dark";
 
     return (
         <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`}>
@@ -133,19 +134,20 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                         </AnimatePresence>
                     </KenBurnsImage>
 
-                    <div className={`absolute inset-0 pointer-events-none z-[5] ${darkHero
-                        ? "bg-[linear-gradient(to_bottom,rgba(255,255,255,0.55),transparent_32%,transparent_62%,rgba(255,255,255,0.6))]"
-                        : "bg-[linear-gradient(to_bottom,rgba(0,0,0,0.32),transparent_32%,transparent_62%,rgba(0,0,0,0.38))]"}`}/>
-                    <div className={`absolute inset-0 flex flex-col items-center justify-between py-28 text-center z-10 ${darkHero ? "text-gray-900" : "text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.25)]"}`}>
-                        <motion.div initial={{opacity: 0, y: 30}} animate={{opacity: 1, y: 0}} transition={{duration: 1.2}}>
-                            <p className={`text-[10px] tracking-[0.5em] font-medium opacity-90 uppercase px-4 py-1.5 rounded-full backdrop-blur-[2px] ${darkHero ? "bg-white/40" : "bg-black/5"}`}>
+                    <div className={`absolute inset-x-0 top-0 h-[38%] pointer-events-none z-[5] bg-gradient-to-b ${darkTop ? "from-white/55" : "from-black/30"} to-transparent`}/>
+                    <div className={`absolute inset-x-0 bottom-0 h-[40%] pointer-events-none z-[5] bg-gradient-to-t ${darkBottom ? "from-white/60" : "from-black/35"} to-transparent`}/>
+                    <div className="absolute inset-0 flex flex-col items-center justify-between py-28 text-center z-10">
+                        <motion.div className={darkTop ? "text-gray-900" : "text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.25)]"}
+                                    initial={{opacity: 0, y: 30}} animate={{opacity: 1, y: 0}} transition={{duration: 1.2}}>
+                            <p className={`text-[10px] tracking-[0.5em] font-medium opacity-90 uppercase px-4 py-1.5 rounded-full backdrop-blur-[2px] ${darkTop ? "bg-white/40" : "bg-black/5"}`}>
                                 The Day of Our Wedding
                             </p>
                             <h1 className="text-4xl font-serif mt-8 font-bold">
                                 {data.groom.name} <span className="font-light mx-1 opacity-70">&</span> {data.bride.name}
                             </h1>
                         </motion.div>
-                        <motion.div className="font-serif" initial={{opacity: 0}} animate={{opacity: 1}} transition={{duration: 1.5, delay: 0.5}}>
+                        <motion.div className={`font-serif ${darkBottom ? "text-gray-900" : "text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.25)]"}`}
+                                    initial={{opacity: 0}} animate={{opacity: 1}} transition={{duration: 1.5, delay: 0.5}}>
                             <p className="text-xl tracking-widest uppercase">{wd.year}. {wd.month + 1}. {wd.day}. {wd.weekdayShortEn}</p>
                             <p className="text-sm font-light opacity-80 mt-2">{data.location} {data.detail}</p>
                         </motion.div>

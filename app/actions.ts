@@ -10,10 +10,11 @@ import { basename, join } from "path";
 import { isValidTemplateId, DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { BGM_NONE, bgmFormError } from "@/lib/bgm";
 import { normalizeParentMark } from "@/lib/parentMark";
+import { serializeHeroText } from "@/lib/heroText";
 
-/** 클래식 메인 사진 위 글자색. 검정만 저장하고 나머지는 기본(흰색) */
+/** 클래식 메인 사진 위 글자색 (위·아래). 둘 다 흰색이면 null */
 function readHeroTextColor(formData: FormData): string | null {
-    return formData.get("hero_text_color") === "dark" ? "dark" : null;
+    return serializeHeroText(formData.get("hero_text_top"), formData.get("hero_text_bottom"));
 }
 
 /** 폼의 template_type 값. 등록되지 않은 값이면 기본 템플릿으로 */
