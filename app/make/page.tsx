@@ -2,7 +2,7 @@
 
 import { createInvitation } from "@/app/actions";
 import { useToast } from "@/components/ui/ToastProvider";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard, User, Users, ChevronRight, AlertCircle, Image as ImageIcon, X, ChevronLeft, Share2, Trash2 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -18,6 +18,7 @@ import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { loadMakeDraft, saveMakeDraft, clearMakeDraft, type MakeDraft } from "@/lib/makeDraft";
+import LivePreview from "@/components/LivePreview";
 
 /** 상단 바로가기 칩 */
 const MAKE_SECTIONS = [
@@ -491,6 +492,12 @@ export default function MakePage() {
         }
     };
 
+    // 실시간 미리보기에 넘길 사진 (올리기 전엔 예시 사진)
+    const previewImages = useMemo(
+        () => ({ main: mainPreviews, middle: middlePreview ?? "", gallery: galleryPreviews }),
+        [mainPreviews, middlePreview, galleryPreviews],
+    );
+
     // 메모리 정리
     useEffect(() => {
         return () => {
@@ -514,11 +521,15 @@ export default function MakePage() {
             )}
 
             <div className="flex-1 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl lg:max-w-6xl mx-auto">
                     <div className="text-center mb-16 space-y-4">
                         <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight">청첩장 만들기</h1>
-                        <p className="text-slate-500 text-sm md:text-base font-medium">아래 항목을 입력해 주세요.</p>
+                        <p className="text-slate-500 text-sm md:text-base font-medium">아래 항목을 입력해 주세요. <span className="hidden lg:inline">오른쪽에서 바로 확인할 수 있어요.</span></p>
                     </div>
+
+                    {/* PC: 왼쪽 입력 + 오른쪽 실시간 미리보기 / 모바일: 입력만 (미리보기는 하단 버튼) */}
+                    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_391px] lg:gap-10 xl:gap-16">
+                    <div className="min-w-0">
 
                     {/* 임시저장 이어쓰기 안내 */}
                     {draftPrompt && (
@@ -540,10 +551,12 @@ export default function MakePage() {
 
                         {/* 디자인 선택 */}
                         <div id="sec-design" className="form-anchor space-y-10">
-                        <TemplatePicker defaultValue={dv("template_type")} onChange={setTemplateType}/>
+                        <div data-preview="main">
+                            <TemplatePicker defaultValue={dv("template_type")} onChange={setTemplateType}/>
+                        </div>
 
                         {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
-                        <div className={templateType === "minihompy" ? "" : "hidden"}>
+                        <div data-preview="people" className={templateType === "minihompy" ? "" : "hidden"}>
                             <ProfilePhotoPicker defaultGroom={dv("groom_photo_url")} defaultBride={dv("bride_photo_url")}/>
                         </div>
 
@@ -670,7 +683,7 @@ export default function MakePage() {
                         </section>
 
                         {/* 인터뷰 */}
-                        <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
+                        <section data-preview="interview" className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-white ring-1 ring-slate-100">
                             <h3 className="text-xl font-bold mb-4 flex items-center gap-3 text-slate-800 border-b border-slate-100 pb-4">
                                 <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span>
                                 <span className="flex-1 flex items-center gap-2 flex-wrap">
@@ -721,7 +734,7 @@ export default function MakePage() {
 
                             <div className="space-y-10">
                                 {/* 메인 사진 */}
-                                <div className="space-y-4">
+                                <div data-preview="main" className="space-y-4">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-base font-bold text-slate-700">
                                             메인 슬라이드 사진 <span className="text-rose-500 text-sm">(3장 필수)</span>
@@ -790,7 +803,7 @@ export default function MakePage() {
                                 </div>
 
                                 {/* 중간(초대장) 사진 */}
-                                <div className="space-y-4">
+                                <div data-preview="message" className="space-y-4">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-base font-bold text-slate-700">초대장 대표 사진 <span className="text-rose-500 text-sm">(1장 필수)</span></label>
                                         {middlePreview && (
@@ -868,7 +881,7 @@ export default function MakePage() {
                                 </FormReveal>
 
                                 {/* 갤러리 사진 */}
-                                <div className="space-y-4">
+                                <div data-preview="gallery" className="space-y-4">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-base font-bold text-slate-700">웨딩 갤러리 사진 <span className="text-rose-500 text-sm">(1~20장)</span></label>
                                         <div className="flex items-center gap-2">
@@ -971,6 +984,10 @@ export default function MakePage() {
 
                     <div className="mt-8">
                         <SupportNudge />
+                    </div>
+                    </div>
+
+                    <LivePreview formRef={formRef} images={previewImages} formVersion={formKey}/>
                     </div>
                 </div>
             </div>

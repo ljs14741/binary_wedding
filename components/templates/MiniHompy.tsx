@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useSyncExternalStore } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Nanum_Gothic, Gaegu } from "next/font/google";
 import { Play, Pause, Copy, Phone, MessageSquare, Share, Maximize2 } from "lucide-react";
@@ -15,6 +15,7 @@ import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useGallery } from "@/components/invitation/hooks";
 import Minimi from "./Minimi";
+import { MINIHOMPY_TAB_OF, type PreviewSection } from "@/lib/preview";
 import { ParentsLine } from "@/components/invitation/ParentName";
 
 const gothic = Nanum_Gothic({ subsets: ["latin"], weight: ["400", "700", "800"], variable: "--font-gothic" });
@@ -45,11 +46,19 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 const ymd = (d: Date) => `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`;
 
 /** 웨딩홈피 템플릿 — 2000년대 미니홈피 감성 */
-export default function MiniHompy({ data, isSample = false }: TemplateProps) {
+export default function MiniHompy({ data, isSample = false, previewFocus }: TemplateProps) {
     const router = useRouter();
     const { toast } = useToast();
 
     const [tab, setTab] = useState<TabId>("home");
+
+    // 만들기 미리보기: 입력 중인 항목이 있는 탭으로 전환
+    useEffect(() => {
+        const next = previewFocus && MINIHOMPY_TAB_OF[previewFocus.section as PreviewSection];
+        // 부모 화면 입력 위치를 따라가는 외부 동기화라 effect에서 처리
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (next) setTab(next as TabId);
+    }, [previewFocus]);
     const [isWriteOpen, setIsWriteOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<GuestbookEntry | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<GuestbookEntry | null>(null);
@@ -113,7 +122,7 @@ export default function MiniHompy({ data, isSample = false }: TemplateProps) {
                             </button>}
                         </div>
 
-                        <div className="p-4 min-h-[560px]">
+                        <div data-preview-section="main people message calendar location notice interview gallery gift" className="p-4 min-h-[560px]">
                             {tab === "home" && <HomeTab data={data} wd={wd} timeLeft={timeLeft} isPlaying={isPlaying} mainIdx={mainSlide.current} onGo={setTab}/>}
                             {tab === "profile" && <ProfileTab data={data} isSample={isSample} toast={toast}/>}
                             {tab === "photo" && <PhotoTab data={data} gallery={gallery}/>}

@@ -76,7 +76,7 @@ export default async function EditPage({ params }: PageProps) {
         <div className="min-h-screen bg-[#FDFCFB] font-sans selection:bg-rose-100 flex flex-col">
             <SiteHeader />
             <div className="flex-1 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl lg:max-w-6xl mx-auto">
                     <div className="text-center mb-16 space-y-4">
                         <span className="text-blue-600 font-bold tracking-widest text-xs uppercase bg-blue-50 px-3 py-1 rounded-full">Edit Mode</span>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight">청첩장 수정하기</h1>

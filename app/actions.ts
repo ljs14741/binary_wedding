@@ -588,6 +588,16 @@ export async function updateInvitation(formData: FormData) {
     redirect(`/${url_id}`);
 }
 
+/** 만들기·수정 미리보기 지도용 좌표. 못 찾거나 제한 걸리면 null */
+export async function getPreviewCoords(address: string): Promise<{ lat: number; lng: number } | null> {
+    const query = String(address ?? "").trim().slice(0, 200);
+    if (!query) return null;
+    const ip = await getClientIp();
+    const { limited } = await checkRateLimit("previewCoords", ip);
+    if (limited) return null;
+    return getCoords(query);
+}
+
 async function getCoords(address: string) {
     try {
         const res = await fetch(`https://maps.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(address)}`, {

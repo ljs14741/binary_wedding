@@ -82,8 +82,8 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                     </button>
                 </div>}
 
-                {/* 1. 메인 섹션 */}
-                <section className="relative h-[100vh] overflow-hidden">
+                {/* 1. 메인 섹션 (data-preview-section: 만들기 미리보기에서 입력 중인 항목 위치 찾기용) */}
+                <section data-preview-section="main" className="relative h-[100vh] overflow-hidden">
                     <KenBurnsImage>
                         <AnimatePresence mode="wait">
                             {data.mainImages.length > 0 ? (
@@ -125,7 +125,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                 </section>
 
                 {/* 2. 초대글 */}
-                <section className="py-28 px-10 text-center bg-white">
+                <section data-preview-section="people message" className="py-28 px-10 text-center bg-white">
                     <FadeIn>
                         <Heart className="mx-auto text-rose-200 mb-10" size={26}/>
                         <h2 className="font-serif text-2xl mb-12 tracking-[0.15em] font-bold italic">초대합니다</h2>
@@ -161,7 +161,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                 </section>
 
                 {/* 3. 달력 & 디데이 */}
-                <section className="py-24 bg-[#FCFAF8] text-center border-y border-[#F3EFEA]">
+                <section data-preview-section="calendar" className="py-24 bg-[#FCFAF8] text-center border-y border-[#F3EFEA]">
                     <FadeIn>
                         <h3 className="font-serif text-2xl text-gray-800 italic font-bold">{wd.year}년 {wd.month + 1}월 {wd.day}일</h3>
                         <p className="font-serif text-rose-300 mt-2 font-bold tracking-widest text-sm uppercase">
@@ -202,7 +202,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                 </section>
 
                 {/* 4. 오시는 길 */}
-                <section className="pt-24 pb-12 px-8 bg-white">
+                <section data-preview-section="location notice" className="pt-24 pb-12 px-8 bg-white">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">오시는 길</h3>
                         <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Location</p>
@@ -266,7 +266,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
                 {/* 5. 인터뷰 */}
                 {data.interviews.length > 0 && (
-                    <section className="py-24 px-10 bg-[#FAF9F7] text-center border-y border-[#F3EFEA]">
+                    <section data-preview-section="interview" className="py-24 px-10 bg-[#FAF9F7] text-center border-y border-[#F3EFEA]">
                         <FadeIn>
                             <Heart className="mx-auto text-rose-50 mb-8" size={24}/>
                             <h3 className="font-serif text-2xl text-gray-800 mb-2 italic">우리의 이야기</h3>
@@ -281,7 +281,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
                 {/* 6. 웨딩 갤러리 */}
                 {data.gallery.length > 0 && (
-                    <section className="py-24 bg-white">
+                    <section data-preview-section="gallery" className="py-24 bg-white">
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩 갤러리</h3>
                         <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
 
@@ -333,7 +333,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                 )}
 
                 {/* 7. 마음 전하실 곳 */}
-                <section className="py-24 px-8 bg-[#FBF9F7]">
+                <section data-preview-section="gift" className="py-24 px-8 bg-[#FBF9F7]">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter italic font-bold">마음 전하실 곳</h3>
                         <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gift</p>

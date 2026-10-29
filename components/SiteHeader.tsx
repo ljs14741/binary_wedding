@@ -65,14 +65,15 @@ export default function SiteHeader() {
                 </Link>
                 <nav className="flex gap-2 sm:gap-4 md:gap-6 text-[12px] sm:text-[13px] md:text-[14px] font-bold text-slate-700 items-center shrink-0">
                     {/* 데스크톱 네비 */}
-                    <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
-                        <MessageCircle size={16} /> 문의하기
+                    {/* 1024~1279px 은 메뉴가 로고와 겹쳐서 아이콘만 */}
+                    <a href={KAKAO_CHAT_URL} target="_blank" rel="noopener noreferrer" title="문의하기" aria-label="문의하기" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
+                        <MessageCircle size={16} /> <span className="hidden xl:inline">문의하기</span>
                     </a>
-                    <button onClick={() => setIsDonateOpen(true)} className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
-                        <Coffee size={16} /> 후원하기
+                    <button onClick={() => setIsDonateOpen(true)} title="후원하기" aria-label="후원하기" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
+                        <Coffee size={16} /> <span className="hidden xl:inline">후원하기</span>
                     </button>
-                    <button onClick={() => setIsShareOpen(true)} className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
-                        <Share2 size={16} /> 공유하기
+                    <button onClick={() => setIsShareOpen(true)} title="공유하기" aria-label="공유하기" className="hover:text-rose-600 transition-colors hidden lg:flex items-center gap-1">
+                        <Share2 size={16} /> <span className="hidden xl:inline">공유하기</span>
                     </button>
                     <div className="w-px h-3 bg-slate-300 hidden lg:block mx-1"></div>
                     <Link href="/#samples" className="hover:text-rose-600 transition-colors cursor-pointer flex items-center py-2 px-2 sm:px-0">

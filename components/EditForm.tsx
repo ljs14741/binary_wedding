@@ -2,7 +2,7 @@
 
 import { updateInvitation } from "@/app/actions";
 import { useToast } from "@/components/ui/ToastProvider";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
     Upload, Calendar, MapPin, Heart, Car, MessageCircle, CreditCard,
     User, Users, ChevronRight, Image as ImageIcon, X, ChevronLeft, Save, Share2, Trash2
@@ -17,6 +17,7 @@ import FormSectionNav from "@/components/FormSectionNav";
 import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
+import LivePreview from "@/components/LivePreview";
 
 /** 상단 바로가기 칩 */
 const EDIT_SECTIONS = [
@@ -37,6 +38,7 @@ export default function EditForm({ initialData }: EditFormProps) {
     const [useInterview, setUseInterview] = useState(
         () => (initialData.interviews?.length ?? 0) > 0
     );
+    const formRef = useRef<HTMLFormElement>(null);
 
     // --------------------------------------------------------
     // 1. 사진 상태 관리 (메인, 중간, 갤러리)
@@ -331,6 +333,13 @@ export default function EditForm({ initialData }: EditFormProps) {
         setLoading(true);
     };
 
+    // 실시간 미리보기 사진: 새로 올린 게 없으면 기존 사진
+    const previewImages = useMemo(() => ({
+        main: mainPreviews.length > 0 ? mainPreviews : (initialData.main_photo_url ? JSON.parse(initialData.main_photo_url) : []),
+        middle: middlePreview ?? initialData.middle_photo_url ?? "",
+        gallery: galleryPreviews.length > 0 ? galleryPreviews : (initialData.gallery || []),
+    }), [mainPreviews, middlePreview, galleryPreviews, initialData]);
+
     // 메모리 정리
     useEffect(() => {
         return () => {
@@ -342,18 +351,22 @@ export default function EditForm({ initialData }: EditFormProps) {
     }, []);
 
     return (
-        <>
+        // PC: 왼쪽 입력 + 오른쪽 실시간 미리보기 / 모바일: 입력만 (미리보기는 하단 버튼)
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_391px] lg:gap-10 xl:gap-16">
+        <div className="min-w-0">
         <FormSectionNav sections={EDIT_SECTIONS}/>
-        <form action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
+        <form ref={formRef} action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
             <input type="hidden" name="url_id" value={initialData.url_id} />
             <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="afterInteractive" />
 
             {/* 디자인 선택 */}
             <div id="sec-design" className="form-anchor space-y-10">
-            <TemplatePicker defaultValue={initialData.template_type} onChange={setTemplateType}/>
+            <div data-preview="main">
+                <TemplatePicker defaultValue={initialData.template_type} onChange={setTemplateType}/>
+            </div>
 
             {/* 웨딩홈피 프로필 사진 (선택) - 템플릿 바꿔도 올린 사진 유지하려고 숨기기만 함 */}
-            <div className={templateType === "minihompy" ? "" : "hidden"}>
+            <div data-preview="people" className={templateType === "minihompy" ? "" : "hidden"}>
                 <ProfilePhotoPicker defaultGroom={initialData.groom_photo_url} defaultBride={initialData.bride_photo_url}/>
             </div>
 
@@ -473,7 +486,7 @@ export default function EditForm({ initialData }: EditFormProps) {
             </section>
 
             {/* 🎤 인터뷰 섹션 */}
-            <section className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
+            <section data-preview="interview" className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white ring-1 ring-slate-100">
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-3 text-slate-800 border-b pb-4">
                     <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm">🎤</span>
                     <span className="flex-1 flex items-center gap-2 flex-wrap">
@@ -517,7 +530,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                 </h3>
                 <p className="-mt-4 mb-8 text-xs text-slate-500 bg-slate-50 rounded-xl px-4 py-3">사진을 바꿀 때만 새로 올리면 돼요. 1장당 15MB까지, 올릴 때 자동으로 용량을 줄여요.</p>
                 <div className="space-y-12">
-                    <div className="space-y-4">
+                    <div data-preview="main" className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <label className="text-base font-bold text-slate-700">메인 슬라이드 사진 <span className="text-rose-500 text-sm">(3장 필수)</span></label>
                             <div className="flex items-center gap-2">
@@ -573,7 +586,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                         {isMainUploading && <p className="text-[11px] text-blue-500 text-center">메인 사진 업로드 중입니다...</p>}
                     </div>
 
-                    <div className="space-y-4">
+                    <div data-preview="message" className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <label className="text-base font-bold text-slate-700">초대장 대표 사진 <span className="text-rose-500 text-sm">(1장 필수)</span></label>
                             {middlePreview && (
@@ -653,7 +666,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                     </div>
                     </FormReveal>
 
-                    <div className="space-y-4">
+                    <div data-preview="gallery" className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <label className="text-base font-bold text-slate-700">웨딩 갤러리 <span className="text-rose-500 text-sm">(1~20장)</span></label>
                             <div className="flex items-center gap-2">
@@ -720,7 +733,10 @@ export default function EditForm({ initialData }: EditFormProps) {
         <div className="pb-20">
             <SupportNudge />
         </div>
-        </>
+        </div>
+
+        <LivePreview formRef={formRef} images={previewImages}/>
+        </div>
     );
 }
 

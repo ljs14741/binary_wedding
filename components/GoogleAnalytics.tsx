@@ -9,8 +9,8 @@ const GA_MEASUREMENT_ID =
 export default function GoogleAnalytics() {
     const pathname = usePathname();
 
-    // 관리자 페이지는 수집 안 함
-    if (!GA_MEASUREMENT_ID || pathname?.startsWith("/admin")) return null;
+    // 관리자·미리보기(만들기 화면 안 iframe) 페이지는 수집 안 함
+    if (!GA_MEASUREMENT_ID || pathname?.startsWith("/admin") || pathname?.startsWith("/preview")) return null;
 
     return (
         <>
