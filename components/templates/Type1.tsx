@@ -6,8 +6,7 @@ import { Noto_Serif_KR } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Phone, Navigation, ChevronDown, ChevronUp,
-    MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus, Maximize2,
-    TrainFront, Bus, SquareParking
+    MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus, Maximize2
 } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
 import { FlowerPetals, KenBurnsImage } from "@/components/effects";
@@ -176,11 +175,11 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
 
                     <FadeIn delay={0.3}>
                         <div data-preview-section="people" className="space-y-6 text-gray-800 font-serif mb-12 text-lg">
-                            <div><span className="text-gray-400 font-sans text-sm mr-3">신랑</span>
+                            <div><span className="text-gray-500 font-sans text-sm mr-3">신랑</span>
                                 <b>{data.groom.name}</b>
                                 {(data.groom.father || data.groom.mother) && <><span className="text-gray-300 mx-2">|</span> <ParentsLine p={data.groom}/></>}
                             </div>
-                            <div><span className="text-gray-400 font-sans text-sm mr-3">신부</span>
+                            <div><span className="text-gray-500 font-sans text-sm mr-3">신부</span>
                                 <b>{data.bride.name}</b>
                                 {(data.bride.father || data.bride.mother) && <><span className="text-gray-300 mx-2">|</span> <ParentsLine p={data.bride}/></>}
                             </div>
@@ -222,7 +221,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                                     {i > 0 && <span className="text-2xl font-bold text-gray-400 mb-6 opacity-70">:</span>}
                                     <div className="flex flex-col items-center">
                                         <span className="text-3xl font-serif tabular-nums">{String(timeLeft[key]).padStart(2, '0')}</span>
-                                        <span className="text-[9px] text-gray-400 mt-2 font-bold tracking-[0.2em] font-sans">{label}</span>
+                                        <span className="text-[10px] text-gray-500 mt-2 font-bold tracking-[0.2em] font-sans">{label}</span>
                                     </div>
                                 </React.Fragment>
                             ))}
@@ -237,9 +236,9 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                 <section data-preview-section="location" className="pt-24 pb-12 px-8 bg-white">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">오시는 길</h3>
-                        <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Location</p>
+                        <p className="text-center text-gray-500 text-[11px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Location</p>
                         <p className="text-center text-gray-800 font-bold text-lg mb-1">{data.location} {data.detail}</p>
-                        <p className="text-center text-gray-400 text-[13px] mb-12 font-serif">{data.address}</p>
+                        <p className="text-center text-gray-600 text-[14px] mb-12 font-serif">{data.address}</p>
                     </FadeIn>
                     <FadeIn delay={0.2}>
                         <NaverMap lat={data.location_lat} lng={data.location_lng}
@@ -262,10 +261,10 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                             {!data.transport.subway && !data.transport.bus && !data.transport.parking && (
                                 <PreviewHint>지하철·버스·주차 안내를 쓰면 여기에 보여요</PreviewHint>
                             )}
-                            {([["지하철", TrainFront, data.transport.subway], ["버스", Bus, data.transport.bus], ["주차", SquareParking, data.transport.parking]] as const).map(([label, Icon, text]) => text && (
+                            {([["지하철", "🚇", data.transport.subway], ["버스", "🚌", data.transport.bus], ["주차", "🅿️", data.transport.parking]] as const).map(([label, emoji, text]) => text && (
                                 <div key={label} className="flex gap-4 sm:gap-5 min-w-0">
                                     <span className="shrink-0 w-[4.5rem] h-7 flex items-center gap-1.5 text-[12px] font-bold text-gray-700 whitespace-nowrap">
-                                        <Icon size={15} strokeWidth={1.75} className="text-rose-400"/>{label}
+                                        <span className="text-[14px] leading-none" aria-hidden="true">{emoji}</span>{label}
                                     </span>
                                     <p className="text-gray-600 flex-1 min-w-0 leading-relaxed text-sm whitespace-pre-line break-words pt-[3px]">{text}</p>
                                 </div>
@@ -278,7 +277,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                         )}
                         {noticeLines(data.notice).length > 0 && (
                             <div data-preview-section="notice" className="mt-12 bg-[#FBFAF8] border border-gray-100 rounded-3xl px-6 py-8 text-left">
-                                <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-6 italic font-bold">Notice</p>
+                                <p className="text-center text-gray-500 text-[11px] tracking-[0.3em] uppercase font-sans mb-6 italic font-bold">Notice</p>
                                 <ul className="space-y-3">
                                     {noticeLines(data.notice).map((line, i) => (
                                         <li key={i} className="flex gap-3 text-sm text-gray-600 leading-relaxed">
@@ -310,7 +309,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                         <FadeIn>
                             <Heart className="mx-auto text-rose-50 mb-8" size={24}/>
                             <h3 className="font-serif text-2xl text-gray-800 mb-2 italic">우리의 이야기</h3>
-                            <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">The Story</p>
+                            <p className="text-center text-gray-500 text-[11px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">The Story</p>
                             <button onClick={() => setIsInterviewOpen(true)}
                                     className="px-12 py-5 bg-white text-[#A68F7F] rounded-[2rem] text-[15px] font-bold shadow-sm hover:shadow-md transition-all border border-rose-50 active:scale-95">
                                 인터뷰 보기
@@ -323,7 +322,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                 {data.gallery.length > 0 && (
                     <section data-preview-section="gallery" className="py-24 bg-white">
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">웨딩 갤러리</h3>
-                        <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
+                        <p className="text-center text-gray-500 text-[11px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gallery</p>
 
                         <div className="px-4 space-y-4">
                             {/* 메인 뷰어: 탭하면 전체화면 */}
@@ -363,7 +362,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                             {data.gallery.length > 4 && (
                                 <div className="pt-6 flex justify-center">
                                     <button onClick={() => gallery.setExpanded(!gallery.expanded)}
-                                            className="text-gray-400 text-xs font-bold border-b border-gray-200 pb-1 flex items-center gap-1 hover:text-gray-600 transition-colors">
+                                            className="text-gray-500 text-xs font-bold border-b border-gray-300 pb-1 flex items-center gap-1 hover:text-gray-600 transition-colors">
                                         {gallery.expanded ? "접기" : "사진 더보기"} {gallery.expanded ? <ChevronUp size={14}/> : <Plus size={14}/>}
                                     </button>
                                 </div>
@@ -376,7 +375,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                 <section data-preview-section="gift" className="py-24 px-8 bg-[#FBF9F7]">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter italic font-bold">마음 전하실 곳</h3>
-                        <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gift</p>
+                        <p className="text-center text-gray-500 text-[11px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gift</p>
                     </FadeIn>
                     <div className="space-y-4">
                         {([["groom", "신랑측", accounts.groom], ["bride", "신부측", accounts.bride]] as const).map(([side, title, list]) => list.length === 0 ? (
@@ -393,12 +392,12 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                                         {list.map((acc, i) => (
                                             <div key={i} className="pt-6 first:pt-0 flex justify-between items-center">
                                                 <div className="space-y-1">
-                                                    <span className="text-[10px] text-rose-300 font-bold uppercase font-sans tracking-widest block">{accountLabel(acc.side)}</span>
+                                                    <span className="text-[10px] text-rose-400 font-bold uppercase font-sans tracking-widest block">{accountLabel(acc.side)}</span>
                                                     <p className="text-[15px] font-bold text-gray-700">{acc.name}</p>
-                                                    <p className="text-[12px] text-gray-400 font-sans tracking-tight">{acc.bank} {acc.num}</p>
+                                                    <p className="text-[13px] text-gray-600 font-sans tracking-tight">{acc.bank} {acc.num}</p>
                                                 </div>
                                                 <button onClick={() => copyText(acc.num)}
-                                                        className="text-[11px] text-gray-400 bg-gray-50 px-4 py-2 rounded-full font-bold shadow-sm active:bg-gray-100 transition">복사</button>
+                                                        className="text-[11px] text-gray-600 bg-gray-100 px-4 py-2 rounded-full font-bold shadow-sm active:bg-gray-100 transition">복사</button>
                                             </div>
                                         ))}
                                     </div>
@@ -412,14 +411,14 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                 <section className="py-24 px-8 bg-white border-t border-gray-50">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter italic font-bold">방명록</h3>
-                        <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Guestbook</p>
+                        <p className="text-center text-gray-500 text-[11px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Guestbook</p>
                     </FadeIn>
                     <div className="space-y-5 mb-12">
                         {data.guestbook.length === 0 ? (
                             <div className="bg-[#FAF9F8] p-7 rounded-[2rem] shadow-sm text-center py-12 border border-gray-50">
                                 <Heart size={24} className="mx-auto text-rose-200 fill-rose-100 mb-4"/>
-                                <p className="text-gray-400 text-sm leading-relaxed">아직 작성된 메시지가 없습니다.</p>
-                                <p className="text-gray-400 text-sm mt-1">첫 번째 축하 글을 남겨주세요! 💌</p>
+                                <p className="text-gray-500 text-sm leading-relaxed">아직 작성된 메시지가 없습니다.</p>
+                                <p className="text-gray-500 text-sm mt-1">첫 번째 축하 글을 남겨주세요! 💌</p>
                             </div>
                         ) : data.guestbook.slice(0, visibleCount).map((g, idx) => (
                             <FadeIn key={g.id} delay={idx * 0.05}>
@@ -427,17 +426,17 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                                     <div className="flex justify-between items-center mb-3">
                                         <div className="flex items-center gap-2">
                                             <Heart size={10} className="text-rose-100 fill-rose-100 shrink-0"/>
-                                            <span className="font-bold text-gray-400 text-[11px] font-sans uppercase tracking-tight">{g.author_name}</span>
+                                            <span className="font-bold text-gray-700 text-[12px] font-sans uppercase tracking-tight">{g.author_name}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[9px] text-gray-300 font-sans tracking-wider">
+                                            <span className="text-[11px] text-gray-500 font-sans tracking-wider">
                                                 {formatGuestbookDate(g.created_at)}
                                             </span>
                                             {!isSample && (
                                                 <div className="flex gap-1">
-                                                    <button type="button" onClick={() => setEditTarget(g)} className="text-[10px] text-gray-400 hover:text-rose-500 font-bold">수정</button>
-                                                    <span className="text-gray-200">|</span>
-                                                    <button type="button" onClick={() => setDeleteTarget(g)} className="text-[10px] text-gray-400 hover:text-rose-500 font-bold">삭제</button>
+                                                    <button type="button" onClick={() => setEditTarget(g)} className="text-[11px] text-gray-500 hover:text-rose-500 font-bold">수정</button>
+                                                    <span className="text-gray-300">|</span>
+                                                    <button type="button" onClick={() => setDeleteTarget(g)} className="text-[11px] text-gray-500 hover:text-rose-500 font-bold">삭제</button>
                                                 </div>
                                             )}
                                         </div>
@@ -453,12 +452,12 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                                 <div className="flex justify-center gap-6">
                                     {visibleCount < data.guestbook.length ? (
                                         <button onClick={() => setVisibleCount(data.guestbook.length)}
-                                                className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">
+                                                className="py-4 text-gray-500 text-[11px] font-bold flex items-center gap-2 hover:text-gray-700 transition-colors uppercase tracking-[0.2em]">
                                             전체 보기 <ChevronDown size={14}/>
                                         </button>
                                     ) : (
                                         <button onClick={() => setVisibleCount(3)}
-                                                className="py-4 text-gray-300 text-[11px] font-bold flex items-center gap-2 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]">
+                                                className="py-4 text-gray-500 text-[11px] font-bold flex items-center gap-2 hover:text-gray-700 transition-colors uppercase tracking-[0.2em]">
                                             접기 <ChevronUp size={14}/>
                                         </button>
                                     )}
