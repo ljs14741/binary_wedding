@@ -22,6 +22,7 @@ import { ParentsLine } from "@/components/invitation/ParentName";
 import InterviewModal from "@/components/invitation/InterviewModal";
 import { GuestbookWriteModal, GuestbookEditModal, GuestbookDeleteModal } from "@/components/invitation/GuestbookModals";
 import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
+import MadeWithLink from "@/components/invitation/MadeWithLink";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useMainSlide, useGallery } from "@/components/invitation/hooks";
 
@@ -475,8 +476,22 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                     </button>
                 </section>
 
-                <footer className="py-20 bg-white text-center opacity-30 text-[9px] tracking-[0.6em] text-gray-400 font-light font-sans uppercase">
-                    Binary Wedding Service
+                {/* 맺음말 + 맨 끝 Binary Wedding 링크 (하트만 살짝 두근거림) */}
+                <footer className="pt-16 pb-12 bg-white text-center">
+                    <div className="flex items-center justify-center gap-3 text-rose-200 mb-5" aria-hidden="true">
+                        <span className="w-10 h-px bg-current"/>
+                        <span className="text-[13px]">♡</span>
+                        <span className="w-10 h-px bg-current"/>
+                    </div>
+                    <p className="font-[family-name:var(--font-serif)] text-[14px] text-gray-500 tracking-wide">함께해 주셔서 감사합니다</p>
+                    <MadeWithLink template="classic"
+                                  className="mt-6 inline-flex items-center gap-1.5 min-h-[40px] px-4 text-[10px] tracking-[0.25em] text-gray-400 font-light font-sans">
+                        made with
+                        <motion.span className="inline-block text-rose-300 text-[11px]"
+                                     animate={{ scale: [1, 1.25, 1, 1.15, 1] }}
+                                     transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1.8 }}>♥</motion.span>
+                        Binary Wedding
+                    </MadeWithLink>
                 </footer>
 
                 {/* 모달 */}

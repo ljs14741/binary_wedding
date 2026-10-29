@@ -18,6 +18,7 @@ import Minimi from "./Minimi";
 import { useBlockedText, useIsPreview, PreviewHint } from "@/components/invitation/PreviewMode";
 import { MINIHOMPY_TAB_OF, MINIHOMPY_SECTIONS_OF_TAB, type PreviewSection } from "@/lib/preview";
 import { ParentsLine } from "@/components/invitation/ParentName";
+import MadeWithLink from "@/components/invitation/MadeWithLink";
 
 const gothic = Nanum_Gothic({ subsets: ["latin"], weight: ["400", "700", "800"], variable: "--font-gothic" });
 const gaegu = Gaegu({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-gaegu" });
@@ -102,11 +103,17 @@ export default function MiniHompy({ data, isSample = false, previewFocus }: Temp
             {data.bgm && <audio ref={audioRef} loop preload="none" src={data.bgm}/>}
 
             <div className="w-full max-w-[430px] px-3 py-5 flex flex-col gap-2">
-                {/* 방문자 카운터 */}
-                <div className="flex justify-end items-center gap-2 text-[10px] tracking-wider text-[#4a6b85] px-1">
-                    <span>TODAY <b className="text-[#FF6B35]">{counter.today}</b></span>
-                    <span className="opacity-40">|</span>
-                    <span>TOTAL <b>{counter.total.toLocaleString()}</b></span>
+                {/* 방문자 카운터 + 싸이월드 하단 메뉴 같은 내 미니홈피 만들기 링크 */}
+                <div className="flex justify-between items-center gap-2 text-[10px] tracking-wider text-[#4a6b85] px-1">
+                    <MadeWithLink template="minihompy"
+                                  className="inline-flex items-center min-h-[32px] -my-1.5 px-2 rounded-md border border-[#9dbdd6] bg-white/60 text-[#1f3d55] tracking-normal active:scale-95">
+                        🏠 내 미니홈피 만들기
+                    </MadeWithLink>
+                    <div className="flex items-center gap-2">
+                        <span>TODAY <b className="text-[#FF6B35]">{counter.today}</b></span>
+                        <span className="opacity-40">|</span>
+                        <span>TOTAL <b>{counter.total.toLocaleString()}</b></span>
+                    </div>
                 </div>
 
                 {/* 웨딩홈피 창 */}
