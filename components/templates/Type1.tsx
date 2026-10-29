@@ -6,7 +6,8 @@ import { Noto_Serif_KR } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Phone, Navigation, ChevronDown, ChevronUp,
-    MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus, Maximize2
+    MessageSquare, Music, Share, Heart, ChevronLeft, ChevronRight, Plus, Maximize2,
+    TrainFront, Bus, SquareParking
 } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
 import { FlowerPetals, KenBurnsImage } from "@/components/effects";
@@ -261,10 +262,12 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                             {!data.transport.subway && !data.transport.bus && !data.transport.parking && (
                                 <PreviewHint>지하철·버스·주차 안내를 쓰면 여기에 보여요</PreviewHint>
                             )}
-                            {[["지하철", data.transport.subway], ["버스", data.transport.bus], ["주차", data.transport.parking]].map(([label, text]) => text && (
+                            {([["지하철", TrainFront, data.transport.subway], ["버스", Bus, data.transport.bus], ["주차", SquareParking, data.transport.parking]] as const).map(([label, Icon, text]) => text && (
                                 <div key={label} className="flex gap-4 sm:gap-5 min-w-0">
-                                    <span className="shrink-0 w-12 sm:w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">{label}</span>
-                                    <p className="text-gray-500 font-light flex-1 min-w-0 leading-relaxed text-sm whitespace-pre-line break-words">{text}</p>
+                                    <span className="shrink-0 w-[4.5rem] h-7 flex items-center gap-1.5 text-[12px] font-bold text-gray-700 whitespace-nowrap">
+                                        <Icon size={15} strokeWidth={1.75} className="text-rose-400"/>{label}
+                                    </span>
+                                    <p className="text-gray-600 flex-1 min-w-0 leading-relaxed text-sm whitespace-pre-line break-words pt-[3px]">{text}</p>
                                 </div>
                             ))}
                         </div>
@@ -278,7 +281,7 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                                 <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-6 italic font-bold">Notice</p>
                                 <ul className="space-y-3">
                                     {noticeLines(data.notice).map((line, i) => (
-                                        <li key={i} className="flex gap-3 text-sm text-gray-500 font-light leading-relaxed">
+                                        <li key={i} className="flex gap-3 text-sm text-gray-600 leading-relaxed">
                                             <span className="text-rose-300 shrink-0">·</span>
                                             <span className="flex-1 min-w-0 break-words">{line}</span>
                                         </li>
