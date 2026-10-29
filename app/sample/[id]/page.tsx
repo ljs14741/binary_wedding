@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             title: `${tpl.name} 모바일 청첩장 샘플 - Binary Wedding`,
             description: tpl.description,
         },
+        alternates: { canonical: tpl.samplePath },
     };
 }
 
