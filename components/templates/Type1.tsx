@@ -14,7 +14,7 @@ import ReminderSection from "@/components/ReminderSection";
 import type { TemplateProps, GuestbookEntry } from "@/components/invitation/types";
 import { noticeLines } from "@/components/invitation/types";
 import FadeIn from "@/components/invitation/FadeIn";
-import { useBlockedText } from "@/components/invitation/PreviewMode";
+import { useBlockedText, PreviewHint } from "@/components/invitation/PreviewMode";
 import NaverMap from "@/components/invitation/NaverMap";
 import GalleryLightbox from "@/components/invitation/GalleryLightbox";
 import ContactModal from "@/components/invitation/ContactModal";
@@ -257,6 +257,9 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                             ))}
                         </div>
                         <div data-preview-section="transport" className="space-y-8 text-[14px] border-t border-gray-50 pt-10 text-left">
+                            {!data.transport.subway && !data.transport.bus && !data.transport.parking && (
+                                <PreviewHint>지하철·버스·주차 안내를 쓰면 여기에 보여요</PreviewHint>
+                            )}
                             {[["지하철", data.transport.subway], ["버스", data.transport.bus], ["주차", data.transport.parking]].map(([label, text]) => text && (
                                 <div key={label} className="flex gap-4 sm:gap-5 min-w-0">
                                     <span className="shrink-0 w-12 sm:w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">{label}</span>
@@ -266,6 +269,9 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                         </div>
 
                         {/* 안내사항 (비면 안 보임) */}
+                        {noticeLines(data.notice).length === 0 && (
+                            <PreviewHint section="notice" className="mt-12">안내사항을 쓰면 여기에 보여요 (한 줄에 하나씩)</PreviewHint>
+                        )}
                         {noticeLines(data.notice).length > 0 && (
                             <div data-preview-section="notice" className="mt-12 bg-[#FBFAF8] border border-gray-100 rounded-3xl px-6 py-8 text-left">
                                 <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-6 italic font-bold">Notice</p>
@@ -369,7 +375,9 @@ export default function Type1({ data, isSample = false, previewFocus }: Template
                         <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Gift</p>
                     </FadeIn>
                     <div className="space-y-4">
-                        {([["groom", "신랑측", accounts.groom], ["bride", "신부측", accounts.bride]] as const).map(([side, title, list]) => list.length > 0 && (
+                        {([["groom", "신랑측", accounts.groom], ["bride", "신부측", accounts.bride]] as const).map(([side, title, list]) => list.length === 0 ? (
+                            <PreviewHint key={side}>{title} 계좌는 은행명을 쓰면 여기에 보여요</PreviewHint>
+                        ) : (
                             <div key={side} data-preview-detail={side} className="border border-rose-50 rounded-[2rem] overflow-hidden shadow-sm shadow-rose-50/20">
                                 <button onClick={() => setOpenAccount(openAccount === side ? null : side)}
                                         className={`w-full flex justify-between items-center p-7 transition-colors ${openAccount === side ? 'bg-rose-50/30 text-rose-400' : 'bg-white text-gray-700'}`}>

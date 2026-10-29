@@ -9,6 +9,18 @@ import type { PreviewMessage, PreviewPayload, PreviewSection } from "@/lib/previ
 const FLASH_MS = 1600;
 /** 칸을 빠르게 옮겨 다닐 때 마지막 칸에서만 움직이도록 기다림 */
 const FOCUS_SETTLE_MS = 220;
+/** 이동했을 때 위쪽 여유 (딱 붙으면 무슨 부분인지 헷갈림) */
+const SCROLL_MARGIN = 28;
+
+/**
+ * 문서 기준 실제 위치. 등장 애니메이션(아래서 떠오르기)이 끝나기 전이면 getBoundingClientRect가
+ * 그만큼 아래로 나와서, 애니메이션과 상관없는 레이아웃 위치(offsetTop)로 계산
+ */
+function layoutTop(el: HTMLElement): number {
+    let y = 0;
+    for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
+    return y;
+}
 
 /**
  * 만들기·수정 화면 왼쪽(모바일은 전체화면) iframe 안에서 도는 실시간 미리보기.
@@ -55,10 +67,11 @@ export default function PreviewPage() {
         const el = document.querySelector<HTMLElement>(`[data-preview-section~="${section}"]`);
         if (!el) return false;
         // scrollIntoView는 바깥 만들기 화면까지 같이 스크롤해서 쓰면 안 됨 → 미리보기 안에서만 스크롤
-        // 이미 화면 위쪽에 보이면 움직이지 않고 강조만 (왔다갔다 줄이기)
-        const rect = el.getBoundingClientRect();
-        const visible = rect.top >= -8 && rect.top < window.innerHeight * 0.55;
-        if (!visible) window.scrollTo({ top: window.scrollY + rect.top, behavior: "smooth" });
+        // 이미 화면 위쪽에 다 보이면 움직이지 않고 강조만 (왔다갔다 줄이기)
+        const top = layoutTop(el);
+        const viewTop = top - window.scrollY;
+        const visible = viewTop >= 0 && viewTop < window.innerHeight * 0.5;
+        if (!visible) window.scrollTo({ top: Math.max(0, top - SCROLL_MARGIN), behavior: "smooth" });
         el.classList.remove("preview-flash");
         void el.offsetWidth; // 같은 곳 연속 강조 시 애니메이션 다시 시작
         el.classList.add("preview-flash");

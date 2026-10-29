@@ -15,7 +15,7 @@ import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useGallery } from "@/components/invitation/hooks";
 import Minimi from "./Minimi";
-import { useBlockedText, useIsPreview } from "@/components/invitation/PreviewMode";
+import { useBlockedText, useIsPreview, PreviewHint } from "@/components/invitation/PreviewMode";
 import { MINIHOMPY_TAB_OF, MINIHOMPY_SECTIONS_OF_TAB, type PreviewSection } from "@/lib/preview";
 import { ParentsLine } from "@/components/invitation/ParentName";
 
@@ -345,6 +345,7 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
                 </div>
             </div>
             <div data-preview-section="contact" className="mt-3 border-t border-dashed border-[#c9dbe8] pt-2 space-y-1.5">
+                {!contacts.some((c) => c.phone) && <PreviewHint className="!py-2">{role} 연락처를 쓰면 여기에 보여요</PreviewHint>}
                 {contacts.map((c) => c.phone && (
                     <div key={c.label} className="flex items-center justify-between text-[11px]">
                         <span><span className="text-[#7a98b0] mr-1.5">{c.label}</span>{c.name}
@@ -506,6 +507,7 @@ function GuestTab({ data, isSample, onWrite, onEdit, onDelete }: {
 /* ───────────── 탭: 선물(도토리) ───────────── */
 
 function GiftTab({ groom, bride, onCopy }: { groom: TemplateProps["data"]["accounts"]; bride: TemplateProps["data"]["accounts"]; onCopy: (t: string) => void }) {
+    const isPreview = useIsPreview();
     const groups = [["신랑측", groom], ["신부측", bride]] as const;
     const hasAny = groom.length + bride.length > 0;
     return (
@@ -515,7 +517,8 @@ function GiftTab({ groom, bride, onCopy }: { groom: TemplateProps["data"]["accou
                 🌰 참석이 어려우신 분들을 위해 계좌를 남겨요.<br/>
                 따뜻한 마음만으로도 충분히 감사합니다.
             </p>
-            {!hasAny && <p className="py-8 text-center text-[#999]">등록된 계좌가 없습니다.</p>}
+            {!hasAny && <PreviewHint>은행명을 쓰면 여기에 계좌가 보여요</PreviewHint>}
+            {!hasAny && !isPreview && <p className="py-8 text-center text-[#999]">등록된 계좌가 없습니다.</p>}
             {groups.map(([title, list]) => list.length > 0 && (
                 <Box key={title} title={`${title} 도토리함`}>
                     <ul className="divide-y divide-[#e3edf4]">
@@ -570,6 +573,7 @@ function MapTab({ data, wd, isSample }: { data: TemplateProps["data"]; wd: WD; i
                     </a>
                 ))}
             </div>
+            {transports.length === 0 && <PreviewHint section="transport">지하철·버스·주차 안내를 쓰면 여기에 보여요</PreviewHint>}
             {transports.length > 0 && (
                 <div data-preview-section="transport">
                 <Box title="교통 안내">

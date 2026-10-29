@@ -3,7 +3,7 @@
 import React from "react";
 import { X, Phone, MessageSquare } from "lucide-react";
 import type { Person } from "./types";
-import { useBlockedText, useIsPreview } from "./PreviewMode";
+import { useBlockedText, useIsPreview, PreviewHint } from "./PreviewMode";
 
 type Props = {
     groom: Person;
@@ -37,6 +37,9 @@ export default function ContactModal({ groom, bride, isSample, toast, onClose }:
                     {sides.map(({ title, label, p }) => (
                         <div key={title} className="space-y-8">
                             <p className="text-[12px] text-rose-300 font-bold font-sans uppercase tracking-[0.3em] border-b border-rose-50 pb-3 text-left">{title}</p>
+                            {!p.contact && !(p.father && p.father_contact) && !(p.mother && p.mother_contact) && (
+                                <PreviewHint>{label} 연락처를 쓰면 여기에 보여요</PreviewHint>
+                            )}
                             <ContactRow label={label} name={p.name} phone={p.contact} isSample={isSample} toast={toast}/>
                             {p.father && <ContactRow label="혼주(부)" name={p.father} phone={p.father_contact || ""} isSample={isSample} toast={toast}/>}
                             {p.mother && <ContactRow label="혼주(모)" name={p.mother} phone={p.mother_contact || ""} isSample={isSample} toast={toast}/>}

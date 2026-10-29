@@ -37,3 +37,15 @@ export function useBlockedText() {
     const isPreview = useContext(PreviewModeContext);
     return (action: BlockedAction) => (isPreview ? PREVIEW_TEXT : SAMPLE_TEXT)[action];
 }
+
+/** 미리보기에서만: 아직 안 쓴 항목 자리를 점선 상자로 보여줌 (실제 청첩장엔 안 나옴) */
+export function PreviewHint({ children, className = "", section }: { children: React.ReactNode; className?: string; section?: string }) {
+    const isPreview = useContext(PreviewModeContext);
+    if (!isPreview) return null;
+    return (
+        <div data-preview-section={section}
+             className={`rounded-2xl border border-dashed border-rose-200 bg-rose-50/40 px-4 py-4 text-center text-[12px] leading-relaxed text-rose-400 ${className}`}>
+            {children}
+        </div>
+    );
+}
