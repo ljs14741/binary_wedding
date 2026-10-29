@@ -19,6 +19,7 @@ import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 import { DEFAULT_TEMPLATE_ID } from "@/components/templates/meta";
 import { loadMakeDraft, saveMakeDraft, clearMakeDraft, type MakeDraft } from "@/lib/makeDraft";
 import LivePreview from "@/components/LivePreview";
+import HeroTextColorPicker from "@/components/HeroTextColorPicker";
 
 /** 상단 바로가기 칩 */
 const MAKE_SECTIONS = [
@@ -524,11 +525,11 @@ export default function MakePage() {
                 <div className="max-w-4xl lg:max-w-6xl mx-auto">
                     <div className="text-center mb-16 space-y-4">
                         <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight">청첩장 만들기</h1>
-                        <p className="text-slate-500 text-sm md:text-base font-medium">아래 항목을 입력해 주세요. <span className="hidden lg:inline">오른쪽에서 바로 확인할 수 있어요.</span></p>
+                        <p className="text-slate-500 text-sm md:text-base font-medium">아래 항목을 입력해 주세요. <span className="hidden lg:inline">왼쪽에서 바로 확인할 수 있어요.</span></p>
                     </div>
 
-                    {/* PC: 왼쪽 입력 + 오른쪽 실시간 미리보기 / 모바일: 입력만 (미리보기는 하단 버튼) */}
-                    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_391px] lg:gap-10 xl:gap-16">
+                    {/* PC: 왼쪽 실시간 미리보기 + 오른쪽 입력 / 모바일: 입력만 (미리보기는 하단 버튼) */}
+                    <div className="lg:grid lg:grid-cols-[391px_minmax(0,1fr)] lg:gap-10 xl:gap-16">
                     <div className="min-w-0">
 
                     {/* 임시저장 이어쓰기 안내 */}
@@ -574,11 +575,10 @@ export default function MakePage() {
                                     <InputGroup label="신랑 성함" name="groom_name" defaultValue={dv("groom_name")} placeholder="예: 홍길동" required icon={<User size={16}/>}/>
                                     <PhoneInput label="신랑 연락처" name="groom_contact" defaultValue={dv("groom_contact")} required icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <OrderSelectGroup label="신랑 호칭" name="groom_order" defaultValue={dv("groom_order")} options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} icon={<Users size={16}/>}/>
                                 <FormReveal label="신랑 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasDraft("account_groom_bank", "account_groom_num")}>
                                     <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={dv("account_groom_bank")} defaultNum={dv("account_groom_num")} />
                                 </FormReveal>
-                                <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasDraft(...PARENT_KEYS("groom"))}>
+                                <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌·호칭" defaultOpen={hasDraft(...PARENT_KEYS("groom"))}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <InputGroup label="아버지 성함" name="groom_father" defaultValue={dv("groom_father")} placeholder="예: 홍길동" icon={<Users size={16}/>}/>
                                     <PhoneInput label="아버지 연락처" name="groom_father_contact" defaultValue={dv("groom_father_contact")} icon={<MessageCircle size={16}/>}/>
@@ -592,6 +592,12 @@ export default function MakePage() {
                                 </div>
                                 <ParentMarkSelect name="groom_mother_mark" defaultValue={dv("groom_mother_mark")}/>
                                 <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" defaultBank={dv("account_groom_m_bank")} defaultNum={dv("account_groom_m_num")} />
+                                <div className="h-px bg-slate-100 my-4"/>
+                                {/* 호칭은 부모님 성함 뒤에 "○○·○○의 장남"으로 붙어서 부모님 정보와 같이 둠 */}
+                                <div data-preview="people" className="space-y-2">
+                                    <OrderSelectGroup label="신랑 호칭" name="groom_order" defaultValue={dv("groom_order")} options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} icon={<Users size={16}/>}/>
+                                    <p className="text-[11px] text-slate-400 ml-1">부모님 성함 뒤에 ‘○○ · ○○의 장남’처럼 붙어요.</p>
+                                </div>
                                 </FormReveal>
                             </div>
                         </section>
@@ -606,11 +612,10 @@ export default function MakePage() {
                                     <InputGroup label="신부 성함" name="bride_name" defaultValue={dv("bride_name")} placeholder="예: 김영희" required icon={<User size={16}/>}/>
                                     <PhoneInput label="신부 연락처" name="bride_contact" defaultValue={dv("bride_contact")} required icon={<MessageCircle size={16}/>}/>
                                 </div>
-                                <OrderSelectGroup label="신부 호칭" name="bride_order" defaultValue={dv("bride_order")} options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} icon={<Users size={16}/>}/>
                                 <FormReveal label="신부 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasDraft("account_bride_bank", "account_bride_num")}>
                                     <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={dv("account_bride_bank")} defaultNum={dv("account_bride_num")} />
                                 </FormReveal>
-                                <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasDraft(...PARENT_KEYS("bride"))}>
+                                <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌·호칭" defaultOpen={hasDraft(...PARENT_KEYS("bride"))}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <InputGroup label="아버지 성함" name="bride_father" defaultValue={dv("bride_father")} placeholder="예: 김철수" icon={<Users size={16}/>}/>
                                     <PhoneInput label="아버지 연락처" name="bride_father_contact" defaultValue={dv("bride_father_contact")} icon={<MessageCircle size={16}/>}/>
@@ -624,6 +629,12 @@ export default function MakePage() {
                                 </div>
                                 <ParentMarkSelect name="bride_mother_mark" defaultValue={dv("bride_mother_mark")}/>
                                 <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" defaultBank={dv("account_bride_m_bank")} defaultNum={dv("account_bride_m_num")} />
+                                <div className="h-px bg-slate-100 my-4"/>
+                                {/* 호칭은 부모님 성함 뒤에 "○○·○○의 장남"으로 붙어서 부모님 정보와 같이 둠 */}
+                                <div data-preview="people" className="space-y-2">
+                                    <OrderSelectGroup label="신부 호칭" name="bride_order" defaultValue={dv("bride_order")} options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} icon={<Users size={16}/>}/>
+                                    <p className="text-[11px] text-slate-400 ml-1">부모님 성함 뒤에 ‘○○ · ○○의 장남’처럼 붙어요.</p>
+                                </div>
                                 </FormReveal>
                             </div>
                         </section>
@@ -749,6 +760,7 @@ export default function MakePage() {
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-500">권장: 9:16 세로 비율</p>
+                                    <HeroTextColorPicker defaultValue={dv("hero_text_color")} visible={templateType === "type1"}/>
 
                                     <div className={`group relative border-2 border-dashed border-slate-200 rounded-3xl ${mainPreviews.length > 0 ? "min-h-[280px]" : "min-h-[160px]"} flex flex-col items-center justify-center p-4 hover:bg-slate-50 hover:border-slate-300 transition-all overflow-hidden`}>
                                         {mainPreviews.length > 0 ? (
@@ -803,7 +815,7 @@ export default function MakePage() {
                                 </div>
 
                                 {/* 중간(초대장) 사진 */}
-                                <div data-preview="message" className="space-y-4">
+                                <div data-preview="middle" className="space-y-4">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-base font-bold text-slate-700">초대장 대표 사진 <span className="text-rose-500 text-sm">(1장 필수)</span></label>
                                         {middlePreview && (

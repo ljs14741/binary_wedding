@@ -106,3 +106,13 @@ body {
     overflow-x: clip;
   }
 }
+
+/* 실시간 미리보기에서 누른 곳 → 폼 칸 잠깐 강조 */
+@keyframes form-pick-flash {
+  0%, 60% { box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.45); }
+  100% { box-shadow: 0 0 0 3px rgba(244, 63, 94, 0); }
+}
+.form-pick-flash {
+  border-radius: 1rem;
+  animation: form-pick-flash 1.6s ease-out forwards;
+}

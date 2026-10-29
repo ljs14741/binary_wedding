@@ -86,6 +86,8 @@ model invitations {
   url_id              String                @unique(map: "url_id") @db.VarChar(50)
   password            String                @db.VarChar(255)
   template_type       String                @db.VarChar(10)
+  /// 클래식 메인 사진 위 글자색 (null=흰색, "dark"=검정)
+  hero_text_color     String?               @db.VarChar(10)
   is_active           Boolean?              @default(true)
 
   // [수정] 혼주 연락처 필드 추가됨

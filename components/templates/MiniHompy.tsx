@@ -15,7 +15,8 @@ import { KakaoSdk, shareKakao } from "@/components/invitation/KakaoShare";
 import { splitAccounts, accountLabel, formatGuestbookDate } from "@/components/invitation/accounts";
 import { useWeddingDate, useCountdown, useBgm, useGallery } from "@/components/invitation/hooks";
 import Minimi from "./Minimi";
-import { MINIHOMPY_TAB_OF, type PreviewSection } from "@/lib/preview";
+import { useBlockedText } from "@/components/invitation/PreviewMode";
+import { MINIHOMPY_TAB_OF, MINIHOMPY_SECTIONS_OF_TAB, type PreviewSection } from "@/lib/preview";
 import { ParentsLine } from "@/components/invitation/ParentName";
 
 const gothic = Nanum_Gothic({ subsets: ["latin"], weight: ["400", "700", "800"], variable: "--font-gothic" });
@@ -49,6 +50,7 @@ const ymd = (d: Date) => `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.
 export default function MiniHompy({ data, isSample = false, previewFocus }: TemplateProps) {
     const router = useRouter();
     const { toast } = useToast();
+    const blocked = useBlockedText();
 
     const [tab, setTab] = useState<TabId>("home");
 
@@ -84,7 +86,7 @@ export default function MiniHompy({ data, isSample = false, previewFocus }: Temp
         toast("복사되었습니다.");
     };
     const handleShare = () => {
-        if (isSample) { toast("샘플 화면에서는 카카오톡 공유를 사용할 수 없습니다."); return; }
+        if (isSample) { toast(blocked("share")); return; }
         shareKakao(data);
     };
     const refresh = () => router.refresh();
@@ -122,7 +124,7 @@ export default function MiniHompy({ data, isSample = false, previewFocus }: Temp
                             </button>}
                         </div>
 
-                        <div data-preview-section="main people message calendar location notice interview gallery gift" className="p-4 min-h-[560px]">
+                        <div data-preview-section={MINIHOMPY_SECTIONS_OF_TAB[tab]} className="p-4 min-h-[560px]">
                             {tab === "home" && <HomeTab data={data} wd={wd} timeLeft={timeLeft} isPlaying={isPlaying} mainIdx={mainSlide.current} onGo={setTab}/>}
                             {tab === "profile" && <ProfileTab data={data} isSample={isSample} toast={toast}/>}
                             {tab === "photo" && <PhotoTab data={data} gallery={gallery}/>}
@@ -314,10 +316,11 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
         { label: "아버지", name: p.father, phone: p.father_contact || "" },
         { label: "어머니", name: p.mother, phone: p.mother_contact || "" },
     ].filter((c) => c.name);
+    const blocked = useBlockedText();
 
     const open = (scheme: "tel" | "sms", phone: string) => {
         if (isSample) {
-            toast(scheme === "tel" ? "샘플 화면에서는 전화를 걸 수 없습니다." : "샘플 화면에서는 문자를 보낼 수 없습니다.");
+            toast(blocked(scheme === "tel" ? "call" : "sms"));
             return;
         }
         window.location.assign(`${scheme}:${phone}`);
@@ -340,7 +343,7 @@ function ProfileCard({ role, p, isSample, toast }: { role: string; p: Person; is
                     )}
                 </div>
             </div>
-            <div className="mt-3 border-t border-dashed border-[#c9dbe8] pt-2 space-y-1.5">
+            <div data-preview-section="contact" className="mt-3 border-t border-dashed border-[#c9dbe8] pt-2 space-y-1.5">
                 {contacts.map((c) => c.phone && (
                     <div key={c.label} className="flex items-center justify-between text-[11px]">
                         <span><span className="text-[#7a98b0] mr-1.5">{c.label}</span>{c.name}</span>
@@ -362,7 +365,7 @@ function ProfileTab({ data, isSample, toast }: { data: TemplateProps["data"]; is
             <ProfileCard role="신랑" p={data.groom} isSample={isSample} toast={toast}/>
             <ProfileCard role="신부" p={data.bride} isSample={isSample} toast={toast}/>
             {data.middleImage && (
-                <div className="flex justify-center pt-2">
+                <div data-preview-section="middle" className="flex justify-center pt-2">
                     <Polaroid src={data.middleImage} alt="둘이서" caption="우리 둘 ♥" className="w-[70%] rotate-1"/>
                 </div>
             )}
@@ -428,9 +431,11 @@ function DiaryTab({ data, wd }: { data: TemplateProps["data"]; wd: WD }) {
                 {data.message || "저희 두 사람의 새로운 시작을 함께 축복해 주세요."}
             </DiaryEntry>
             {data.interviews.map((iv, i) => (
-                <DiaryEntry key={i} date="" title={`Q. ${iv.q}`} weather={["🌸", "🌙", "⭐"][i % 3]}>
-                    {iv.a}
-                </DiaryEntry>
+                <div key={i} data-preview-section="interview">
+                    <DiaryEntry date="" title={`Q. ${iv.q}`} weather={["🌸", "🌙", "⭐"][i % 3]}>
+                        {iv.a}
+                    </DiaryEntry>
+                </div>
             ))}
         </div>
     );
@@ -562,6 +567,7 @@ function MapTab({ data, wd, isSample }: { data: TemplateProps["data"]; wd: WD; i
                 ))}
             </div>
             {transports.length > 0 && (
+                <div data-preview-section="transport">
                 <Box title="교통 안내">
                     <ul className="space-y-2 text-[11.5px]">
                         {transports.map(([label, text]) => (
@@ -572,6 +578,7 @@ function MapTab({ data, wd, isSample }: { data: TemplateProps["data"]; wd: WD; i
                         ))}
                     </ul>
                 </Box>
+                </div>
             )}
             <div>
                 <ReminderSection groomName={data.groom.name} brideName={data.bride.name} date={wd.date}

@@ -2,6 +2,7 @@
 
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { getTemplateComponent } from "@/components/templates";
+import { PreviewModeProvider } from "@/components/invitation/PreviewMode";
 import type { PreviewMessage, PreviewPayload, PreviewSection } from "@/lib/preview";
 
 /** 강조 표시 유지 시간 */
@@ -13,7 +14,7 @@ const FLASH_MS = 1600;
  */
 export default function PreviewPage() {
     const [payload, setPayload] = useState<PreviewPayload | null>(null);
-    const [focus, setFocus] = useState<{ section: PreviewSection; seq: number } | null>(null);
+    const [focus, setFocus] = useState<{ section: PreviewSection; detail?: string; seq: number } | null>(null);
 
     useEffect(() => {
         const onMessage = (e: MessageEvent<PreviewMessage>) => {
@@ -23,11 +24,24 @@ export default function PreviewPage() {
             // 부모가 늦게 준비된 경우 다시 알려줌
             if (msg?.type === "preview-hello") window.parent.postMessage({ type: "preview-ready" } satisfies PreviewMessage, window.location.origin);
             else if (msg?.type === "preview-data") setPayload(msg.payload);
-            else if (msg?.type === "preview-focus") setFocus({ section: msg.section, seq: msg.seq });
+            else if (msg?.type === "preview-focus") setFocus({ section: msg.section, detail: msg.detail, seq: msg.seq });
         };
         window.addEventListener("message", onMessage);
         window.parent.postMessage({ type: "preview-ready" } satisfies PreviewMessage, window.location.origin);
         return () => window.removeEventListener("message", onMessage);
+    }, []);
+
+    // 청첩장을 누르면 부모 화면에 알려서 고칠 칸을 열게 함 (버튼 원래 동작은 그대로)
+    useEffect(() => {
+        const onClick = (e: MouseEvent) => {
+            const el = (e.target as Element | null)?.closest?.<HTMLElement>("[data-preview-section]");
+            const section = el?.dataset.previewSection?.split(" ")[0] as PreviewSection | undefined;
+            if (!section) return;
+            const detail = (e.target as Element).closest<HTMLElement>("[data-preview-detail]")?.dataset.previewDetail;
+            window.parent.postMessage({ type: "preview-pick", section, detail } satisfies PreviewMessage, window.location.origin);
+        };
+        document.addEventListener("click", onClick);
+        return () => document.removeEventListener("click", onClick);
     }, []);
 
     // 아직 없는 섹션으로 가려던 경우 (예: 인터뷰 답을 쓰기 전) 나타나면 이동
@@ -80,13 +94,15 @@ export default function PreviewPage() {
                 @keyframes preview-flash { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
             `}</style>
             {payload ? (
-                createElement(getTemplateComponent(payload.templateType), {
+                <PreviewModeProvider value={true}>
+                {createElement(getTemplateComponent(payload.templateType), {
                     // 메인 사진 장수가 바뀌면 슬라이드 순번이 범위를 넘으므로 새로 그림
                     key: `${payload.templateType}-${payload.data.mainImages.length}`,
                     data: payload.data,
                     isSample: true,
                     previewFocus: focus,
-                })
+                })}
+                </PreviewModeProvider>
             ) : (
                 <div className="min-h-screen flex items-center justify-center bg-[#FAF8F6]">
                     <div className="w-6 h-6 border-2 border-rose-200 border-t-rose-400 rounded-full animate-spin" />

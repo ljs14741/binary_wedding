@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useBlockedText } from "@/components/invitation/PreviewMode";
 
 interface ReminderSectionProps {
   groomName: string;
@@ -58,6 +59,7 @@ export default function ReminderSection({
   const { toast } = useToast();
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [guideStep, setGuideStep] = useState(0);
+  const blocked = useBlockedText();
   const mapUrl = getNaverMapUrl(address);
   const dateFormatted = formatDateForSms(date);
   const icsDateStart = formatDateForIcs(date);
@@ -65,7 +67,7 @@ export default function ReminderSection({
 
   const handlePushAlarm = () => {
     if (isSample) {
-      toast("샘플 화면에서는 실제 알림 기능을 사용할 수 없습니다.");
+      toast(blocked("alarm"));
       return;
     }
   
@@ -155,7 +157,7 @@ export default function ReminderSection({
 
   const handleSms = () => {
     if (isSample) {
-      toast("샘플 화면에서는 실제 문자 기능을 사용할 수 없습니다.");
+      toast(blocked("reminderSms"));
       return;
     }
     const body = [

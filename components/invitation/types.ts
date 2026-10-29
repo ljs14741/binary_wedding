@@ -15,7 +15,7 @@ export interface Person {
     mother: string;
     father_contact?: string;
     mother_contact?: string;
-    /** 고인 표시: "" / "故" / "flower" */
+    /** 고인 표시: "" / "故" */
     father_mark?: string;
     mother_mark?: string;
     /** 웨딩홈피 프로필 사진 (없으면 미니미) */
@@ -45,6 +45,8 @@ export interface InvitationData {
     mainImages: string[];
     middleImage: string;
     ogImage?: string;
+    /** 클래식 메인 사진 위 글자색 (기본 흰색) */
+    heroTextColor?: "white" | "dark";
     /** 배경음악 경로 (빈 문자열이면 음악 없음) */
     bgm: string;
     gallery: string[];
@@ -65,5 +67,5 @@ export interface TemplateProps {
     /** 샘플 페이지 모드: 방명록 작성·전화·공유 등 실제 동작을 막고 안내 토스트를 띄운다 */
     isSample?: boolean;
     /** 만들기·수정 실시간 미리보기: 지금 입력 중인 항목 (seq 바뀔 때마다 다시 이동) */
-    previewFocus?: { section: string; seq: number } | null;
+    previewFocus?: { section: string; detail?: string; seq: number } | null;
 }

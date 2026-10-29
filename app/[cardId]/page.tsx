@@ -142,6 +142,7 @@ export default async function CardPage({ params, searchParams }: PageProps) {
         mainImages,
         middleImage: rawData.middle_photo_url || "",
         ogImage: rawData.og_photo_url || "",
+        heroTextColor: rawData.hero_text_color === "dark" ? "dark" : "white",
         bgm: resolveBgmSrc(rawData.bgm_url),
         gallery: rawData.invitation_photos.map(p => p.photo_url),
 

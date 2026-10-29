@@ -11,6 +11,11 @@ import { isValidTemplateId, DEFAULT_TEMPLATE_ID } from "@/components/templates/m
 import { BGM_NONE, bgmFormError } from "@/lib/bgm";
 import { normalizeParentMark } from "@/lib/parentMark";
 
+/** 클래식 메인 사진 위 글자색. 검정만 저장하고 나머지는 기본(흰색) */
+function readHeroTextColor(formData: FormData): string | null {
+    return formData.get("hero_text_color") === "dark" ? "dark" : null;
+}
+
 /** 폼의 template_type 값. 등록되지 않은 값이면 기본 템플릿으로 */
 function readTemplateType(formData: FormData): string {
     const v = formData.get("template_type");
@@ -325,6 +330,7 @@ export async function createInvitation(formData: FormData) {
                 url_id,
                 password: hashedPassword,
                 template_type,
+                hero_text_color: readHeroTextColor(formData),
 
                 groom_name, groom_contact, groom_order, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
                 bride_name, bride_contact, bride_order, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
@@ -522,6 +528,7 @@ export async function updateInvitation(formData: FormData) {
         where: { url_id },
         data: {
             template_type,
+            hero_text_color: readHeroTextColor(formData),
             groom_name, groom_contact, groom_order, groom_father, groom_father_contact, groom_mother, groom_mother_contact,
             bride_name, bride_contact, bride_order, bride_father, bride_father_contact, bride_mother, bride_mother_contact,
 

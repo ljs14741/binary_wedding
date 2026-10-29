@@ -18,6 +18,7 @@ import BgmPicker from "@/components/BgmPicker";
 import { bgmFormError } from "@/lib/bgm";
 import ProfilePhotoPicker from "@/components/ProfilePhotoPicker";
 import LivePreview from "@/components/LivePreview";
+import HeroTextColorPicker from "@/components/HeroTextColorPicker";
 
 /** 상단 바로가기 칩 */
 const EDIT_SECTIONS = [
@@ -351,8 +352,8 @@ export default function EditForm({ initialData }: EditFormProps) {
     }, []);
 
     return (
-        // PC: 왼쪽 입력 + 오른쪽 실시간 미리보기 / 모바일: 입력만 (미리보기는 하단 버튼)
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_391px] lg:gap-10 xl:gap-16">
+        // PC: 왼쪽 실시간 미리보기 + 오른쪽 입력 / 모바일: 입력만 (미리보기는 하단 버튼)
+        <div className="lg:grid lg:grid-cols-[391px_minmax(0,1fr)] lg:gap-10 xl:gap-16">
         <div className="min-w-0">
         <FormSectionNav sections={EDIT_SECTIONS}/>
         <form ref={formRef} action={updateInvitation} className="space-y-10" onSubmit={handleSubmit}>
@@ -384,11 +385,10 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <InputGroup label="신랑 성함" name="groom_name" defaultValue={initialData.groom_name} required icon={<User size={16}/>}/>
                         <PhoneInput label="신랑 연락처" name="groom_contact" defaultValue={initialData.groom_contact} required icon={<MessageCircle size={16}/>}/>
                     </div>
-                    <OrderSelectGroup label="신랑 호칭" name="groom_order" options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} defaultValue={initialData.groom_order} icon={<Users size={16}/>}/>
                     <FormReveal label="신랑 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasAccount("groom")}>
                         <AccountGroup label="신랑 계좌" bankName="account_groom_bank" accountNum="account_groom_num" defaultBank={getAccount("groom")?.bank_name} defaultNum={getAccount("groom")?.account_number} />
                     </FormReveal>
-                    <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasParents("groom")}>
+                    <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌·호칭" defaultOpen={hasParents("groom")}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputGroup label="아버지 성함" name="groom_father" defaultValue={initialData.groom_father} icon={<Users size={16}/>}/>
                         <PhoneInput label="아버지 연락처" name="groom_father_contact" defaultValue={initialData.groom_father_contact} icon={<MessageCircle size={16}/>}/>
@@ -402,6 +402,12 @@ export default function EditForm({ initialData }: EditFormProps) {
                     </div>
                     <ParentMarkSelect name="groom_mother_mark" defaultValue={initialData.groom_mother_mark}/>
                     <AccountGroup label="어머니 계좌" bankName="account_groom_m_bank" accountNum="account_groom_m_num" defaultBank={getAccount("groom_m")?.bank_name} defaultNum={getAccount("groom_m")?.account_number} />
+                    <div className="h-px bg-slate-100 my-4"/>
+                    {/* 호칭은 부모님 성함 뒤에 "○○·○○의 장남"으로 붙어서 부모님 정보와 같이 둠 */}
+                    <div data-preview="people" className="space-y-2">
+                        <OrderSelectGroup label="신랑 호칭" name="groom_order" options={["아들", "장남", "차남", "삼남", "사남", "외아들", "막내아들"]} defaultValue={initialData.groom_order} icon={<Users size={16}/>}/>
+                        <p className="text-[11px] text-slate-400 ml-1">부모님 성함 뒤에 ‘○○ · ○○의 장남’처럼 붙어요.</p>
+                    </div>
                     </FormReveal>
                 </div>
             </section>
@@ -416,11 +422,10 @@ export default function EditForm({ initialData }: EditFormProps) {
                         <InputGroup label="신부 성함" name="bride_name" defaultValue={initialData.bride_name} required icon={<User size={16}/>}/>
                         <PhoneInput label="신부 연락처" name="bride_contact" defaultValue={initialData.bride_contact} required icon={<MessageCircle size={16}/>}/>
                     </div>
-                    <OrderSelectGroup label="신부 호칭" name="bride_order" options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} defaultValue={initialData.bride_order} icon={<Users size={16}/>}/>
                     <FormReveal label="신부 계좌 추가" hint="축의금 받을 계좌" defaultOpen={hasAccount("bride")}>
                         <AccountGroup label="신부 계좌" bankName="account_bride_bank" accountNum="account_bride_num" defaultBank={getAccount("bride")?.bank_name} defaultNum={getAccount("bride")?.account_number} />
                     </FormReveal>
-                    <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌" defaultOpen={hasParents("bride")}>
+                    <FormReveal label="부모님 정보 추가" hint="성함·연락처·계좌·호칭" defaultOpen={hasParents("bride")}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputGroup label="아버지 성함" name="bride_father" defaultValue={initialData.bride_father} icon={<Users size={16}/>}/>
                         <PhoneInput label="아버지 연락처" name="bride_father_contact" defaultValue={initialData.bride_father_contact} icon={<MessageCircle size={16}/>}/>
@@ -434,6 +439,12 @@ export default function EditForm({ initialData }: EditFormProps) {
                     </div>
                     <ParentMarkSelect name="bride_mother_mark" defaultValue={initialData.bride_mother_mark}/>
                     <AccountGroup label="어머니 계좌" bankName="account_bride_m_bank" accountNum="account_bride_m_num" defaultBank={getAccount("bride_m")?.bank_name} defaultNum={getAccount("bride_m")?.account_number} />
+                    <div className="h-px bg-slate-100 my-4"/>
+                    {/* 호칭은 부모님 성함 뒤에 "○○·○○의 장남"으로 붙어서 부모님 정보와 같이 둠 */}
+                    <div data-preview="people" className="space-y-2">
+                        <OrderSelectGroup label="신부 호칭" name="bride_order" options={["딸", "장녀", "차녀", "삼녀", "사녀", "외동딸", "막내딸"]} defaultValue={initialData.bride_order} icon={<Users size={16}/>}/>
+                        <p className="text-[11px] text-slate-400 ml-1">부모님 성함 뒤에 ‘○○ · ○○의 장남’처럼 붙어요.</p>
+                    </div>
                     </FormReveal>
                 </div>
             </section>
@@ -543,6 +554,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                             </div>
                         </div>
                         <p className="text-xs text-slate-500">권장: 9:16 세로 비율 · 화살표로 순서 변경</p>
+                        <HeroTextColorPicker defaultValue={initialData.hero_text_color} visible={templateType === "type1"}/>
                         {mainPreviews.length === 0 && existingMainPhotos.length > 0 && (
                             <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border">
                                 {existingMainPhotos.map((src: string, i: number) => (
@@ -586,7 +598,7 @@ export default function EditForm({ initialData }: EditFormProps) {
                         {isMainUploading && <p className="text-[11px] text-blue-500 text-center">메인 사진 업로드 중입니다...</p>}
                     </div>
 
-                    <div data-preview="message" className="space-y-4">
+                    <div data-preview="middle" className="space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <label className="text-base font-bold text-slate-700">초대장 대표 사진 <span className="text-rose-500 text-sm">(1장 필수)</span></label>
                             {middlePreview && (

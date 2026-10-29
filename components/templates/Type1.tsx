@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Noto_Serif_KR } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +14,7 @@ import ReminderSection from "@/components/ReminderSection";
 import type { TemplateProps, GuestbookEntry } from "@/components/invitation/types";
 import { noticeLines } from "@/components/invitation/types";
 import FadeIn from "@/components/invitation/FadeIn";
+import { useBlockedText } from "@/components/invitation/PreviewMode";
 import NaverMap from "@/components/invitation/NaverMap";
 import GalleryLightbox from "@/components/invitation/GalleryLightbox";
 import ContactModal from "@/components/invitation/ContactModal";
@@ -31,9 +32,10 @@ const serif = Noto_Serif_KR({
 });
 
 /** 클래식 화이트 템플릿 */
-export default function Type1({ data, isSample = false }: TemplateProps) {
+export default function Type1({ data, isSample = false, previewFocus }: TemplateProps) {
     const router = useRouter();
     const { toast } = useToast();
+    const blocked = useBlockedText();
 
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [isInterviewOpen, setIsInterviewOpen] = useState(false);
@@ -57,13 +59,36 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
     const handleShare = () => {
         if (isSample) {
-            toast("샘플 화면에서는 카카오톡 공유를 사용할 수 없습니다.");
+            toast(blocked("share"));
             return;
         }
         shareKakao(data);
     };
 
     const refresh = () => router.refresh();
+
+    // 만들기 미리보기: 입력 중인 항목에 맞춰 팝업·계좌 펼치기 (다른 칸으로 가면 닫음)
+    useEffect(() => {
+        if (!previewFocus) return;
+        const { section, detail } = previewFocus;
+        // 부모 화면 입력 위치를 따라가는 외부 동기화라 effect에서 처리
+        setIsContactOpen(section === "contact");
+        setIsInterviewOpen(section === "interview" && data.interviews.length > 0);
+        if (section === "gift") setOpenAccount(detail === "bride" ? "bride" : "groom");
+        // 칸을 옮길 때만 (인터뷰 내용 타이핑으로는 다시 열지 않음)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [previewFocus]);
+
+    // 인터뷰 칸에 들어간 뒤 내용이 처음 생기면 그때 팝업 열기 (질문만 누른 직후 등)
+    const hasInterviews = data.interviews.length > 0;
+    useEffect(() => {
+        if (hasInterviews && previewFocus?.section === "interview") setIsInterviewOpen(true);
+        // 내용 생길 때만 확인
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasInterviews]);
+
+    // 메인 사진 위 글자: 밝은 사진에서도 읽히게 글자색 반대쪽으로 살짝 그늘
+    const darkHero = data.heroTextColor === "dark";
 
     return (
         <div className={`${serif.variable} font-sans bg-[#FAF8F6] min-h-screen flex justify-center selection:bg-rose-50`}>
@@ -108,9 +133,12 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                         </AnimatePresence>
                     </KenBurnsImage>
 
-                    <div className="absolute inset-0 flex flex-col items-center justify-between py-28 text-white text-center z-10">
+                    <div className={`absolute inset-0 pointer-events-none z-[5] ${darkHero
+                        ? "bg-[linear-gradient(to_bottom,rgba(255,255,255,0.55),transparent_32%,transparent_62%,rgba(255,255,255,0.6))]"
+                        : "bg-[linear-gradient(to_bottom,rgba(0,0,0,0.32),transparent_32%,transparent_62%,rgba(0,0,0,0.38))]"}`}/>
+                    <div className={`absolute inset-0 flex flex-col items-center justify-between py-28 text-center z-10 ${darkHero ? "text-gray-900" : "text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.25)]"}`}>
                         <motion.div initial={{opacity: 0, y: 30}} animate={{opacity: 1, y: 0}} transition={{duration: 1.2}}>
-                            <p className="text-[10px] tracking-[0.5em] font-medium opacity-90 uppercase bg-black/5 px-4 py-1.5 rounded-full backdrop-blur-[2px]">
+                            <p className={`text-[10px] tracking-[0.5em] font-medium opacity-90 uppercase px-4 py-1.5 rounded-full backdrop-blur-[2px] ${darkHero ? "bg-white/40" : "bg-black/5"}`}>
                                 The Day of Our Wedding
                             </p>
                             <h1 className="text-4xl font-serif mt-8 font-bold">
@@ -125,7 +153,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                 </section>
 
                 {/* 2. 초대글 */}
-                <section data-preview-section="people message" className="py-28 px-10 text-center bg-white">
+                <section data-preview-section="message" className="py-28 px-10 text-center bg-white">
                     <FadeIn>
                         <Heart className="mx-auto text-rose-200 mb-10" size={26}/>
                         <h2 className="font-serif text-2xl mb-12 tracking-[0.15em] font-bold italic">초대합니다</h2>
@@ -136,14 +164,14 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
                     {data.middleImage && (
                         <FadeIn delay={0.2}>
-                            <div className="relative aspect-[4/5] w-full rounded-[2.5rem] overflow-hidden mb-16 shadow-xl shadow-rose-50/50">
+                            <div data-preview-section="middle" className="relative aspect-[4/5] w-full rounded-[2.5rem] overflow-hidden mb-16 shadow-xl shadow-rose-50/50">
                                 <img src={data.middleImage} alt="서브 사진" className="absolute inset-0 w-full h-full object-cover"/>
                             </div>
                         </FadeIn>
                     )}
 
                     <FadeIn delay={0.3}>
-                        <div className="space-y-6 text-gray-800 font-serif mb-12 text-lg">
+                        <div data-preview-section="people" className="space-y-6 text-gray-800 font-serif mb-12 text-lg">
                             <div><span className="text-gray-400 font-sans text-sm mr-3">신랑</span>
                                 <b>{data.groom.name}</b>
                                 {(data.groom.father || data.groom.mother) && <><span className="text-gray-300 mx-2">|</span> <ParentsLine p={data.groom}/></>}
@@ -153,7 +181,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                                 {(data.bride.father || data.bride.mother) && <><span className="text-gray-300 mx-2">|</span> <ParentsLine p={data.bride}/></>}
                             </div>
                         </div>
-                        <button onClick={() => setIsContactOpen(true)}
+                        <button data-preview-section="contact" onClick={() => setIsContactOpen(true)}
                                 className="px-12 py-5 bg-[#FBF7F4] text-[#B19888] rounded-2xl font-bold text-sm flex items-center gap-3 mx-auto shadow-sm">
                             <Phone size={16}/> 연락처 보기
                         </button>
@@ -202,7 +230,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                 </section>
 
                 {/* 4. 오시는 길 */}
-                <section data-preview-section="location notice" className="pt-24 pb-12 px-8 bg-white">
+                <section data-preview-section="location" className="pt-24 pb-12 px-8 bg-white">
                     <FadeIn>
                         <h3 className="text-center font-serif text-2xl mb-2 text-gray-800 tracking-tighter underline underline-offset-8 decoration-gray-100 italic font-bold">오시는 길</h3>
                         <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-12 italic font-bold">Location</p>
@@ -226,7 +254,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                                 </a>
                             ))}
                         </div>
-                        <div className="space-y-8 text-[14px] border-t border-gray-50 pt-10 text-left">
+                        <div data-preview-section="transport" className="space-y-8 text-[14px] border-t border-gray-50 pt-10 text-left">
                             {[["지하철", data.transport.subway], ["버스", data.transport.bus], ["주차", data.transport.parking]].map(([label, text]) => text && (
                                 <div key={label} className="flex gap-4 sm:gap-5 min-w-0">
                                     <span className="shrink-0 w-12 sm:w-14 h-7 bg-[#F3F4F6] text-[#4B5563] rounded-lg text-[10px] flex items-center justify-center font-bold whitespace-nowrap">{label}</span>
@@ -237,7 +265,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
 
                         {/* 안내사항 (비면 안 보임) */}
                         {noticeLines(data.notice).length > 0 && (
-                            <div className="mt-12 bg-[#FBFAF8] border border-gray-100 rounded-3xl px-6 py-8 text-left">
+                            <div data-preview-section="notice" className="mt-12 bg-[#FBFAF8] border border-gray-100 rounded-3xl px-6 py-8 text-left">
                                 <p className="text-center text-gray-300 text-[10px] tracking-[0.3em] uppercase font-sans mb-6 italic font-bold">Notice</p>
                                 <ul className="space-y-3">
                                     {noticeLines(data.notice).map((line, i) => (
@@ -340,7 +368,7 @@ export default function Type1({ data, isSample = false }: TemplateProps) {
                     </FadeIn>
                     <div className="space-y-4">
                         {([["groom", "신랑측", accounts.groom], ["bride", "신부측", accounts.bride]] as const).map(([side, title, list]) => list.length > 0 && (
-                            <div key={side} className="border border-rose-50 rounded-[2rem] overflow-hidden shadow-sm shadow-rose-50/20">
+                            <div key={side} data-preview-detail={side} className="border border-rose-50 rounded-[2rem] overflow-hidden shadow-sm shadow-rose-50/20">
                                 <button onClick={() => setOpenAccount(openAccount === side ? null : side)}
                                         className={`w-full flex justify-between items-center p-7 transition-colors ${openAccount === side ? 'bg-rose-50/30 text-rose-400' : 'bg-white text-gray-700'}`}>
                                     <span className="font-serif font-bold">{title} 계좌번호</span>

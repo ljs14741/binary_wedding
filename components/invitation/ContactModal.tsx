@@ -3,6 +3,7 @@
 import React from "react";
 import { X, Phone, MessageSquare } from "lucide-react";
 import type { Person } from "./types";
+import { useBlockedText } from "./PreviewMode";
 
 type Props = {
     groom: Person;
@@ -43,6 +44,7 @@ export default function ContactModal({ groom, bride, isSample, toast, onClose }:
 function ContactRow({ label, name, phone, isSample, toast }: {
     label: string; name: string; phone: string; isSample?: boolean; toast: (m: string) => Promise<void>;
 }) {
+    const blocked = useBlockedText();
     if (!phone) return null;
     const callCls = "w-10 h-10 bg-[#FDFBF9] border border-rose-50 rounded-full flex items-center justify-center text-rose-300 hover:bg-rose-50 transition";
     const smsCls = "w-10 h-10 bg-[#FDFBF9] border border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 transition";
@@ -53,8 +55,8 @@ function ContactRow({ label, name, phone, isSample, toast }: {
             <div className="flex gap-4">
                 {isSample ? (
                     <>
-                        <button type="button" onClick={() => toast("샘플 화면에서는 전화를 걸 수 없습니다.")} className={callCls}><Phone size={18}/></button>
-                        <button type="button" onClick={() => toast("샘플 화면에서는 문자를 보낼 수 없습니다.")} className={smsCls}><MessageSquare size={18}/></button>
+                        <button type="button" onClick={() => toast(blocked("call"))} className={callCls}><Phone size={18}/></button>
+                        <button type="button" onClick={() => toast(blocked("sms"))} className={smsCls}><MessageSquare size={18}/></button>
                     </>
                 ) : (
                     <>

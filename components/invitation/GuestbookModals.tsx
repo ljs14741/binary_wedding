@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useBlockedText } from "./PreviewMode";
 import { X, MessageSquare } from "lucide-react";
 import { createGuestbookEntry, updateGuestbookEntry, deleteGuestbookEntry } from "@/app/actions";
 import type { GuestbookEntry } from "./types";
@@ -27,13 +28,14 @@ function ModalShell({ onClose, children }: { onClose: () => void; children: Reac
 export function GuestbookWriteModal({ toast, url_id, isSample, onClose, onSuccess }: {
     toast: Toast; url_id: string; isSample?: boolean; onClose: () => void; onSuccess: () => void;
 }) {
+    const blocked = useBlockedText();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (isSample) {
-            toast("샘플 페이지에서는 작성이 불가능합니다.");
+            toast(blocked("guestbook"));
             return;
         }
         setIsSubmitting(true);
