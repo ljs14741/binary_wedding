@@ -30,10 +30,11 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<{ total: number; today: number; thisWeek: number; thisMonth: number } | null>(null);
     const [trendDaily, setTrendDaily] = useState<{ date: string; count: number }[]>([]);
     const [trendWeekly, setTrendWeekly] = useState<{ weekStart: string; count: number }[]>([]);
-    const [list, setList] = useState<{ items: AdminInvitationItem[]; total: number; totalPages: number } | null>(null);
+    const [list, setList] = useState<{ items: AdminInvitationItem[]; total: number; totalPages: number; usedTotal: number } | null>(null);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const [searchInput, setSearchInput] = useState("");
+    const [onlyUsed, setOnlyUsed] = useState(false);
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<"daily" | "weekly">("daily");
 
@@ -60,14 +61,14 @@ export default function AdminDashboard() {
     const loadList = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await getAdminInvitationList(page, search || undefined);
+            const res = await getAdminInvitationList(page, search || undefined, onlyUsed);
             setList(res);
         } catch {
             setList(null);
         } finally {
             setLoading(false);
         }
-    }, [page, search]);
+    }, [page, search, onlyUsed]);
 
     useEffect(() => {
         loadStats();
@@ -189,6 +190,11 @@ export default function AdminDashboard() {
                     <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Users size={16} />
                         청첩장 목록
+                        {list && (
+                            <span className="normal-case tracking-normal font-medium text-emerald-600">
+                                · 실사용 추정 {list.usedTotal}개 (방명록 2개 이상)
+                            </span>
+                        )}
                     </h2>
                     <form onSubmit={handleSearch} className="mb-4 flex gap-2">
                         <div className="relative flex-1">
@@ -207,6 +213,13 @@ export default function AdminDashboard() {
                         >
                             검색
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => { setOnlyUsed((v) => !v); setPage(1); }}
+                            className={`px-4 py-3 rounded-xl font-medium text-sm border transition whitespace-nowrap ${onlyUsed ? "bg-emerald-600 border-emerald-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                        >
+                            실사용만
+                        </button>
                     </form>
 
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -220,6 +233,7 @@ export default function AdminDashboard() {
                                             <tr className="bg-slate-50 border-b border-slate-200">
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">신랑/신부</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">테마</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-slate-600">방명록</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">예식일</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600 hidden sm:table-cell">장소</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-slate-600">생성일</th>
@@ -245,6 +259,14 @@ export default function AdminDashboard() {
                                                         <span className={`inline-block whitespace-nowrap text-[11px] font-bold px-2 py-0.5 rounded-full ${item.template_type === "minihompy" ? "bg-sky-50 text-sky-600" : "bg-rose-50 text-rose-500"}`}>
                                                             {getTemplateMeta(item.template_type).name}
                                                         </span>
+                                                    </td>
+                                                    <td className="py-3 px-4 whitespace-nowrap">
+                                                        <span className="text-slate-600">{item.guestbook_count}</span>
+                                                        {item.guestbook_count >= 2 && (
+                                                            <span className="ml-1.5 inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                                                                실사용
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="py-3 px-4 text-slate-600">
                                                         {new Date(item.wedding_date).toLocaleDateString("ko-KR")}

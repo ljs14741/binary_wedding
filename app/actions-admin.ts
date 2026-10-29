@@ -6,6 +6,9 @@ import { Prisma } from "@prisma/client";
 
 const LIST_PAGE_SIZE = 20;
 
+// 방명록이 이만큼 있으면 하객이 실제로 본 청첩장으로 봄
+const USED_GUESTBOOK_MIN = 2;
+
 // 날짜 구분은 항상 한국 시간 기준 (DB DATE()는 저장 시간대 때문에 9시간 밀림)
 const KST_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
 
@@ -112,16 +115,28 @@ export type AdminInvitationItem = {
     template_type: string;
     created_at: Date | null;
     updated_at: Date | null;
+    guestbook_count: number;
 };
+
+/** 방명록이 USED_GUESTBOOK_MIN 개 이상인 청첩장 id */
+async function usedInvitationIds(): Promise<number[]> {
+    const rows = await prisma.invitation_guestbook.groupBy({
+        by: ["invitation_id"],
+        having: { invitation_id: { _count: { gte: USED_GUESTBOOK_MIN } } },
+    });
+    return rows.map((r) => r.invitation_id);
+}
 
 /** 청첩장 목록 (페이지네이션, 생성일순 내림차순) */
 export async function getAdminInvitationList(
     page: number = 1,
-    search?: string
+    search?: string,
+    onlyUsed: boolean = false
 ): Promise<{
     items: AdminInvitationItem[];
     total: number;
     totalPages: number;
+    usedTotal: number;
 }> {
     await requireAdminSession();
 
@@ -138,6 +153,9 @@ export async function getAdminInvitationList(
         ];
     }
 
+    const usedIds = await usedInvitationIds();
+    if (onlyUsed) where.id = { in: usedIds };
+
     const [items, total] = await Promise.all([
         prisma.invitations.findMany({
             where,
@@ -151,6 +169,7 @@ export async function getAdminInvitationList(
                 template_type: true,
                 created_at: true,
                 updated_at: true,
+                _count: { select: { invitation_guestbook: true } },
             },
             orderBy: { created_at: "desc" },
             skip,
@@ -160,9 +179,10 @@ export async function getAdminInvitationList(
     ]);
 
     return {
-        items: items as AdminInvitationItem[],
+        items: items.map(({ _count, ...rest }) => ({ ...rest, guestbook_count: _count.invitation_guestbook })),
         total,
         totalPages: Math.ceil(total / LIST_PAGE_SIZE),
+        usedTotal: usedIds.length,
     };
 }
 
