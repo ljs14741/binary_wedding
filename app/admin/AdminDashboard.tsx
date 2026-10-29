@@ -8,6 +8,8 @@ import {
     getAdminTrendDaily,
     getAdminTrendWeekly,
     type AdminInvitationItem,
+    type AdminListSort,
+    type AdminListStatus,
 } from "@/app/actions-admin";
 import { adminLogout } from "@/lib/admin-auth";
 import AdminDonations from "./AdminDonations";
@@ -26,15 +28,44 @@ import {
     Users,
 } from "lucide-react";
 
+const KST_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
+
+/** 예식일까지 남은 날 (한국 날짜 기준, 0=오늘, 음수=지남) */
+function daysUntil(date: Date | string): number {
+    const toUtcDay = (d: Date) => Date.parse(`${KST_DAY.format(d)}T00:00:00Z`);
+    return Math.round((toUtcDay(new Date(date)) - toUtcDay(new Date())) / 86400000);
+}
+
+function DdayBadge({ date }: { date: Date | string }) {
+    const d = daysUntil(date);
+    const [label, cls] =
+        d > 0 ? [`D-${d}`, "bg-rose-50 text-rose-500"]
+        : d === 0 ? ["오늘", "bg-rose-500 text-white"]
+        : ["종료", "bg-slate-100 text-slate-400"];
+    return <span className={`ml-1.5 inline-block whitespace-nowrap text-[11px] font-bold px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
+}
+
+const SORT_OPTIONS: { value: AdminListSort; label: string }[] = [
+    { value: "created", label: "생성일순" },
+    { value: "wedding", label: "예식일순" },
+];
+const STATUS_OPTIONS: { value: AdminListStatus; label: string }[] = [
+    { value: "all", label: "전체" },
+    { value: "upcoming", label: "예정" },
+    { value: "past", label: "종료" },
+];
+
 export default function AdminDashboard() {
     const [stats, setStats] = useState<{ total: number; today: number; thisWeek: number; thisMonth: number } | null>(null);
     const [trendDaily, setTrendDaily] = useState<{ date: string; count: number }[]>([]);
     const [trendWeekly, setTrendWeekly] = useState<{ weekStart: string; count: number }[]>([]);
-    const [list, setList] = useState<{ items: AdminInvitationItem[]; total: number; totalPages: number; usedTotal: number } | null>(null);
+    const [list, setList] = useState<{ items: AdminInvitationItem[]; total: number; totalPages: number; usedTotal: number; upcomingTotal: number; pastTotal: number } | null>(null);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const [searchInput, setSearchInput] = useState("");
     const [onlyUsed, setOnlyUsed] = useState(false);
+    const [sort, setSort] = useState<AdminListSort>("created");
+    const [status, setStatus] = useState<AdminListStatus>("all");
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<"daily" | "weekly">("daily");
 
@@ -61,14 +92,14 @@ export default function AdminDashboard() {
     const loadList = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await getAdminInvitationList(page, search || undefined, onlyUsed);
+            const res = await getAdminInvitationList(page, search || undefined, onlyUsed, sort, status);
             setList(res);
         } catch {
             setList(null);
         } finally {
             setLoading(false);
         }
-    }, [page, search, onlyUsed]);
+    }, [page, search, onlyUsed, sort, status]);
 
     useEffect(() => {
         loadStats();
@@ -192,7 +223,7 @@ export default function AdminDashboard() {
                         청첩장 목록
                         {list && (
                             <span className="normal-case tracking-normal font-medium text-emerald-600">
-                                · 실사용 추정 {list.usedTotal}개 (방명록 2개 이상)
+                                · 실사용 추정 {list.usedTotal}개 (방명록 2개 이상) · 예정 {list.upcomingTotal} · 종료 {list.pastTotal}
                             </span>
                         )}
                     </h2>
@@ -221,6 +252,23 @@ export default function AdminDashboard() {
                             실사용만
                         </button>
                     </form>
+
+                    <div className="mb-4 flex flex-wrap gap-2">
+                        {[{ options: SORT_OPTIONS, value: sort, set: setSort }, { options: STATUS_OPTIONS, value: status, set: setStatus }].map((g, gi) => (
+                            <div key={gi} className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+                                {g.options.map((o) => (
+                                    <button
+                                        key={o.value}
+                                        type="button"
+                                        onClick={() => { (g.set as (v: string) => void)(o.value); setPage(1); }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${g.value === o.value ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                                    >
+                                        {o.label}
+                                    </button>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
 
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                         {loading ? (
@@ -268,8 +316,9 @@ export default function AdminDashboard() {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="py-3 px-4 text-slate-600">
-                                                        {new Date(item.wedding_date).toLocaleDateString("ko-KR")}
+                                                    <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
+                                                        {new Date(item.wedding_date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
+                                                        <DdayBadge date={item.wedding_date} />
                                                     </td>
                                                     <td className="py-3 px-4 text-slate-500 hidden sm:table-cell max-w-[120px] truncate">
                                                         {item.location_name}

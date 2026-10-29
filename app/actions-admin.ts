@@ -127,16 +127,27 @@ async function usedInvitationIds(): Promise<number[]> {
     return rows.map((r) => r.invitation_id);
 }
 
-/** 청첩장 목록 (페이지네이션, 생성일순 내림차순) */
+export type AdminListSort = "created" | "wedding";
+export type AdminListStatus = "all" | "upcoming" | "past";
+
+/**
+ * 청첩장 목록 (페이지네이션)
+ * sort created: 생성일 최신순 / wedding: 다가오는 예식 가까운 순 → 끝난 예식 최근 순
+ * status upcoming: 오늘(한국 날짜) 포함 이후 예식 / past: 어제까지 끝난 예식
+ */
 export async function getAdminInvitationList(
     page: number = 1,
     search?: string,
-    onlyUsed: boolean = false
+    onlyUsed: boolean = false,
+    sort: AdminListSort = "created",
+    status: AdminListStatus = "all"
 ): Promise<{
     items: AdminInvitationItem[];
     total: number;
     totalPages: number;
     usedTotal: number;
+    upcomingTotal: number;
+    pastTotal: number;
 }> {
     await requireAdminSession();
 
@@ -156,33 +167,57 @@ export async function getAdminInvitationList(
     const usedIds = await usedInvitationIds();
     if (onlyUsed) where.id = { in: usedIds };
 
-    const [items, total] = await Promise.all([
-        prisma.invitations.findMany({
-            where,
-            select: {
-                id: true,
-                url_id: true,
-                groom_name: true,
-                bride_name: true,
-                wedding_date: true,
-                location_name: true,
-                template_type: true,
-                created_at: true,
-                updated_at: true,
-                _count: { select: { invitation_guestbook: true } },
-            },
-            orderBy: { created_at: "desc" },
-            skip,
-            take: LIST_PAGE_SIZE,
-        }),
+    // 오늘 0시(한국) 기준으로 예정/종료 나눔
+    const todayStart = kstStart(kstKey(new Date()));
+    const upcomingWhere: Prisma.invitationsWhereInput = { ...where, wedding_date: { gte: todayStart } };
+    const pastWhere: Prisma.invitationsWhereInput = { ...where, wedding_date: { lt: todayStart } };
+    if (status === "upcoming") where.wedding_date = { gte: todayStart };
+    if (status === "past") where.wedding_date = { lt: todayStart };
+
+    const select = {
+        id: true,
+        url_id: true,
+        groom_name: true,
+        bride_name: true,
+        wedding_date: true,
+        location_name: true,
+        template_type: true,
+        created_at: true,
+        updated_at: true,
+        _count: { select: { invitation_guestbook: true } },
+    } satisfies Prisma.invitationsSelect;
+
+    const [total, upcomingTotal, pastTotal] = await Promise.all([
         prisma.invitations.count({ where }),
+        prisma.invitations.count({ where: { wedding_date: { gte: todayStart } } }),
+        prisma.invitations.count({ where: { wedding_date: { lt: todayStart } } }),
     ]);
+
+    let items;
+    if (sort === "wedding" && status === "all") {
+        // 예정 → 종료 순으로 이어 붙여 페이지를 자름
+        const upcomingCount = await prisma.invitations.count({ where: upcomingWhere });
+        const upcoming = skip < upcomingCount
+            ? await prisma.invitations.findMany({ where: upcomingWhere, select, orderBy: { wedding_date: "asc" }, skip, take: LIST_PAGE_SIZE })
+            : [];
+        const rest = LIST_PAGE_SIZE - upcoming.length;
+        const past = rest > 0
+            ? await prisma.invitations.findMany({ where: pastWhere, select, orderBy: { wedding_date: "desc" }, skip: Math.max(0, skip - upcomingCount), take: rest })
+            : [];
+        items = [...upcoming, ...past];
+    } else {
+        const orderBy: Prisma.invitationsOrderByWithRelationInput =
+            sort === "wedding" ? { wedding_date: status === "past" ? "desc" : "asc" } : { created_at: "desc" };
+        items = await prisma.invitations.findMany({ where, select, orderBy, skip, take: LIST_PAGE_SIZE });
+    }
 
     return {
         items: items.map(({ _count, ...rest }) => ({ ...rest, guestbook_count: _count.invitation_guestbook })),
         total,
         totalPages: Math.ceil(total / LIST_PAGE_SIZE),
         usedTotal: usedIds.length,
+        upcomingTotal,
+        pastTotal,
     };
 }
 
